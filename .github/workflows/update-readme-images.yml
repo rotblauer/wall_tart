@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "sierpinski_poster.py"
+      - "lorenz_poster.py"
       - ".github/workflows/update-readme-images.yml"
   workflow_dispatch:
 
@@ -24,18 +25,21 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Generate poster SVG
+      - name: Generate poster SVGs
         run: |
           mkdir -p docs/generated
           python sierpinski_poster.py \
             --depth 5 \
             --output docs/generated/sierpinski_poster.svg
+          python lorenz_poster.py \
+            --steps 10000 \
+            --output docs/generated/lorenz_poster.svg
 
-      - name: Commit updated image
+      - name: Commit updated images
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add docs/generated/sierpinski_poster.svg
+          git add docs/generated/sierpinski_poster.svg docs/generated/lorenz_poster.svg
           git diff --staged --quiet && echo "No changes to commit" \
-            || git commit -m "chore: regenerate poster preview [skip ci]"
+            || git commit -m "chore: regenerate poster previews [skip ci]"
           git push
