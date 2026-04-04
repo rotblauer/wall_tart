@@ -12,4 +12,4 @@ RUN pip install --no-cache-dir cairosvg
 WORKDIR /app
 COPY sierpinski_poster.py lorenz_poster.py ./
 
-ENTRYPOINT ["python"]
+ENTRYPOINT []
