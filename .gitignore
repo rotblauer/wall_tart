@@ -2,6 +2,9 @@
 *.svg
 *.pdf
 
+# Allow tracked generated images
+!docs/generated/*.svg
+
 # Python
 __pycache__/
 *.py[cod]
