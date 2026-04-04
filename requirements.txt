@@ -1,0 +1,2 @@
+# Optional dependency for PDF output
+cairosvg>=2.7.0
