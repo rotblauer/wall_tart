@@ -14,6 +14,7 @@ from lorenz_poster import (
     lorenz_derivatives,
     project_3d_to_2d,
     rk4_step,
+    write_png,
     write_svg,
 )
 
@@ -262,3 +263,36 @@ class TestWriteSvg:
             assert root.tag.endswith("svg")
         finally:
             os.unlink(path)
+
+
+class TestWritePng:
+    pytest.importorskip("cairosvg", reason="cairosvg not installed")
+
+    def test_writes_png_file(self):
+        cairosvg = pytest.importorskip("cairosvg")  # noqa: F841
+        svg = generate_poster(steps=1000, width_mm=100, height_mm=150)
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as f:
+            path = f.name
+        try:
+            write_png(svg, path, dpi=72)
+            assert os.path.getsize(path) > 0
+            with open(path, "rb") as fh:
+                header = fh.read(8)
+            assert header == b"\x89PNG\r\n\x1a\n"
+        finally:
+            os.unlink(path)
+
+    def test_writes_png_file_custom_dpi(self):
+        cairosvg = pytest.importorskip("cairosvg")  # noqa: F841
+        svg = generate_poster(steps=1000, width_mm=100, height_mm=150)
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as f:
+            path_low = f.name
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as f:
+            path_high = f.name
+        try:
+            write_png(svg, path_low, dpi=72)
+            write_png(svg, path_high, dpi=144)
+            assert os.path.getsize(path_high) > os.path.getsize(path_low)
+        finally:
+            os.unlink(path_low)
+            os.unlink(path_high)
