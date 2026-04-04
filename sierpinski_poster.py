@@ -597,10 +597,11 @@ def generate_poster(depth=7, width_mm=420, height_mm=594,
 
     anno_y = anno_sep_y + 18 * h_scale  # annotation text starts here
 
-    # Three-column x positions
+    # Three-column x positions — anchored so arrow origins land at ~10%, ~50%,
+    # ~90% of width (all arrow_x = col_x + 25*scale, w_scale = width_mm/420).
     col1_x = width_mm * 0.04
-    col2_x = width_mm * 0.35
-    col3_x = width_mm * 0.67
+    col2_x = width_mm * 0.44
+    col3_x = width_mm * 0.84
 
     # Compute sub-triangle midpoints for precise arrow targets
     ab = midpoint(vertices[0], vertices[1])
