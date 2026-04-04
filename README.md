@@ -2,7 +2,7 @@
 
 A Python tool that generates a museum-quality, annotated vector poster of the **Sierpiński Triangle** fractal — suitable for large-format printing (A2 and above).
 
-![poster-preview](https://upload.wikimedia.org/wikipedia/commons/thumb/4/45/Sierpinski_triangle.svg/220px-Sierpinski_triangle.svg.png)
+![poster-preview](docs/generated/sierpinski_triangle.svg)
 
 ## Features
 
@@ -117,6 +117,8 @@ The repository includes a CI workflow (`.github/workflows/ci.yml`) that:
 1. Runs the full test suite with `pytest`.
 2. Builds the Docker image.
 3. Generates a sample poster and uploads it as a build artifact.
+
+It also includes a README image refresh workflow (`.github/workflows/update-readme-images.yml`) that regenerates the committed Sierpiński image used above.
 
 ## How It Works
 

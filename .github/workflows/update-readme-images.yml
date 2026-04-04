@@ -1,0 +1,40 @@
+name: Update README Images
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generate-readme-image:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Generate Sierpiński image for README
+        run: |
+          mkdir -p docs/generated
+          python sierpinski_poster.py --depth 5 --output docs/generated/sierpinski_triangle.svg
+
+      - name: Commit and push if changed
+        run: |
+          if git diff --quiet -- docs/generated/sierpinski_triangle.svg README.md; then
+            echo "No README image changes to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/generated/sierpinski_triangle.svg README.md
+          git commit -m "chore: refresh generated README image"
+          git push

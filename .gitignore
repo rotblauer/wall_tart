@@ -1,6 +1,7 @@
 # Generated posters
 *.svg
 *.pdf
+!docs/generated/*.svg
 
 # Python
 __pycache__/
