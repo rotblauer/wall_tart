@@ -182,6 +182,39 @@ class TestGeneratePoster:
                 f"rule at {rule_y:.1f}"
             )
 
+    def test_educational_group_present(self):
+        """The educational panels group exists in the SVG."""
+        svg = generate_poster(depth=2, width_mm=200, height_mm=300)
+        ns = "http://www.w3.org/2000/svg"
+        edu = svg.find(f".//{{{ns}}}g[@id='educational']")
+        assert edu is not None
+
+    def test_educational_text_present(self):
+        """All three educational panel topics appear in the SVG."""
+        svg = generate_poster(depth=2, width_mm=200, height_mm=300)
+        xml_str = ET.tostring(svg, encoding="unicode")
+        assert "Pascal" in xml_str
+        assert "Chaos Game" in xml_str
+        assert "Area Paradox" in xml_str
+
+    def test_educational_pascal_mod2_cells(self):
+        """Pascal panel draws cells (rects) in the educational group."""
+        svg = generate_poster(depth=1, width_mm=200, height_mm=300)
+        ns = "http://www.w3.org/2000/svg"
+        edu = svg.find(f".//{{{ns}}}g[@id='educational']")
+        rects = edu.findall(f".//{{{ns}}}rect")
+        # 8 rows of Pascal → 1+2+3+4+5+6+7+8 = 36 cells
+        assert len(rects) >= 36
+
+    def test_educational_chaos_game_dots(self):
+        """Chaos game panel draws scatter dots (circles) in the group."""
+        svg = generate_poster(depth=1, width_mm=200, height_mm=300)
+        ns = "http://www.w3.org/2000/svg"
+        edu = svg.find(f".//{{{ns}}}g[@id='educational']")
+        circles = edu.findall(f".//{{{ns}}}circle")
+        # 200 chaos game dots + a few vertex dots
+        assert len(circles) >= 200
+
 
 # ---------------------------------------------------------------------------
 # SVG file output

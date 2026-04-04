@@ -308,6 +308,158 @@ def _annotation_dimension(parent, ns, target_x, target_y,
 
 
 # ---------------------------------------------------------------------------
+# Educational panel builders (second row)
+# ---------------------------------------------------------------------------
+
+def _panel_pascal(parent, ns, col_x, anno_y, scale=1):
+    """Panel: Pascal\u2019s triangle mod 2 \u2192 Sierpi\u0144ski pattern."""
+    g = _group(parent, ns)
+
+    _text(g, ns, col_x, anno_y + 2 * scale,
+          "Hidden in Pascal\u2019s Triangle",
+          **{**ANNOTATION_STYLE, "font-size": str(round(5 * scale, 2)),
+             "fill": ACCENT_COLOR})
+
+    lines = [
+        "Color the odd entries of Pascal\u2019s",
+        "triangle and the Sierpi\u0144ski",
+        "pattern emerges \u2014 a bridge between",
+        "number theory and geometry.",
+    ]
+    _multiline_text(
+        g, ns, col_x, anno_y + 9 * scale,
+        lines, line_height=5 * scale,
+        **{**ANNOTATION_STYLE, "font-size": str(round(3.8 * scale, 2))},
+    )
+
+    # Pascal's triangle mod 2 — rows of small squares
+    cell = 3.2 * scale
+    gap = 0.4 * scale
+    step = cell + gap
+    base_y = anno_y + 33 * scale
+    center_x = col_x + 28 * scale
+    num_rows = 8
+
+    for n in range(num_rows):
+        row_start_x = center_x - n * step / 2
+        for k in range(n + 1):
+            # C(n,k) is odd iff every bit of k is set in n (Kummer's theorem)
+            is_odd = (n & k) == k
+            rx = row_start_x + k * step
+            ry = base_y + n * step
+            fill = TRIANGLE_COLOR if is_odd else "none"
+            opacity = "0.85" if is_odd else "0.15"
+            _rect(g, ns, rx, ry, cell, cell,
+                  fill=fill, stroke=TRIANGLE_COLOR,
+                  **{"stroke-width": str(round(0.15 * scale, 3)),
+                     "opacity": opacity})
+
+    return g
+
+
+def _panel_chaos_game(parent, ns, col_x, anno_y, scale=1):
+    """Panel: the chaos game algorithm with dot demonstration."""
+    g = _group(parent, ns)
+
+    _text(g, ns, col_x, anno_y + 2 * scale, "The Chaos Game",
+          **{**ANNOTATION_STYLE, "font-size": str(round(5 * scale, 2)),
+             "fill": ACCENT_COLOR})
+
+    lines = [
+        "Pick any starting point inside the",
+        "triangle. Choose a random vertex \u2014",
+        "jump halfway there. Repeat forever.",
+        "The dots trace the Sierpi\u0144ski triangle!",
+    ]
+    _multiline_text(
+        g, ns, col_x, anno_y + 9 * scale,
+        lines, line_height=5 * scale,
+        **{**ANNOTATION_STYLE, "font-size": str(round(3.8 * scale, 2))},
+    )
+
+    # Small demonstration: chaos game scatter dots
+    tri_cx = col_x + 28 * scale
+    tri_cy = anno_y + 48 * scale
+    tri_side = 32 * scale
+    demo_verts = equilateral_triangle_vertices(tri_cx, tri_cy, tri_side)
+
+    # Faint outline triangle
+    _polygon(g, ns, demo_verts, fill="none", stroke=TRIANGLE_COLOR,
+             **{"stroke-width": str(round(0.2 * scale, 3)), "opacity": "0.2"})
+
+    # Label vertices
+    labels = ["A", "B", "C"]
+    offsets = [(0, -3), (-4, 4), (4, 4)]
+    for v, label, (dx, dy) in zip(demo_verts, labels, offsets):
+        _text(g, ns, v[0] + dx * scale, v[1] + dy * scale, label,
+              **{**ANNOTATION_STYLE, "font-size": str(round(2.8 * scale, 2)),
+                 "fill": ACCENT_COLOR, "text-anchor": "middle"})
+
+    # Deterministic chaos game via LCG
+    x = (demo_verts[0][0] + demo_verts[1][0]) / 2
+    y = (demo_verts[0][1] + demo_verts[1][1]) / 2
+    seed = 42
+    dot_r = 0.3 * scale
+    for i in range(210):
+        seed = (seed * 1103515245 + 12345) & 0x7FFFFFFF
+        vi = seed % 3
+        vx, vy = demo_verts[vi]
+        x = (x + vx) / 2
+        y = (y + vy) / 2
+        if i >= 10:  # skip initial iterations to converge from starting point
+            _circle(g, ns, x, y, dot_r,
+                    fill=TRIANGLE_COLOR, opacity="0.55")
+
+    return g
+
+
+def _panel_area_paradox(parent, ns, col_x, anno_y, scale=1):
+    """Panel: the area/perimeter paradox with formula and visual."""
+    g = _group(parent, ns)
+
+    _text(g, ns, col_x, anno_y + 2 * scale, "The Area Paradox",
+          **{**ANNOTATION_STYLE, "font-size": str(round(5 * scale, 2)),
+             "fill": ACCENT_COLOR})
+
+    lines = [
+        "At each step, \u00BC of remaining area",
+        "is removed. After infinitely many",
+        "steps the total area reaches zero \u2014",
+        "yet the boundary length grows",
+        "without limit!",
+    ]
+    _multiline_text(
+        g, ns, col_x, anno_y + 9 * scale,
+        lines, line_height=5 * scale,
+        **{**ANNOTATION_STYLE, "font-size": str(round(3.8 * scale, 2))},
+    )
+
+    # Formulas
+    formula_y = anno_y + 40 * scale
+    _text(g, ns, col_x + 4 * scale, formula_y,
+          "Area(n) = (\u00BE)\u207F \u2192 0",
+          **{**ANNOTATION_STYLE, "font-size": str(round(4.2 * scale, 2)),
+             "font-style": "italic"})
+    _text(g, ns, col_x + 4 * scale, formula_y + 7 * scale,
+          "Perimeter(n) \u2192 \u221E",
+          **{**ANNOTATION_STYLE, "font-size": str(round(4.2 * scale, 2)),
+             "font-style": "italic"})
+
+    # Visual: three stages showing decreasing filled area
+    demo_y = anno_y + 58 * scale
+    for i, (d, label) in enumerate([(0, "n=0"), (1, "n=1"), (3, "n=3")]):
+        cx = col_x + (8 + i * 18) * scale
+        side = 12 * scale
+        verts = equilateral_triangle_vertices(cx, demo_y, side)
+        for tri in sierpinski_triangles(verts, d):
+            _polygon(g, ns, tri, fill=TRIANGLE_COLOR, opacity="0.8")
+        _text(g, ns, cx - 3 * scale, demo_y + 12 * scale, label,
+              **{**ANNOTATION_STYLE, "font-size": str(round(2.8 * scale, 2))})
+
+    return g
+
+
+# ---------------------------------------------------------------------------
 # Poster composition
 # ---------------------------------------------------------------------------
 
@@ -449,6 +601,25 @@ def generate_poster(depth=7, width_mm=420, height_mm=594,
     _annotation_dimension(anno_group, ns,
                           dim_target_x, dim_target_y,
                           col3_x, anno_y, w_scale)
+
+    # --- Second row: educational connections ---
+    edu_group = _group(svg, ns, id="educational")
+
+    # Separator between annotation rows
+    row2_sep_y = anno_y + 55 * w_scale
+    _line(
+        edu_group, ns,
+        width_mm * 0.15, row2_sep_y,
+        width_mm * 0.85, row2_sep_y,
+        stroke=ACCENT_COLOR,
+        **{"stroke-width": str(round(0.3 * w_scale, 3)), "opacity": "0.35"},
+    )
+
+    row2_y = row2_sep_y + 12 * w_scale
+
+    _panel_pascal(edu_group, ns, col1_x, row2_y, w_scale)
+    _panel_chaos_game(edu_group, ns, col2_x, row2_y, w_scale)
+    _panel_area_paradox(edu_group, ns, col3_x, row2_y, w_scale)
 
     # --- Footer ---
     footer_y = height_mm - 18 * h_scale

@@ -13,6 +13,12 @@ A Python tool that generates a museum-quality, annotated vector poster of the **
   | **Self-Similarity** | Arrow pointing to a sub-triangle explaining how every part mirrors the whole. |
   | **Recursion** | Visual step-by-step diagram (depth 0 → 1 → 2) showing the removal rule. |
   | **Fractional Dimension** | Kid-friendly note on the Hausdorff dimension (~1.585 — not 1-D, not 2-D!). |
+- **Educational panels** — a second row of mathematical connections:
+  | Panel | Description |
+  |---|---|
+  | **Hidden in Pascal's Triangle** | Pascal's triangle mod 2 visualisation — odd entries form the Sierpiński pattern. |
+  | **The Chaos Game** | Scatter-dot demo of the random vertex-jumping algorithm that produces the fractal. |
+  | **The Area Paradox** | Formulas and mini diagrams showing area → 0 yet perimeter → ∞. |
 - **Efficient iterative algorithm** — handles deep recursion depths without hitting Python's stack limit.
 - Optional **PDF export** via `cairosvg`.
 
