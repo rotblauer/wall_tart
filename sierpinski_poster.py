@@ -170,7 +170,7 @@ def _add_arrow_marker(svg, ns):
         f"{{{ns}}}polygon",
         attrib={
             "points": "0 0, 10 3.5, 0 7",
-            "fill": "#FFD700",
+            "fill": "#8B0000",
         },
     )
     return defs
@@ -182,11 +182,11 @@ def _add_arrow_marker(svg, ns):
 
 ANNOTATION_STYLE = {
     "font-family": "Georgia, 'Times New Roman', serif",
-    "fill": "#F0E6D3",
+    "fill": "#1C1C1C",
 }
 
 CALLOUT_LINE_STYLE = {
-    "stroke": "#FFD700",
+    "stroke": "#8B0000",
     "stroke-width": "0.5",
     "marker-end": "url(#arrowhead)",
 }
@@ -246,7 +246,7 @@ def _annotation_recursion(parent, ns, target_x, target_y, width_mm):
         side = 14
         verts = equilateral_triangle_vertices(mini_cx, mini_y, side)
         for tri in sierpinski_triangles(verts, d):
-            _polygon(g, ns, tri, fill="#FFD700", opacity="0.85")
+            _polygon(g, ns, tri, fill="#1C1C1C", opacity="0.85")
         _text(g, ns, mini_cx - 4, mini_y + 13, f"depth {d}",
               **{**ANNOTATION_STYLE, "font-size": "3"})
         if i < 2:
@@ -286,11 +286,13 @@ def _annotation_dimension(parent, ns, target_x, target_y, width_mm):
 # Poster composition
 # ---------------------------------------------------------------------------
 
-# Colour palette – dark museum aesthetic
-BG_COLOR = "#1A1A2E"
-TRIANGLE_COLOR = "#00D4FF"
-TITLE_COLOR = "#F0E6D3"
-ACCENT_COLOR = "#FFD700"
+# Colour palette – traditional museum/print aesthetic (ink on paper)
+BG_COLOR = "#FFFEF8"              # warm ivory paper
+TRIANGLE_COLOR = "#1C1C1C"        # near-black ink
+TITLE_COLOR = "#1C1C1C"           # dark title text
+ACCENT_COLOR = "#8B0000"          # deep museum red
+FOOTER_PRIMARY_COLOR = "#555555"  # footer primary text
+FOOTER_SECONDARY_COLOR = "#777777"  # footer secondary text
 
 
 def generate_poster(depth=7, width_mm=420, height_mm=594):
@@ -320,8 +322,16 @@ def generate_poster(depth=7, width_mm=420, height_mm=594):
             "font-size": "6",
             "fill": ACCENT_COLOR,
             "text-anchor": "middle",
-            "opacity": "0.8",
         },
+    )
+
+    # Thin red rule beneath the header (classic museum print element)
+    _line(
+        svg, ns,
+        width_mm * 0.15, 46,
+        width_mm * 0.85, 46,
+        stroke=ACCENT_COLOR,
+        **{"stroke-width": "0.4"},
     )
 
     # Arrow marker for callouts
@@ -368,9 +378,8 @@ def generate_poster(depth=7, width_mm=420, height_mm=594):
         **{
             "font-family": "Georgia, 'Times New Roman', serif",
             "font-size": "4",
-            "fill": TITLE_COLOR,
+            "fill": FOOTER_PRIMARY_COLOR,
             "text-anchor": "middle",
-            "opacity": "0.6",
         },
     )
     _text(
@@ -379,17 +388,21 @@ def generate_poster(depth=7, width_mm=420, height_mm=594):
         **{
             "font-family": "Georgia, 'Times New Roman', serif",
             "font-size": "3.5",
-            "fill": TITLE_COLOR,
+            "fill": FOOTER_SECONDARY_COLOR,
             "text-anchor": "middle",
-            "opacity": "0.5",
         },
     )
 
-    # Decorative border
+    # Decorative double border (outer rule + inner rule — classic poster look)
     _rect(
         svg, ns, 4, 4, width_mm - 8, height_mm - 8,
-        fill="none", stroke=ACCENT_COLOR,
-        **{"stroke-width": "0.3", "opacity": "0.3"},
+        fill="none", stroke=TITLE_COLOR,
+        **{"stroke-width": "0.8"},
+    )
+    _rect(
+        svg, ns, 7, 7, width_mm - 14, height_mm - 14,
+        fill="none", stroke=TITLE_COLOR,
+        **{"stroke-width": "0.2"},
     )
 
     return svg
