@@ -192,61 +192,73 @@ CALLOUT_LINE_STYLE = {
 }
 
 
-def _annotation_self_similarity(parent, ns, target_x, target_y, width_mm):
-    """Annotation: self-similarity callout."""
-    box_x = width_mm * 0.62
-    box_y = target_y - 30
-
+def _annotation_self_similarity(parent, ns, target_x, target_y,
+                                col_x, anno_y):
+    """Annotation: self-similarity callout (below the fractal)."""
     g = _group(parent, ns)
-    _line(g, ns, box_x - 2, box_y + 4, target_x, target_y,
-          **CALLOUT_LINE_STYLE)
 
+    # Arrow from above the title up to the fractal target
+    arrow_x = col_x + 25
+    arrow_y = anno_y - 8
+    _line(g, ns, arrow_x, arrow_y, target_x, target_y,
+          **CALLOUT_LINE_STYLE)
+    _circle(g, ns, arrow_x, arrow_y, 1, fill=ACCENT_COLOR)
+
+    # Title
+    _text(g, ns, col_x, anno_y + 2, "Self-Similarity",
+          **{**ANNOTATION_STYLE, "font-size": "5", "fill": ACCENT_COLOR})
+
+    # Body text
     lines = [
-        "Self-Similarity",
-        "Every smaller triangle is an",
-        "exact copy of the whole shape.",
-        "Zoom in anywhere — you'll find",
-        "the same pattern repeated forever.",
+        "Every smaller triangle is an exact",
+        "copy of the whole shape. Zoom in",
+        "anywhere \u2014 the same pattern",
+        "repeats at every scale, forever.",
     ]
     _multiline_text(
-        g, ns, box_x, box_y,
-        lines, line_height=5.5,
-        **{**ANNOTATION_STYLE, "font-size": "4.5"},
+        g, ns, col_x, anno_y + 9,
+        lines, line_height=5,
+        **{**ANNOTATION_STYLE, "font-size": "3.8"},
     )
-    # Title line is bold
     return g
 
 
-def _annotation_recursion(parent, ns, target_x, target_y, width_mm):
-    """Annotation: recursion callout with step diagram."""
-    box_x = width_mm * 0.05
-    box_y = target_y + 10
-
+def _annotation_recursion(parent, ns, target_x, target_y,
+                           col_x, anno_y):
+    """Annotation: recursion callout with step diagram (below the fractal)."""
     g = _group(parent, ns)
-    _line(g, ns, box_x + 50, box_y - 2, target_x, target_y,
-          **CALLOUT_LINE_STYLE)
 
+    # Arrow from above the title up to the fractal target
+    arrow_x = col_x + 25
+    arrow_y = anno_y - 8
+    _line(g, ns, arrow_x, arrow_y, target_x, target_y,
+          **CALLOUT_LINE_STYLE)
+    _circle(g, ns, arrow_x, arrow_y, 1, fill=ACCENT_COLOR)
+
+    # Title
+    _text(g, ns, col_x, anno_y + 2, "Recursion",
+          **{**ANNOTATION_STYLE, "font-size": "5", "fill": ACCENT_COLOR})
+
+    # Body text
     lines = [
-        "Recursion",
-        "Start with one triangle. Remove",
-        "the centre to get three smaller",
-        "copies. Repeat on each copy —",
-        "forever. That's recursion!",
+        "Start with one triangle. Remove the",
+        "centre to get three smaller copies.",
+        "Repeat on each \u2014 that\u2019s recursion!",
     ]
     _multiline_text(
-        g, ns, box_x, box_y,
-        lines, line_height=5.5,
-        **{**ANNOTATION_STYLE, "font-size": "4.5"},
+        g, ns, col_x, anno_y + 9,
+        lines, line_height=5,
+        **{**ANNOTATION_STYLE, "font-size": "3.8"},
     )
 
     # Mini step diagram: 3 tiny triangles showing depth 0, 1, 2
-    mini_y = box_y + 35
+    mini_y = anno_y + 32
     for i, d in enumerate([0, 1, 2]):
-        mini_cx = box_x + 12 + i * 22
+        mini_cx = col_x + 12 + i * 22
         side = 14
         verts = equilateral_triangle_vertices(mini_cx, mini_y, side)
         for tri in sierpinski_triangles(verts, d):
-            _polygon(g, ns, tri, fill="#1C1C1C", opacity="0.85")
+            _polygon(g, ns, tri, fill=TRIANGLE_COLOR, opacity="0.85")
         _text(g, ns, mini_cx - 4, mini_y + 13, f"depth {d}",
               **{**ANNOTATION_STYLE, "font-size": "3"})
         if i < 2:
@@ -256,28 +268,36 @@ def _annotation_recursion(parent, ns, target_x, target_y, width_mm):
     return g
 
 
-def _annotation_dimension(parent, ns, target_x, target_y, width_mm):
-    """Annotation: fractional (Hausdorff) dimension callout."""
-    box_x = width_mm * 0.62
-    box_y = target_y + 10
-
+def _annotation_dimension(parent, ns, target_x, target_y,
+                           col_x, anno_y):
+    """Annotation: fractional (Hausdorff) dimension callout (below fractal)."""
     g = _group(parent, ns)
-    _line(g, ns, box_x - 2, box_y - 2, target_x, target_y,
+
+    # Arrow from above the title up to the fractal target
+    arrow_x = col_x + 25
+    arrow_y = anno_y - 8
+    _line(g, ns, arrow_x, arrow_y, target_x, target_y,
           **CALLOUT_LINE_STYLE)
+    _circle(g, ns, arrow_x, arrow_y, 1, fill=ACCENT_COLOR)
 
     dim_val = f"{math.log(3) / math.log(2):.4f}"
+
+    # Title
+    _text(g, ns, col_x, anno_y + 2, "Fractional Dimension",
+          **{**ANNOTATION_STYLE, "font-size": "5", "fill": ACCENT_COLOR})
+
+    # Body text
     lines = [
-        "Fractional Dimension",
         "A line is 1-D. A square is 2-D.",
-        f"This shape is {dim_val}-D!",
-        "It's called the Hausdorff dimension.",
-        "Not quite a line, not quite a plane —",
+        f"This fractal is {dim_val}-D!",
+        "It\u2019s the Hausdorff dimension \u2014 not",
+        "quite a line, not quite a plane,",
         "somewhere magically in between.",
     ]
     _multiline_text(
-        g, ns, box_x, box_y,
-        lines, line_height=5.5,
-        **{**ANNOTATION_STYLE, "font-size": "4.5"},
+        g, ns, col_x, anno_y + 9,
+        lines, line_height=5,
+        **{**ANNOTATION_STYLE, "font-size": "3.8"},
     )
     return g
 
@@ -349,26 +369,52 @@ def generate_poster(depth=7, width_mm=420, height_mm=594):
         _polygon(fractal_group, ns, tri,
                  fill=TRIANGLE_COLOR, stroke="none", opacity="0.92")
 
-    # --- Annotations ---
+    # --- Annotations (below the fractal in a three-column layout) ---
     anno_group = _group(svg, ns, id="annotations")
 
-    # Self-similarity arrow → top sub-triangle
-    ss_target_x = vertices[0][0] + tri_side * 0.18
-    ss_target_y = vertices[0][1] + tri_side * 0.22
-    _annotation_self_similarity(anno_group, ns, ss_target_x, ss_target_y,
-                                width_mm)
+    fractal_bottom = vertices[1][1]  # bottom vertices share the same y
 
-    # Recursion arrow → bottom-left area
-    rec_target_x = vertices[1][0] + tri_side * 0.12
-    rec_target_y = vertices[1][1] - tri_side * 0.10
-    _annotation_recursion(anno_group, ns, rec_target_x, rec_target_y,
-                          width_mm)
+    # Subtle separator line between fractal and annotations
+    anno_sep_y = fractal_bottom + 10
+    _line(
+        anno_group, ns,
+        width_mm * 0.15, anno_sep_y,
+        width_mm * 0.85, anno_sep_y,
+        stroke=ACCENT_COLOR, **{"stroke-width": "0.3", "opacity": "0.5"},
+    )
 
-    # Dimension arrow → bottom-right area
-    dim_target_x = vertices[2][0] - tri_side * 0.12
-    dim_target_y = vertices[2][1] - tri_side * 0.10
-    _annotation_dimension(anno_group, ns, dim_target_x, dim_target_y,
-                          width_mm)
+    anno_y = anno_sep_y + 18  # annotation text starts here
+
+    # Three-column x positions
+    col1_x = width_mm * 0.04
+    col2_x = width_mm * 0.35
+    col3_x = width_mm * 0.67
+
+    # Compute sub-triangle midpoints for precise arrow targets
+    ab = midpoint(vertices[0], vertices[1])
+    ac = midpoint(vertices[0], vertices[2])
+    bc = midpoint(vertices[1], vertices[2])
+
+    # Self-Similarity → centroid of top sub-triangle
+    ss_target_x = (vertices[0][0] + ab[0] + ac[0]) / 3
+    ss_target_y = (vertices[0][1] + ab[1] + ac[1]) / 3
+    _annotation_self_similarity(anno_group, ns,
+                                ss_target_x, ss_target_y,
+                                col1_x, anno_y)
+
+    # Recursion → centroid of removed centre triangle
+    rec_target_x = (ab[0] + ac[0] + bc[0]) / 3
+    rec_target_y = (ab[1] + ac[1] + bc[1]) / 3
+    _annotation_recursion(anno_group, ns,
+                          rec_target_x, rec_target_y,
+                          col2_x, anno_y)
+
+    # Dimension → centroid of bottom-right sub-triangle
+    dim_target_x = (ac[0] + bc[0] + vertices[2][0]) / 3
+    dim_target_y = (ac[1] + bc[1] + vertices[2][1]) / 3
+    _annotation_dimension(anno_group, ns,
+                          dim_target_x, dim_target_y,
+                          col3_x, anno_y)
 
     # --- Footer ---
     footer_y = height_mm - 18
