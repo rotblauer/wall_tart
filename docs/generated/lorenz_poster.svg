@@ -24,8 +24,11 @@
       <circle cx="41.8" cy="422.11424" r="1.0" fill="#8B0000" />
       <text x="16.8" y="432.11424" font-family="Georgia, 'Times New Roman', serif" fill="#8B0000" font-size="5.0">The Butterfly Effect</text>
       <text x="16.8" y="439.11424" font-family="Georgia, 'Times New Roman', serif" fill="#1C1C1C" font-size="3.8">
-        <tspan x="16.8" dy="0">Two trajectories start just 10⁻¹⁰</tspan>
-        <tspan x="16.8" dy="5.0">apart — an unimaginably tiny gap.</tspan>
+        <tspan x="16.8" dy="0">Two trajectories start just 10<tspan dy="-1.5" font-size="2.5">-10</tspan>
+        </tspan>
+      </text>
+      <text x="16.8" y="444.11424" font-family="Georgia, 'Times New Roman', serif" fill="#1C1C1C" font-size="3.8">
+        <tspan x="16.8" dy="0">apart — an unimaginably tiny gap.</tspan>
         <tspan x="16.8" dy="5.0">Yet they diverge wildly: sensitive</tspan>
         <tspan x="16.8" dy="5.0">dependence on initial conditions</tspan>
         <tspan x="16.8" dy="5.0">makes long-term prediction impossible.</tspan>
