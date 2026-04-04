@@ -520,6 +520,31 @@ def generate_poster(depth=7, width_mm=420, height_mm=594,
         **{"stroke-width": str(round(0.4 * w_scale, 3))},
     )
 
+    # Header credits flanking the rule — "Designed by" left, "Designed for" right
+    # (classic museum-print placement: small italic caps at the rule ends)
+    header_credit_y = rule_y + 5 * h_scale
+    header_credit_font = str(round(3.8 * w_scale, 2))
+    header_credit_style = {
+        "font-family": "Georgia, 'Times New Roman', serif",
+        "font-size": header_credit_font,
+        "font-style": "italic",
+        "fill": FOOTER_SECONDARY_COLOR,
+    }
+    if designed_by:
+        _text(
+            svg, ns,
+            width_mm * 0.15, header_credit_y,
+            f"Designed by {designed_by}",
+            **{**header_credit_style, "text-anchor": "start"},
+        )
+    if designed_for:
+        _text(
+            svg, ns,
+            width_mm * 0.85, header_credit_y,
+            f"Designed for {designed_for}",
+            **{**header_credit_style, "text-anchor": "end"},
+        )
+
     # Arrow marker for callouts
     _add_arrow_marker(svg, ns)
 

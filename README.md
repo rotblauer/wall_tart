@@ -2,7 +2,7 @@
 
 A Python tool that generates a museum-quality, annotated vector poster of the **Sierpiński Triangle** fractal — suitable for large-format printing (A2 and above).
 
-![poster-preview](https://upload.wikimedia.org/wikipedia/commons/thumb/4/45/Sierpinski_triangle.svg/220px-Sierpinski_triangle.svg.png)
+![poster-preview](docs/generated/sierpinski_poster.svg)
 
 ## Features
 
@@ -112,11 +112,18 @@ docker run -v "$(pwd)/output:/app/output" \
 
 ## CI / GitHub Actions
 
-The repository includes a CI workflow (`.github/workflows/ci.yml`) that:
+The repository includes two workflows:
 
+**`ci.yml`** — runs on every push and pull request to `main`:
 1. Runs the full test suite with `pytest`.
 2. Builds the Docker image.
 3. Generates a sample poster and uploads it as a build artifact.
+
+**`update-readme-images.yml`** — runs on every push to `main` that touches the poster generator or the workflow itself (and can be triggered manually via `workflow_dispatch`):
+1. Regenerates `docs/generated/sierpinski_poster.svg` at depth 5.
+2. Commits and pushes the updated image back to `main` so the README always shows the current output.
+
+> **Adding new poster variants?** Run them in the same `update-readme-images.yml` job and reference the output path in the README — the workflow will keep both images up to date automatically.
 
 ## How It Works
 
