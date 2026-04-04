@@ -534,14 +534,14 @@ def generate_poster(depth=7, width_mm=420, height_mm=594,
         _text(
             svg, ns,
             width_mm * 0.15, header_credit_y,
-            f"Designed by  {designed_by}",
+            f"Designed by {designed_by}",
             **{**header_credit_style, "text-anchor": "start"},
         )
     if designed_for:
         _text(
             svg, ns,
             width_mm * 0.85, header_credit_y,
-            f"Designed for  {designed_for}",
+            f"Designed for {designed_for}",
             **{**header_credit_style, "text-anchor": "end"},
         )
 
