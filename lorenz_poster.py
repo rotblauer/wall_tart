@@ -284,17 +284,40 @@ def _annotation_butterfly_effect(parent, ns, target_x, target_y,
              "fill": ACCENT_COLOR})
 
     # Body text
-    lines = [
-        "Two trajectories start just 10\u207b\u00b9\u2070",
-        "apart \u2014 an unimaginably tiny gap.",
-        "Yet they diverge wildly: sensitive",
-        "dependence on initial conditions",
-        "makes long-term prediction impossible.",
-    ]
+    body_style = {**ANNOTATION_STYLE, "font-size": str(round(3.8 * scale, 2))}
+    body_y = anno_y + 9 * scale
+    lh = 5 * scale
+
+    # First line: render "10" then the exponent "-10" via SVG tspan so that
+    # the ASCII minus is used instead of U+207B (SUPERSCRIPT MINUS), which is
+    # absent from many PDF-embedded fonts and renders as a missing-glyph square.
+    attrib = {"x": str(col_x), "y": str(body_y)}
+    attrib.update(body_style)
+    text_el = ET.SubElement(g, f"{{{ns}}}text", attrib=attrib)
+    line0_tspan = ET.SubElement(
+        text_el, f"{{{ns}}}tspan", attrib={"x": str(col_x), "dy": "0"}
+    )
+    line0_tspan.text = "Two trajectories start just 10"
+    sup = ET.SubElement(
+        line0_tspan,
+        f"{{{ns}}}tspan",
+        attrib={
+            "dy": str(round(-1.5 * scale, 2)),
+            "font-size": str(round(2.5 * scale, 2)),
+        },
+    )
+    sup.text = "-10"
+
     _multiline_text(
-        g, ns, col_x, anno_y + 9 * scale,
-        lines, line_height=5 * scale,
-        **{**ANNOTATION_STYLE, "font-size": str(round(3.8 * scale, 2))},
+        g, ns, col_x, body_y + lh,
+        [
+            "apart \u2014 an unimaginably tiny gap.",
+            "Yet they diverge wildly: sensitive",
+            "dependence on initial conditions",
+            "makes long-term prediction impossible.",
+        ],
+        line_height=lh,
+        **body_style,
     )
     return g
 
