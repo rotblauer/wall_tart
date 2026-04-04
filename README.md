@@ -110,6 +110,58 @@ This creates **`lorenz_poster.svg`** — an A2-sized (420 × 594 mm) annotated p
 
 ---
 
+## 📈 Logistic Map Poster
+
+![logistic-map-preview](docs/generated/logistic_map_poster.svg)
+
+### Quick Start
+
+```bash
+# Generate the Logistic Map bifurcation poster (no dependencies needed)
+python logistic_map_poster.py
+```
+
+This creates **`logistic_map_poster.svg`** — an A2-sized (420 × 594 mm) annotated poster with 2,000 r-parameter samples. The bifurcation diagram reveals how a simple population model transitions from stable equilibria through period doubling to full chaos, with surprising windows of order along the way.
+
+### Features
+
+- **Millions of points** plotted efficiently to capture fine bifurcation detail across 2,000+ r-parameter values.
+- **Museum-style annotations** with leader-line callouts:
+  | Annotation | Description |
+  |---|---|
+  | **Period Doubling Cascade** | Points to the distinct splits where the population alternates between 2, 4, 8… values — the road from order to chaos. |
+  | **The Edge of Chaos** | Highlights the Feigenbaum point (r ≈ 3.5699) where the system becomes unpredictable. |
+  | **Windows of Order** | A callout to the famous period-3 window at r ≈ 3.83, where brief moments of predictability emerge amid chaos. |
+- **Educational panels** — a second row of mathematical context:
+  | Panel | Description |
+  |---|---|
+  | **The Equation** | The logistic recurrence x_{n+1} = r·x_n(1 − x_n) with parameter ranges. |
+  | **Feigenbaum's Constant** | The universal constant δ ≈ 4.669201… that governs all period-doubling cascades. |
+  | **Population Biology** | Robert May's 1976 discovery that this simple model produces chaotic dynamics. |
+
+### Options
+
+| Flag | Default | Description |
+|---|---|---|
+| `--r-count N` | `2000` | Number of r-parameter samples. Higher = finer detail. |
+| `--output FILE` | `logistic_map_poster.<fmt>` | Output file path. |
+| `--format FMT` | `svg` | Output format: `svg` or `pdf`. |
+| `--width MM` | `420` | Poster width in millimetres (A2 default). |
+| `--height MM` | `594` | Poster height in millimetres (A2 default). |
+| `--designed-by TEXT` | *(none)* | Designer credit, e.g. `'Alice and Bob'`. |
+| `--designed-for TEXT` | *(none)* | Client / purpose credit, e.g. `'the Science Museum'`. |
+
+### r-Count vs. Detail
+
+| r-Count | Approx. Time (s) | Notes |
+|---|---|---|
+| 200 | < 1 | Quick preview |
+| 2,000 | ~1 | Default — good balance of detail and speed |
+| 5,000 | ~3 | High detail |
+| 10,000 | ~6 | Ultra-fine detail; larger file |
+
+---
+
 ## Common Information
 
 ### Requirements
@@ -126,25 +178,31 @@ python sierpinski_poster.py --depth 9 --output my_poster.svg
 # Lorenz: more integration steps
 python lorenz_poster.py --steps 500000 --output lorenz_hires.svg
 
+# Logistic Map: more r-parameter samples
+python logistic_map_poster.py --r-count 5000 --output logistic_hires.svg
+
 # Generate PDFs directly (requires cairosvg)
 pip install cairosvg
 python sierpinski_poster.py --format pdf --output sierpinski.pdf
 python lorenz_poster.py --format pdf --output lorenz.pdf
+python logistic_map_poster.py --format pdf --output logistic_map.pdf
 
 # Custom poster dimensions (width × height in mm)
 python sierpinski_poster.py --width 594 --height 841   # A1 size
 python lorenz_poster.py --width 594 --height 841
+python logistic_map_poster.py --width 594 --height 841
 
 # Add custom credit lines
 python sierpinski_poster.py --designed-by "Alice" --designed-for "the Science Museum"
 python lorenz_poster.py --designed-by "Alice" --designed-for "the Science Museum"
+python logistic_map_poster.py --designed-by "Alice" --designed-for "the Science Museum"
 ```
 
 ### Running Tests
 
 ```bash
 pip install pytest
-pytest test_sierpinski.py test_lorenz.py -v
+pytest test_sierpinski.py test_lorenz.py test_logistic_map.py -v
 ```
 
 ### Docker
@@ -162,6 +220,10 @@ docker run -v "$(pwd)/output:/app/output" \
 # Generate Lorenz poster
 docker run -v "$(pwd)/output:/app/output" \
   wall-tart python lorenz_poster.py --steps 200000 --output output/lorenz_poster.svg
+
+# Generate Logistic Map poster
+docker run -v "$(pwd)/output:/app/output" \
+  wall-tart python logistic_map_poster.py --r-count 2000 --output output/logistic_map_poster.svg
 ```
 
 ### CI / GitHub Actions
@@ -169,12 +231,12 @@ docker run -v "$(pwd)/output:/app/output" \
 The repository includes two workflows:
 
 **`ci.yml`** — runs on every push and pull request to `main`:
-1. Runs the full test suite (`test_sierpinski.py` and `test_lorenz.py`) with `pytest`.
+1. Runs the full test suite (`test_sierpinski.py`, `test_lorenz.py`, and `test_logistic_map.py`) with `pytest`.
 2. Builds the Docker image.
 3. Generates sample posters and uploads them as build artifacts.
 
 **`update-readme-images.yml`** — runs on every push to `main` that touches the poster generators or the workflow itself (and can be triggered manually via `workflow_dispatch`):
-1. Regenerates `docs/generated/sierpinski_poster.svg` and `docs/generated/lorenz_poster.svg`.
+1. Regenerates `docs/generated/sierpinski_poster.svg`, `docs/generated/lorenz_poster.svg`, and `docs/generated/logistic_map_poster.svg`.
 2. Commits and pushes the updated images back to `main` so the README always shows the current output.
 
 ### How It Works
@@ -190,6 +252,12 @@ The repository includes two workflows:
 2. The 3D trajectory is projected to 2D via a rotation matrix for an optimal viewing angle.
 3. The trajectory is rendered as `<polyline>` elements, with a second diverging trajectory to illustrate the butterfly effect.
 4. Leader lines connect annotated text blocks to specific dynamics of the system.
+
+**Logistic Map**:
+1. The logistic recurrence x_{n+1} = r·x_n(1 − x_n) is iterated for thousands of r values across [2.5, 4.0].
+2. For each r, transient iterations are discarded before collecting steady-state values — producing the bifurcation diagram.
+3. Each (r, x) point is rendered as a tiny `<circle>` element in the SVG, capturing period doubling, chaos, and windows of order.
+4. Leader lines connect annotated text blocks to specific mathematical milestones on the diagram.
 
 ## License
 
