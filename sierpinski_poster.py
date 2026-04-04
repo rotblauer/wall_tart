@@ -243,7 +243,7 @@ def _annotation_recursion(parent, ns, target_x, target_y,
     lines = [
         "Start with one triangle. Remove the",
         "centre to get three smaller copies.",
-        "Repeat on each \u2014 that\u2019s recursion!",
+        "Repeat on each copy \u2014 that\u2019s recursion!",
     ]
     _multiline_text(
         g, ns, col_x, anno_y + 9,

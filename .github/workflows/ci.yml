@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install pytest cairosvg
+
+      - name: Run tests
+        run: pytest test_sierpinski.py -v
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t sierpinski-poster .
+
+      - name: Generate sample poster (SVG)
+        run: |
+          mkdir -p output
+          docker run -v "$(pwd)/output:/app/output" \
+            sierpinski-poster --depth 5 --output output/sierpinski_poster.svg
+
+      - name: Upload poster artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sierpinski-poster-svg
+          path: output/sierpinski_poster.svg

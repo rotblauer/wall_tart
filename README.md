@@ -82,6 +82,31 @@ pip install pytest
 pytest test_sierpinski.py -v
 ```
 
+## Docker
+
+Build and run the poster generator in a container (includes `cairosvg` for PDF):
+
+```bash
+# Build the image
+docker build -t sierpinski-poster .
+
+# Generate an SVG poster
+docker run -v "$(pwd)/output:/app/output" \
+  sierpinski-poster --depth 7 --output output/sierpinski_poster.svg
+
+# Generate a PDF poster
+docker run -v "$(pwd)/output:/app/output" \
+  sierpinski-poster --depth 9 --format pdf --output output/sierpinski.pdf
+```
+
+## CI / GitHub Actions
+
+The repository includes a CI workflow (`.github/workflows/ci.yml`) that:
+
+1. Runs the full test suite with `pytest`.
+2. Builds the Docker image.
+3. Generates a sample poster and uploads it as a build artifact.
+
 ## How It Works
 
 1. **Geometry**: An equilateral triangle is defined by its centre and side length.
