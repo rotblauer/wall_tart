@@ -285,10 +285,10 @@ class TestWritePng:
     def test_writes_png_file_custom_dpi(self):
         cairosvg = pytest.importorskip("cairosvg")  # noqa: F841
         svg = generate_poster(steps=1000, width_mm=100, height_mm=150)
-        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as f:
-            path_low = f.name
-        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as f:
-            path_high = f.name
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as f_low:
+            path_low = f_low.name
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as f_high:
+            path_high = f_high.name
         try:
             write_png(svg, path_low, dpi=72)
             write_png(svg, path_high, dpi=144)
