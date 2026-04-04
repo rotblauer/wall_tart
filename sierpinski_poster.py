@@ -2,7 +2,7 @@
 """
 Sierpiński Triangle Poster Generator
 
-Generates a museum-quality, annotated vector poster (SVG/PDF) of the
+Generates a museum-quality, annotated vector poster (SVG/PDF/PNG) of the
 Sierpiński Triangle fractal. Designed for large-format printing (A2+).
 
 Usage:
@@ -11,7 +11,8 @@ Usage:
 Options:
     --depth N            Recursion depth (default: 7)
     --output FILE        Output filename (default: sierpinski_poster.svg)
-    --format FMT         Output format: svg or pdf (default: svg)
+    --format FMT         Output format: svg, pdf, or png (default: svg)
+    --dpi N              Resolution for PNG output in dots per inch (default: 150)
     --width MM           Poster width in mm (default: 420, A2 width)
     --height MM          Poster height in mm (default: 594, A2 height)
     --designed-by TEXT   Designer credit (e.g. 'Alice and Bob')
@@ -737,6 +738,28 @@ def write_pdf(svg_root, filepath):
     cairosvg.svg2pdf(bytestring=svg_bytes.encode("utf-8"), write_to=filepath)
 
 
+def write_png(svg_root, filepath, dpi=150):
+    """Write the poster as PNG via cairosvg (must be installed).
+
+    The pixel dimensions are derived from the SVG's declared width/height and
+    the requested *dpi* so that the raster output faithfully represents the
+    vector layout at the chosen resolution.
+    """
+    try:
+        import cairosvg
+    except ImportError:
+        print(
+            "Error: 'cairosvg' is required for PNG output.\n"
+            "Install it with:  pip install cairosvg",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    # Render SVG string → PNG at the requested DPI
+    svg_bytes = ET.tostring(svg_root, encoding="unicode", xml_declaration=True)
+    cairosvg.svg2png(bytestring=svg_bytes.encode("utf-8"), write_to=filepath, dpi=dpi)
+
+
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
@@ -755,8 +778,12 @@ def build_arg_parser():
         help="Output file path (default: sierpinski_poster.<format>).",
     )
     parser.add_argument(
-        "--format", type=str, choices=["svg", "pdf"], default="svg",
+        "--format", type=str, choices=["svg", "pdf", "png"], default="svg",
         help="Output format (default: svg).",
+    )
+    parser.add_argument(
+        "--dpi", type=int, default=150,
+        help="Resolution for PNG output in dots per inch (default: 150).",
     )
     parser.add_argument(
         "--width", type=float, default=420,
@@ -795,6 +822,8 @@ def main(argv=None):
 
     if args.format == "pdf":
         write_pdf(svg, args.output)
+    elif args.format == "png":
+        write_png(svg, args.output, dpi=args.dpi)
     else:
         write_svg(svg, args.output)
 
