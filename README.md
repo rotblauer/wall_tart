@@ -1,12 +1,27 @@
-# Sierpiński Triangle Poster Generator
+# Wall Tart — Museum-Quality Mathematical Poster Generators
 
-A Python tool that generates a museum-quality, annotated vector poster of the **Sierpiński Triangle** fractal — suitable for large-format printing (A2 and above).
+A collection of Python tools that generate museum-quality, annotated vector posters of iconic mathematical objects — suitable for large-format printing (A2 and above).
 
-![poster-preview](docs/generated/sierpinski_poster.svg)
+---
 
-## Features
+## 🔺 Sierpiński Triangle Poster
 
-- **High-resolution vector output** (SVG) that scales to any poster size.
+![sierpinski-preview](docs/generated/sierpinski_poster.svg)
+
+### Quick Start
+
+```bash
+git clone https://github.com/rotblauer/wall_tart.git
+cd wall_tart
+
+# Generate an SVG poster (no dependencies needed)
+python sierpinski_poster.py
+```
+
+This creates **`sierpinski_poster.svg`** — an A2-sized (420 × 594 mm) annotated poster at depth 7 (2,187 triangles).
+
+### Features
+
 - **Museum-style annotations** with leader-line callouts:
   | Annotation | Description |
   |---|---|
@@ -19,53 +34,8 @@ A Python tool that generates a museum-quality, annotated vector poster of the **
   | **Hidden in Pascal's Triangle** | Pascal's triangle mod 2 visualisation — odd entries form the Sierpiński pattern. |
   | **The Chaos Game** | Scatter-dot demo of the random vertex-jumping algorithm that produces the fractal. |
   | **The Area Paradox** | Formulas and mini diagrams showing area → 0 yet perimeter → ∞. |
-- **Efficient iterative algorithm** — handles deep recursion depths without hitting Python's stack limit.
-- Optional **PDF export** via `cairosvg`.
 
-## Requirements
-
-- **Python 3.8+** (uses only the standard library for SVG output).
-- *(Optional)* [`cairosvg`](https://cairosvg.org/) for PDF export.
-
-## Quick Start
-
-### 1. Clone the repository
-
-```bash
-git clone https://github.com/rotblauer/wall_tart.git
-cd wall_tart
-```
-
-### 2. Generate an SVG poster (no dependencies needed)
-
-```bash
-python sierpinski_poster.py
-```
-
-This creates **`sierpinski_poster.svg`** — an A2-sized (420 × 594 mm) annotated poster at depth 7 (2,187 triangles).
-
-### 3. Open or print the SVG
-
-Open the SVG in any modern browser (Chrome, Firefox, Safari) or a vector editor like [Inkscape](https://inkscape.org/) to view, export, or send to a large-format printer.
-
-## Advanced Usage
-
-```bash
-# Custom recursion depth (more detail) and output file
-python sierpinski_poster.py --depth 9 --output my_poster.svg
-
-# Generate a PDF directly (requires cairosvg)
-pip install cairosvg
-python sierpinski_poster.py --format pdf --output sierpinski.pdf
-
-# Custom poster dimensions (width × height in mm)
-python sierpinski_poster.py --width 594 --height 841   # A1 size
-
-# Add a custom credit line
-python sierpinski_poster.py --designed-by "Alice and Bob" --designed-for "the Science Museum"
-```
-
-### All Options
+### Options
 
 | Flag | Default | Description |
 |---|---|---|
@@ -86,51 +56,140 @@ python sierpinski_poster.py --designed-by "Alice and Bob" --designed-for "the Sc
 | 9 | 19,683 | High detail |
 | 11 | 177,147 | Very fine detail; larger file |
 
-## Running Tests
+---
+
+## 🦋 Lorenz Attractor Poster
+
+![lorenz-preview](docs/generated/lorenz_poster.svg)
+
+### Quick Start
+
+```bash
+# Generate the Lorenz attractor poster (no dependencies needed)
+python lorenz_poster.py
+```
+
+This creates **`lorenz_poster.svg`** — an A2-sized (420 × 594 mm) annotated poster with 200,000 integration steps. The 3D trajectory of the strange attractor is projected to 2D, showing the iconic "butterfly" shape with a second diverging trajectory in red that demonstrates sensitive dependence on initial conditions.
+
+### Features
+
+- **Millions of points** rendered via a 4th-order Runge-Kutta integrator for a smooth, visually striking trajectory.
+- **Museum-style annotations** with leader-line callouts:
+  | Annotation | Description |
+  |---|---|
+  | **The Butterfly Effect** | Highlights two trajectories that start 10⁻¹⁰ apart but diverge wildly — sensitive dependence on initial conditions. |
+  | **The Two 'Wings'** | Points out the two unstable fixed points that the trajectory orbits around. |
+  | **Infinite Complexity** | Notes how the line never intersects itself despite being trapped in a bounded space. |
+- **Educational panels** — a second row of scientific context:
+  | Panel | Description |
+  |---|---|
+  | **The Equations** | The three Lorenz ODEs with parameter values (σ = 10, ρ = 28, β = 8/3). |
+  | **Deterministic Chaos** | Mini divergence plot showing two initially close trajectories separating over time. |
+  | **A Weather Model** | The meteorological origins of the Lorenz system and why long-term weather prediction is impossible. |
+
+### Options
+
+| Flag | Default | Description |
+|---|---|---|
+| `--steps N` | `200000` | Number of integration steps. Higher = more detail. |
+| `--output FILE` | `lorenz_poster.<fmt>` | Output file path. |
+| `--format FMT` | `svg` | Output format: `svg` or `pdf`. |
+| `--width MM` | `420` | Poster width in millimetres (A2 default). |
+| `--height MM` | `594` | Poster height in millimetres (A2 default). |
+| `--designed-by TEXT` | *(none)* | Designer credit, e.g. `'Alice and Bob'`. |
+| `--designed-for TEXT` | *(none)* | Client / purpose credit, e.g. `'the Science Museum'`. |
+
+### Steps vs. Detail
+
+| Steps | Approx. Time (s) | Notes |
+|---|---|---|
+| 5,000 | < 1 | Quick preview |
+| 50,000 | ~1 | Good detail |
+| 200,000 | ~3 | Default — smooth, publication-quality |
+| 1,000,000 | ~15 | Ultra-fine detail; larger file |
+
+---
+
+## Common Information
+
+### Requirements
+
+- **Python 3.8+** (uses only the standard library for SVG output).
+- *(Optional)* [`cairosvg`](https://cairosvg.org/) for PDF export.
+
+### Advanced Usage
+
+```bash
+# Sierpiński: higher depth and custom output
+python sierpinski_poster.py --depth 9 --output my_poster.svg
+
+# Lorenz: more integration steps
+python lorenz_poster.py --steps 500000 --output lorenz_hires.svg
+
+# Generate PDFs directly (requires cairosvg)
+pip install cairosvg
+python sierpinski_poster.py --format pdf --output sierpinski.pdf
+python lorenz_poster.py --format pdf --output lorenz.pdf
+
+# Custom poster dimensions (width × height in mm)
+python sierpinski_poster.py --width 594 --height 841   # A1 size
+python lorenz_poster.py --width 594 --height 841
+
+# Add custom credit lines
+python sierpinski_poster.py --designed-by "Alice" --designed-for "the Science Museum"
+python lorenz_poster.py --designed-by "Alice" --designed-for "the Science Museum"
+```
+
+### Running Tests
 
 ```bash
 pip install pytest
-pytest test_sierpinski.py -v
+pytest test_sierpinski.py test_lorenz.py -v
 ```
 
-## Docker
+### Docker
 
-Build and run the poster generator in a container (includes `cairosvg` for PDF):
+Build and run the poster generators in a container (includes `cairosvg` for PDF):
 
 ```bash
 # Build the image
-docker build -t sierpinski-poster .
+docker build -t wall-tart .
 
-# Generate an SVG poster
+# Generate Sierpiński poster
 docker run -v "$(pwd)/output:/app/output" \
-  sierpinski-poster --depth 7 --output output/sierpinski_poster.svg
+  wall-tart python sierpinski_poster.py --depth 7 --output output/sierpinski_poster.svg
 
-# Generate a PDF poster
+# Generate Lorenz poster
 docker run -v "$(pwd)/output:/app/output" \
-  sierpinski-poster --depth 9 --format pdf --output output/sierpinski.pdf
+  wall-tart python lorenz_poster.py --steps 200000 --output output/lorenz_poster.svg
 ```
 
-## CI / GitHub Actions
+### CI / GitHub Actions
 
 The repository includes two workflows:
 
 **`ci.yml`** — runs on every push and pull request to `main`:
-1. Runs the full test suite with `pytest`.
+1. Runs the full test suite (`test_sierpinski.py` and `test_lorenz.py`) with `pytest`.
 2. Builds the Docker image.
-3. Generates a sample poster and uploads it as a build artifact.
+3. Generates sample posters and uploads them as build artifacts.
 
-**`update-readme-images.yml`** — runs on every push to `main` that touches the poster generator or the workflow itself (and can be triggered manually via `workflow_dispatch`):
-1. Regenerates `docs/generated/sierpinski_poster.svg` at depth 5.
-2. Commits and pushes the updated image back to `main` so the README always shows the current output.
+**`update-readme-images.yml`** — runs on every push to `main` that touches the poster generators or the workflow itself (and can be triggered manually via `workflow_dispatch`):
+1. Regenerates `docs/generated/sierpinski_poster.svg` and `docs/generated/lorenz_poster.svg`.
+2. Commits and pushes the updated images back to `main` so the README always shows the current output.
 
-> **Adding new poster variants?** Run them in the same `update-readme-images.yml` job and reference the output path in the README — the workflow will keep both images up to date automatically.
+### How It Works
 
-## How It Works
+**Sierpiński Triangle**:
+1. An equilateral triangle is defined by its centre and side length.
+2. An iterative stack replaces naive recursion — at each step the triangle is split into three sub-triangles (the middle is removed).
+3. The filled triangles are written as `<polygon>` elements inside an SVG document.
+4. Leader lines connect explanatory text blocks to specific regions of the fractal.
 
-1. **Geometry**: An equilateral triangle is defined by its centre and side length.
-2. **Iteration**: An iterative stack replaces naive recursion — at each step the triangle is split into three sub-triangles (the middle is removed). This continues to the target depth.
-3. **SVG Generation**: The filled triangles are written as `<polygon>` elements inside an SVG document using Python's built-in `xml.etree.ElementTree`.
-4. **Annotations**: Leader lines (with arrowhead markers) connect explanatory text blocks to specific regions of the fractal.
+**Lorenz Attractor**:
+1. The Lorenz system of three coupled ODEs is integrated using a 4th-order Runge-Kutta method.
+2. The 3D trajectory is projected to 2D via a rotation matrix for an optimal viewing angle.
+3. The trajectory is rendered as `<polyline>` elements, with a second diverging trajectory to illustrate the butterfly effect.
+4. Leader lines connect annotated text blocks to specific dynamics of the system.
 
 ## License
 

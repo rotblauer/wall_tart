@@ -23,7 +23,7 @@ jobs:
         run: pip install pytest cairosvg
 
       - name: Run tests
-        run: pytest test_sierpinski.py -v
+        run: pytest test_sierpinski.py test_lorenz.py -v
 
   docker:
     runs-on: ubuntu-latest
@@ -32,16 +32,21 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build Docker image
-        run: docker build -t sierpinski-poster .
+        run: docker build -t wall-tart .
 
-      - name: Generate sample poster (SVG)
+      - name: Generate sample Sierpiński poster (SVG)
         run: |
           mkdir -p output
           docker run -v "$(pwd)/output:/app/output" \
-            sierpinski-poster --depth 5 --output output/sierpinski_poster.svg
+            wall-tart python sierpinski_poster.py --depth 5 --output output/sierpinski_poster.svg
 
-      - name: Upload poster artifact
+      - name: Generate sample Lorenz poster (SVG)
+        run: |
+          docker run -v "$(pwd)/output:/app/output" \
+            wall-tart python lorenz_poster.py --steps 5000 --output output/lorenz_poster.svg
+
+      - name: Upload poster artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: sierpinski-poster-svg
-          path: output/sierpinski_poster.svg
+          name: poster-svgs
+          path: output/
