@@ -1,0 +1,41 @@
+name: Update README Images
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "sierpinski_poster.py"
+      - ".github/workflows/update-readme-images.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  regenerate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Use the default GITHUB_TOKEN — write permission granted above
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Generate poster SVG
+        run: |
+          mkdir -p docs/generated
+          python sierpinski_poster.py \
+            --depth 5 \
+            --output docs/generated/sierpinski_poster.svg
+
+      - name: Commit updated image
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/generated/sierpinski_poster.svg
+          git diff --staged --quiet && echo "No changes to commit" \
+            || git commit -m "chore: regenerate poster preview [skip ci]"
+          git push
