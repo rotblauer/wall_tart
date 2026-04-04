@@ -409,7 +409,7 @@ def write_svg(svg_root, filepath):
 def write_pdf(svg_root, filepath):
     """Write the poster as PDF via cairosvg (must be installed)."""
     try:
-        import cairosvg  # noqa: F811
+        import cairosvg
     except ImportError:
         print(
             "Error: 'cairosvg' is required for PDF output.\n"
