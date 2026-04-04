@@ -54,6 +54,9 @@ python sierpinski_poster.py --format pdf --output sierpinski.pdf
 
 # Custom poster dimensions (width × height in mm)
 python sierpinski_poster.py --width 594 --height 841   # A1 size
+
+# Add a custom credit line
+python sierpinski_poster.py --designed-by "Alice and Bob" --designed-for "the Science Museum"
 ```
 
 ### All Options
@@ -65,6 +68,8 @@ python sierpinski_poster.py --width 594 --height 841   # A1 size
 | `--format FMT` | `svg` | Output format: `svg` or `pdf`. |
 | `--width MM` | `420` | Poster width in millimetres (A2 default). |
 | `--height MM` | `594` | Poster height in millimetres (A2 default). |
+| `--designed-by TEXT` | *(none)* | Designer credit, e.g. `'Alice and Bob'`. |
+| `--designed-for TEXT` | *(none)* | Client / purpose credit, e.g. `'the Science Museum'`. |
 
 ### Depth vs. Triangle Count
 

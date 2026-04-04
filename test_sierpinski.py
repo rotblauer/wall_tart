@@ -138,6 +138,50 @@ class TestGeneratePoster:
         assert "Fractional Dimension" in xml_str
         assert "Hausdorff" in xml_str
 
+    def test_credit_designed_by(self):
+        """Credit line appears when --designed-by is supplied."""
+        svg = generate_poster(depth=1, width_mm=200, height_mm=300,
+                              designed_by="Alice")
+        xml_str = ET.tostring(svg, encoding="unicode")
+        assert "Designed by Alice" in xml_str
+
+    def test_credit_designed_for(self):
+        """Credit line appears when --designed-for is supplied."""
+        svg = generate_poster(depth=1, width_mm=200, height_mm=300,
+                              designed_for="the Science Museum")
+        xml_str = ET.tostring(svg, encoding="unicode")
+        assert "for the Science Museum" in xml_str
+
+    def test_credit_both(self):
+        """Credit line combines both designer and client."""
+        svg = generate_poster(depth=1, width_mm=200, height_mm=300,
+                              designed_by="Alice and Bob",
+                              designed_for="ACME Labs")
+        xml_str = ET.tostring(svg, encoding="unicode")
+        assert "Designed by Alice and Bob for ACME Labs" in xml_str
+
+    def test_no_credit_by_default(self):
+        """No credit line appears when neither flag is supplied."""
+        svg = generate_poster(depth=1, width_mm=200, height_mm=300)
+        xml_str = ET.tostring(svg, encoding="unicode")
+        assert "Designed by" not in xml_str
+
+    def test_triangle_clears_header_rule(self):
+        """The triangle top vertex must not overlap the header rule."""
+        for w, h in [(420, 594), (594, 841), (200, 300), (100, 150)]:
+            svg = generate_poster(depth=1, width_mm=w, height_mm=h)
+            ns = "http://www.w3.org/2000/svg"
+            fractal = svg.find(f".//{{{ns}}}g[@id='fractal']")
+            poly = fractal.find(f"{{{ns}}}polygon")
+            points = poly.get("points").split()
+            ys = [float(p.split(",")[1]) for p in points]
+            top_y = min(ys)
+            rule_y = h * 0.074
+            assert top_y > rule_y, (
+                f"Poster {w}x{h}: triangle top {top_y:.1f} overlaps "
+                f"rule at {rule_y:.1f}"
+            )
+
 
 # ---------------------------------------------------------------------------
 # SVG file output
