@@ -5,10 +5,10 @@ Unified Poster Generator — generate all wall_tart posters in one command.
 Usage:
     python generate_all.py [OPTIONS]
 
-Generates all seven posters (Sierpiński Triangle, Lorenz Attractor, Logistic
-Map, Mandelbrot Set, Double Pendulum, Cellular Automata, and Fourier
-Epicycles) with shared common arguments and optional poster-specific
-parameters.
+Generates all ten posters (Sierpiński Triangle, Lorenz Attractor, Logistic
+Map, Mandelbrot Set, Double Pendulum, Cellular Automata, Fourier
+Epicycles, Turing Patterns, Penrose Tiling, and Harmonograph) with shared
+common arguments and optional poster-specific parameters.
 
 Examples:
     # Generate all posters with defaults (SVG, A2 size)
@@ -47,10 +47,14 @@ from mandelbrot_poster import generate_poster as generate_mandelbrot
 from double_pendulum_poster import generate_poster as generate_double_pendulum
 from cellular_automata_poster import generate_poster as generate_cellular_automata
 from fourier_epicycles_poster import generate_poster as generate_fourier_epicycles
+from turing_patterns_poster import generate_poster as generate_turing_patterns
+from penrose_tiling_poster import generate_poster as generate_penrose_tiling
+from harmonograph_poster import generate_poster as generate_harmonograph
 
 
 POSTER_NAMES = ("sierpinski", "lorenz", "logistic", "mandelbrot",
-                "double_pendulum", "cellular_automata", "fourier_epicycles")
+                "double_pendulum", "cellular_automata", "fourier_epicycles",
+                "turing_patterns", "penrose_tiling", "harmonograph")
 
 
 def build_arg_parser():
@@ -74,7 +78,8 @@ def build_arg_parser():
         help=(
             "Which posters to generate (default: all). "
             "Choices: sierpinski, lorenz, logistic, mandelbrot, "
-            "double_pendulum, cellular_automata, fourier_epicycles."
+            "double_pendulum, cellular_automata, fourier_epicycles, "
+            "turing_patterns, penrose_tiling, harmonograph."
         ),
     )
 
@@ -175,6 +180,32 @@ def build_arg_parser():
         help="Number of Fourier circles (default: 32).",
     )
 
+    turing = parser.add_argument_group("Turing Patterns options")
+    turing.add_argument(
+        "--turing-grid-size", type=int, default=60,
+        dest="turing_grid_size",
+        help="Grid width/height (default: 60).",
+    )
+    turing.add_argument(
+        "--turing-steps", type=int, default=3000,
+        dest="turing_steps",
+        help="Simulation steps (default: 3000).",
+    )
+
+    penrose = parser.add_argument_group("Penrose Tiling options")
+    penrose.add_argument(
+        "--penrose-subdivisions", type=int, default=5,
+        dest="penrose_subdivisions",
+        help="Number of subdivisions (default: 5).",
+    )
+
+    harmonograph_group = parser.add_argument_group("Harmonograph options")
+    harmonograph_group.add_argument(
+        "--harmonograph-steps", type=int, default=10000,
+        dest="harmonograph_steps",
+        help="Simulation steps (default: 10000).",
+    )
+
     return parser
 
 
@@ -250,6 +281,36 @@ def main(argv=None):
             "label": (
                 f"Fourier Epicycles "
                 f"(num_circles={args.fourier_num_circles})"
+            ),
+        },
+        "turing_patterns": {
+            "generate": generate_turing_patterns,
+            "kwargs": {
+                "grid_size": args.turing_grid_size,
+                "steps": args.turing_steps,
+            },
+            "filename": "turing_patterns_poster",
+            "label": (
+                f"Turing Patterns (grid_size={args.turing_grid_size}, "
+                f"steps={args.turing_steps})"
+            ),
+        },
+        "penrose_tiling": {
+            "generate": generate_penrose_tiling,
+            "kwargs": {"subdivisions": args.penrose_subdivisions},
+            "filename": "penrose_tiling_poster",
+            "label": (
+                f"Penrose Tiling "
+                f"(subdivisions={args.penrose_subdivisions})"
+            ),
+        },
+        "harmonograph": {
+            "generate": generate_harmonograph,
+            "kwargs": {"steps": args.harmonograph_steps},
+            "filename": "harmonograph_poster",
+            "label": (
+                f"Harmonograph "
+                f"(steps={args.harmonograph_steps:,})"
             ),
         },
     }
