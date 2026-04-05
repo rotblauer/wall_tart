@@ -168,8 +168,6 @@ class TestWriteSvg:
 
 
 class TestWritePng:
-    pytest.importorskip("cairosvg", reason="cairosvg not installed")
-
     def test_writes_png_file(self):
         cairosvg = pytest.importorskip("cairosvg")  # noqa: F841
         svg = generate_poster(num_circles=5, width_mm=100, height_mm=150)
