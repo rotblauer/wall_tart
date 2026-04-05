@@ -150,40 +150,15 @@ def _annotation_edge_of_chaos(parent, ns, target_x, target_y,
     g = draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
                                "The Edge of Chaos", scale, theme=theme)
 
-    # Body text with r_inf value rendered via tspan for subscript
     body_style = {**ANNOTATION_STYLE, "font-size": str(round(3.8 * scale, 2)),
                   "text-anchor": "middle"}
     body_y = anno_y + 9 * scale
     lh = 5 * scale
 
-    attrib = {"x": str(col_cx), "y": str(body_y)}
-    attrib.update(body_style)
-    text_el = ET.SubElement(g, f"{{{ns}}}text", attrib=attrib)
-    line0_tspan = ET.SubElement(
-        text_el, f"{{{ns}}}tspan", attrib={"x": str(col_cx), "dy": "0"}
-    )
-    line0_tspan.text = "At r"
-    sub = ET.SubElement(
-        line0_tspan,
-        f"{{{ns}}}tspan",
-        attrib={
-            "dy": str(round(1.2 * scale, 2)),
-            "font-size": str(round(2.5 * scale, 2)),
-        },
-    )
-    sub.text = "\u221e"
-    reset = ET.SubElement(
-        line0_tspan,
-        f"{{{ns}}}tspan",
-        attrib={
-            "dy": str(round(-1.2 * scale, 2)),
-        },
-    )
-    reset.text = " \u2248 3.5699\u2026 the cascade"
-
     _multiline_text(
-        g, ns, col_cx, body_y + lh,
+        g, ns, col_cx, body_y,
         [
+            "At r \u221e \u2248 3.5699\u2026 the cascade",
             "converges. Beyond this threshold",
             "the system becomes unpredictable:",
             "no finite period remains stable.",
@@ -245,50 +220,12 @@ def _panel_equation(parent, ns, col_cx, anno_y, scale=1):
     eq_y = anno_y + 24 * scale
     eq_x = col_cx - 24 * scale
 
-    # Build equation with subscript via tspan
+    # Build equation using Unicode subscript characters to avoid tspan cursor bugs
     attrib = {"x": str(eq_x), "y": str(eq_y)}
     attrib.update(eq_style)
     eq_el = ET.SubElement(g, f"{{{ns}}}text", attrib=attrib)
-    eq_el.text = "x"
-    sub_n1 = ET.SubElement(
-        eq_el, f"{{{ns}}}tspan",
-        attrib={
-            "dy": str(round(1.2 * scale, 2)),
-            "font-size": str(round(3.0 * scale, 2)),
-        },
-    )
-    sub_n1.text = "n+1"
-    rest = ET.SubElement(
-        eq_el, f"{{{ns}}}tspan",
-        attrib={"dy": str(round(-1.2 * scale, 2))},
-    )
-    rest.text = " = r \u00b7 x"
-    sub_n = ET.SubElement(
-        rest, f"{{{ns}}}tspan",
-        attrib={
-            "dy": str(round(1.2 * scale, 2)),
-            "font-size": str(round(3.0 * scale, 2)),
-        },
-    )
-    sub_n.text = "n"
-    paren = ET.SubElement(
-        rest, f"{{{ns}}}tspan",
-        attrib={"dy": str(round(-1.2 * scale, 2))},
-    )
-    paren.text = " (1 \u2212 x"
-    sub_n2 = ET.SubElement(
-        paren, f"{{{ns}}}tspan",
-        attrib={
-            "dy": str(round(1.2 * scale, 2)),
-            "font-size": str(round(3.0 * scale, 2)),
-        },
-    )
-    sub_n2.text = "n"
-    close = ET.SubElement(
-        paren, f"{{{ns}}}tspan",
-        attrib={"dy": str(round(-1.2 * scale, 2))},
-    )
-    close.text = ")"
+    # x_{n+1} = r · x_n (1 − x_n)  using Unicode subscript n/+/1
+    eq_el.text = "x\u2099\u208a\u2081 = r \u00b7 x\u2099(1 \u2212 x\u2099)"
 
     param_y = eq_y + 10 * scale
     param_style = {

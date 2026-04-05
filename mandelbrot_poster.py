@@ -289,41 +289,8 @@ def _panel_equation(parent, ns, col_cx, anno_y, scale=1):
     attrib = {"x": str(eq_x), "y": str(eq_y)}
     attrib.update(eq_style)
     eq_el = ET.SubElement(g, f"{{{ns}}}text", attrib=attrib)
-    eq_el.text = "z"
-    sub_n1 = ET.SubElement(
-        eq_el, f"{{{ns}}}tspan",
-        attrib={
-            "dy": str(round(1.2 * scale, 2)),
-            "font-size": str(round(3.0 * scale, 2)),
-        },
-    )
-    sub_n1.text = "n+1"
-    rest = ET.SubElement(
-        eq_el, f"{{{ns}}}tspan",
-        attrib={"dy": str(round(-1.2 * scale, 2))},
-    )
-    rest.text = " = z"
-    sub_n = ET.SubElement(
-        rest, f"{{{ns}}}tspan",
-        attrib={
-            "dy": str(round(1.2 * scale, 2)),
-            "font-size": str(round(3.0 * scale, 2)),
-        },
-    )
-    sub_n.text = "n"
-    sup = ET.SubElement(
-        rest, f"{{{ns}}}tspan",
-        attrib={
-            "dy": str(round(-2.4 * scale, 2)),
-            "font-size": str(round(3.0 * scale, 2)),
-        },
-    )
-    sup.text = "2"
-    plus_c = ET.SubElement(
-        rest, f"{{{ns}}}tspan",
-        attrib={"dy": str(round(1.2 * scale, 2))},
-    )
-    plus_c.text = " + c"
+    # z_{n+1} = z_n^2 + c  using Unicode subscript/superscript characters
+    eq_el.text = "z\u2099\u208a\u2081 = z\u2099\u00b2 + c"
 
     param_y = eq_y + 10 * scale
     param_style = {
