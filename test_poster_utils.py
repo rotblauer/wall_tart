@@ -362,7 +362,8 @@ class TestThemeSystem:
         assert isinstance(t, dict)
         for key in ("bg_color", "accent_color", "title_color",
                      "footer_primary", "footer_secondary",
-                     "text_color", "border_color"):
+                     "text_color", "border_color",
+                     "content_primary", "content_secondary"):
             assert key in t
 
     def test_get_theme_none_returns_default(self):

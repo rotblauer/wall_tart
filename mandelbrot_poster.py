@@ -444,6 +444,7 @@ def generate_poster(resolution=80, max_iter=100,
     set_color = t["content_primary"]
 
     sc = build_poster_scaffold(
+        "The Mandelbrot & Julia Sets",
         subtitle="Infinite complexity from z\u00b2 + c",
         width_mm=width_mm, height_mm=height_mm,
         designed_by=designed_by, designed_for=designed_for,
