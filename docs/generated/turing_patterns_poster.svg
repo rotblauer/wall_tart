@@ -3,7 +3,7 @@
   <style>@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&amp;family=Inter:wght@300;400;500&amp;display=swap');</style>
   <rect x="0" y="0" width="420" height="594" fill="#FFFEF8" />
   <text x="210.0" y="27.918" font-family="'Playfair Display', Georgia, 'Times New Roman', serif" font-size="16.0" fill="#1C1C1C" text-anchor="middle">Reaction–Diffusion · Turing Patterns</text>
-  <text x="210.0" y="38.016" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" font-size="6.0" fill="#8B0000" text-anchor="middle">How leopards get their spots</text>
+  <text x="210.0" y="38.016" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" font-size="6.0" fill="#8B0000" text-anchor="middle">How leopards get their spots</text>
   <line x1="63.0" y1="43.955999999999996" x2="357.0" y2="43.955999999999996" stroke="#8B0000" stroke-width="0.4" />
   <defs>
     <marker id="arrowhead" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
@@ -2726,8 +2726,8 @@
     <g>
       <line x1="63.0" y1="437.79999999999995" x2="63.0" y2="214.20799999999997" stroke="#8B0000" stroke-width="0.5" stroke-dasharray="2,1.5" marker-end="url(#arrowhead)" />
       <circle cx="63.0" cy="437.79999999999995" r="1.0" fill="#8B0000" />
-      <text x="63.0" y="447.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#8B0000" font-size="5.0" text-anchor="middle">Activator–Inhibitor</text>
-      <text x="63.0" y="454.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
+      <text x="63.0" y="447.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#8B0000" font-size="5.0" text-anchor="middle">Activator–Inhibitor</text>
+      <text x="63.0" y="454.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
         <tspan x="63.0" dy="0">Two chemicals interact: one activates</tspan>
         <tspan x="63.0" dy="5.0">growth while the other inhibits it.</tspan>
         <tspan x="63.0" dy="5.0">The activator diffuses slowly, while</tspan>
@@ -2739,8 +2739,8 @@
     <g>
       <line x1="210.0" y1="437.79999999999995" x2="210.0" y2="214.20799999999997" stroke="#8B0000" stroke-width="0.5" stroke-dasharray="2,1.5" marker-end="url(#arrowhead)" />
       <circle cx="210.0" cy="437.79999999999995" r="1.0" fill="#8B0000" />
-      <text x="210.0" y="447.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#8B0000" font-size="5.0" text-anchor="middle">Symmetry Breaking</text>
-      <text x="210.0" y="454.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
+      <text x="210.0" y="447.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#8B0000" font-size="5.0" text-anchor="middle">Symmetry Breaking</text>
+      <text x="210.0" y="454.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
         <tspan x="210.0" dy="0">Starting from near-uniform conditions,</tspan>
         <tspan x="210.0" dy="5.0">tiny perturbations are amplified by the</tspan>
         <tspan x="210.0" dy="5.0">reaction-diffusion feedback loop. The</tspan>
@@ -2752,8 +2752,8 @@
     <g>
       <line x1="357.0" y1="437.79999999999995" x2="357.0" y2="214.20799999999997" stroke="#8B0000" stroke-width="0.5" stroke-dasharray="2,1.5" marker-end="url(#arrowhead)" />
       <circle cx="357.0" cy="437.79999999999995" r="1.0" fill="#8B0000" />
-      <text x="357.0" y="447.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#8B0000" font-size="5.0" text-anchor="middle">Turing’s Insight</text>
-      <text x="357.0" y="454.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
+      <text x="357.0" y="447.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#8B0000" font-size="5.0" text-anchor="middle">Turing’s Insight</text>
+      <text x="357.0" y="454.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
         <tspan x="357.0" dy="0">In 1952, Alan Turing proposed that</tspan>
         <tspan x="357.0" dy="5.0">chemical substances (morphogens)</tspan>
         <tspan x="357.0" dy="5.0">reacting and diffusing through tissue</tspan>
@@ -2766,8 +2766,8 @@
   <g id="educational">
     <line x1="63.0" y1="500.79999999999995" x2="357.0" y2="500.79999999999995" stroke="#8B0000" stroke-width="0.3" opacity="0.35" />
     <g>
-      <text x="63.0" y="514.8" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#8B0000" font-size="5.0" text-anchor="middle">The Gray–Scott Model</text>
-      <text x="63.0" y="521.8" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
+      <text x="63.0" y="514.8" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#8B0000" font-size="5.0" text-anchor="middle">The Gray–Scott Model</text>
+      <text x="63.0" y="521.8" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
         <tspan x="63.0" dy="0">∂u/∂t = Dᵤ∇²u − uv² + f(1−u)</tspan>
         <tspan x="63.0" dy="5.0">∂v/∂t = Dᵥ∇²v + uv² − (f+k)v</tspan>
         <tspan x="63.0" dy="5.0" />
@@ -2779,8 +2779,8 @@
       </text>
     </g>
     <g>
-      <text x="210.0" y="514.8" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#8B0000" font-size="5.0" text-anchor="middle">Nature’s Patterns</text>
-      <text x="210.0" y="521.8" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
+      <text x="210.0" y="514.8" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#8B0000" font-size="5.0" text-anchor="middle">Nature’s Patterns</text>
+      <text x="210.0" y="521.8" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
         <tspan x="210.0" dy="0">Turing patterns appear throughout the</tspan>
         <tspan x="210.0" dy="5.0">living world: the rosettes on a leopard,</tspan>
         <tspan x="210.0" dy="5.0">stripes on a zebra or angelfish, the</tspan>
@@ -2792,8 +2792,8 @@
       </text>
     </g>
     <g>
-      <text x="357.0" y="514.8" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#8B0000" font-size="5.0" text-anchor="middle">From Chemistry to Ecology</text>
-      <text x="357.0" y="521.8" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
+      <text x="357.0" y="514.8" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#8B0000" font-size="5.0" text-anchor="middle">From Chemistry to Ecology</text>
+      <text x="357.0" y="521.8" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
         <tspan x="357.0" dy="0">Reaction–diffusion models bridge</tspan>
         <tspan x="357.0" dy="5.0">biochemistry, ecology, and mathematics.</tspan>
         <tspan x="357.0" dy="5.0">The same equations that model chemical</tspan>
@@ -2805,8 +2805,8 @@
       </text>
     </g>
   </g>
-  <text x="210.0" y="576.0" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" font-size="4.0" fill="#555555" text-anchor="middle">Alan Turing’s 1952 paper “The Chemical Basis of Morphogenesis” — the origin of mathematical biology.</text>
-  <text x="210.0" y="582.0" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" font-size="3.5" fill="#777777" text-anchor="middle">Generated with grid 30×30  ·  1,000 steps  ·  Gray–Scott model</text>
+  <text x="210.0" y="576.0" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" font-size="4.0" fill="#555555" text-anchor="middle">Alan Turing’s 1952 paper “The Chemical Basis of Morphogenesis” — the origin of mathematical biology.</text>
+  <text x="210.0" y="582.0" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" font-size="3.5" fill="#777777" text-anchor="middle">Generated with grid 30×30  ·  1,000 steps  ·  Gray–Scott model</text>
   <rect x="4" y="4" width="412" height="586" fill="none" stroke="#1C1C1C" stroke-width="0.8" />
   <rect x="7" y="7" width="406" height="580" fill="none" stroke="#1C1C1C" stroke-width="0.2" />
 </svg>

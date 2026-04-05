@@ -3,7 +3,7 @@
   <style>@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&amp;family=Inter:wght@300;400;500&amp;display=swap');</style>
   <rect x="0" y="0" width="420" height="594" fill="#FFFEF8" />
   <text x="210.0" y="27.918" font-family="'Playfair Display', Georgia, 'Times New Roman', serif" font-size="16.0" fill="#1C1C1C" text-anchor="middle">Elementary Cellular Automata</text>
-  <text x="210.0" y="38.016" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" font-size="6.0" fill="#8B0000" text-anchor="middle">Simple rules, complex worlds</text>
+  <text x="210.0" y="38.016" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" font-size="6.0" fill="#8B0000" text-anchor="middle">Simple rules, complex worlds</text>
   <line x1="63.0" y1="43.955999999999996" x2="357.0" y2="43.955999999999996" stroke="#8B0000" stroke-width="0.4" />
   <defs>
     <marker id="arrowhead" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
@@ -6273,8 +6273,8 @@
     <g>
       <line x1="63.0" y1="437.79999999999995" x2="63.0" y2="228.89495652173912" stroke="#8B0000" stroke-width="0.5" stroke-dasharray="2,1.5" marker-end="url(#arrowhead)" />
       <circle cx="63.0" cy="437.79999999999995" r="1.0" fill="#8B0000" />
-      <text x="63.0" y="447.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#8B0000" font-size="5.0" text-anchor="middle">Rule 30 — Chaos</text>
-      <text x="63.0" y="454.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
+      <text x="63.0" y="447.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#8B0000" font-size="5.0" text-anchor="middle">Rule 30 — Chaos</text>
+      <text x="63.0" y="454.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
         <tspan x="63.0" dy="0">From a single seed, Rule 30 produces</tspan>
         <tspan x="63.0" dy="5.0">irregular, pseudo-random output that</tspan>
         <tspan x="63.0" dy="5.0">defies prediction. Wolfram chose it</tspan>
@@ -6286,8 +6286,8 @@
     <g>
       <line x1="210.0" y1="437.79999999999995" x2="210.0" y2="228.89495652173912" stroke="#8B0000" stroke-width="0.5" stroke-dasharray="2,1.5" marker-end="url(#arrowhead)" />
       <circle cx="210.0" cy="437.79999999999995" r="1.0" fill="#8B0000" />
-      <text x="210.0" y="447.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#8B0000" font-size="5.0" text-anchor="middle">Rule 90 — Sierpiński</text>
-      <text x="210.0" y="454.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
+      <text x="210.0" y="447.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#8B0000" font-size="5.0" text-anchor="middle">Rule 90 — Sierpiński</text>
+      <text x="210.0" y="454.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
         <tspan x="210.0" dy="0">Rule 90 generates the Sierpiński</tspan>
         <tspan x="210.0" dy="5.0">triangle — a fractal that also appears</tspan>
         <tspan x="210.0" dy="5.0">when you shade the odd entries of</tspan>
@@ -6299,8 +6299,8 @@
     <g>
       <line x1="357.0" y1="437.79999999999995" x2="357.0" y2="228.89495652173912" stroke="#8B0000" stroke-width="0.5" stroke-dasharray="2,1.5" marker-end="url(#arrowhead)" />
       <circle cx="357.0" cy="437.79999999999995" r="1.0" fill="#8B0000" />
-      <text x="357.0" y="447.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#8B0000" font-size="5.0" text-anchor="middle">Rule 110 — Universal</text>
-      <text x="357.0" y="454.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
+      <text x="357.0" y="447.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#8B0000" font-size="5.0" text-anchor="middle">Rule 110 — Universal</text>
+      <text x="357.0" y="454.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
         <tspan x="357.0" dy="0">In 2004, Matthew Cook proved that</tspan>
         <tspan x="357.0" dy="5.0">Rule 110 is Turing-complete: it can</tspan>
         <tspan x="357.0" dy="5.0">simulate any computation. A one-</tspan>
@@ -6313,8 +6313,8 @@
   <g id="educational">
     <line x1="63.0" y1="500.79999999999995" x2="357.0" y2="500.79999999999995" stroke="#8B0000" stroke-width="0.3" opacity="0.35" />
     <g>
-      <text x="63.0" y="514.8" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#8B0000" font-size="5.0" text-anchor="middle">How It Works</text>
-      <text x="63.0" y="521.8" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
+      <text x="63.0" y="514.8" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#8B0000" font-size="5.0" text-anchor="middle">How It Works</text>
+      <text x="63.0" y="521.8" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
         <tspan x="63.0" dy="0">Each cell looks at itself and its two</tspan>
         <tspan x="63.0" dy="5.0">neighbours — eight possible patterns</tspan>
         <tspan x="63.0" dy="5.0">of three cells. A rule assigns a new</tspan>
@@ -6326,8 +6326,8 @@
       </text>
     </g>
     <g>
-      <text x="210.0" y="514.8" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#8B0000" font-size="5.0" text-anchor="middle">Wolfram’s Four Classes</text>
-      <text x="210.0" y="521.8" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
+      <text x="210.0" y="514.8" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#8B0000" font-size="5.0" text-anchor="middle">Wolfram’s Four Classes</text>
+      <text x="210.0" y="521.8" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
         <tspan x="210.0" dy="0">Wolfram classified all 256 rules into</tspan>
         <tspan x="210.0" dy="5.0">four classes: I. uniform (all cells</tspan>
         <tspan x="210.0" dy="5.0">settle to one state), II. periodic</tspan>
@@ -6339,8 +6339,8 @@
       </text>
     </g>
     <g>
-      <text x="357.0" y="514.8" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#8B0000" font-size="5.0" text-anchor="middle">A New Kind of Science</text>
-      <text x="357.0" y="521.8" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
+      <text x="357.0" y="514.8" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#8B0000" font-size="5.0" text-anchor="middle">A New Kind of Science</text>
+      <text x="357.0" y="521.8" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
         <tspan x="357.0" dy="0">In 2002, Stephen Wolfram argued that</tspan>
         <tspan x="357.0" dy="5.0">simple programs — not equations — are</tspan>
         <tspan x="357.0" dy="5.0">the key to modelling nature. Cellular</tspan>
@@ -6352,8 +6352,8 @@
       </text>
     </g>
   </g>
-  <text x="210.0" y="576.0" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" font-size="4.0" fill="#555555" text-anchor="middle">Stephen Wolfram’s elementary cellular automata, explored in A New Kind of Science (2002).</text>
-  <text x="210.0" y="582.0" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" font-size="3.5" fill="#777777" text-anchor="middle">Generated with cell size 2  ·  80 generations  ·  Rules 30, 90, 110</text>
+  <text x="210.0" y="576.0" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" font-size="4.0" fill="#555555" text-anchor="middle">Stephen Wolfram’s elementary cellular automata, explored in A New Kind of Science (2002).</text>
+  <text x="210.0" y="582.0" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" font-size="3.5" fill="#777777" text-anchor="middle">Generated with cell size 2  ·  80 generations  ·  Rules 30, 90, 110</text>
   <rect x="4" y="4" width="412" height="586" fill="none" stroke="#1C1C1C" stroke-width="0.8" />
   <rect x="7" y="7" width="406" height="580" fill="none" stroke="#1C1C1C" stroke-width="0.2" />
 </svg>

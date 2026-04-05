@@ -3,7 +3,7 @@
   <style>@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&amp;family=Inter:wght@300;400;500&amp;display=swap');</style>
   <rect x="0" y="0" width="420" height="594" fill="#FFFEF8" />
   <text x="210.0" y="27.918" font-family="'Playfair Display', Georgia, 'Times New Roman', serif" font-size="16.0" fill="#1C1C1C" text-anchor="middle">Penrose Tiling</text>
-  <text x="210.0" y="38.016" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" font-size="6.0" fill="#8B0000" text-anchor="middle">Infinite patterns that never repeat</text>
+  <text x="210.0" y="38.016" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" font-size="6.0" fill="#8B0000" text-anchor="middle">Infinite patterns that never repeat</text>
   <line x1="63.0" y1="43.955999999999996" x2="357.0" y2="43.955999999999996" stroke="#8B0000" stroke-width="0.4" />
   <defs>
     <marker id="arrowhead" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
@@ -357,8 +357,8 @@
     <g>
       <line x1="63.0" y1="437.79999999999995" x2="63.0" y2="284.628" stroke="#8B0000" stroke-width="0.5" stroke-dasharray="2,1.5" marker-end="url(#arrowhead)" />
       <circle cx="63.0" cy="437.79999999999995" r="1.0" fill="#8B0000" />
-      <text x="63.0" y="447.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#8B0000" font-size="5.0" text-anchor="middle">Aperiodic Order</text>
-      <text x="63.0" y="454.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
+      <text x="63.0" y="447.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#8B0000" font-size="5.0" text-anchor="middle">Aperiodic Order</text>
+      <text x="63.0" y="454.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
         <tspan x="63.0" dy="0">A Penrose tiling fills the plane</tspan>
         <tspan x="63.0" dy="5.0">completely, yet no finite patch can</tspan>
         <tspan x="63.0" dy="5.0">be shifted to overlap itself. It has</tspan>
@@ -370,8 +370,8 @@
     <g>
       <line x1="210.0" y1="437.79999999999995" x2="210.0" y2="284.628" stroke="#8B0000" stroke-width="0.5" stroke-dasharray="2,1.5" marker-end="url(#arrowhead)" />
       <circle cx="210.0" cy="437.79999999999995" r="1.0" fill="#8B0000" />
-      <text x="210.0" y="447.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#8B0000" font-size="5.0" text-anchor="middle">Five-Fold Symmetry</text>
-      <text x="210.0" y="454.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
+      <text x="210.0" y="447.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#8B0000" font-size="5.0" text-anchor="middle">Five-Fold Symmetry</text>
+      <text x="210.0" y="454.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
         <tspan x="210.0" dy="0">Classical crystallography proved that</tspan>
         <tspan x="210.0" dy="5.0">periodic tilings cannot have five-fold</tspan>
         <tspan x="210.0" dy="5.0">symmetry. Penrose tilings bypass this</tspan>
@@ -383,8 +383,8 @@
     <g>
       <line x1="357.0" y1="437.79999999999995" x2="357.0" y2="284.628" stroke="#8B0000" stroke-width="0.5" stroke-dasharray="2,1.5" marker-end="url(#arrowhead)" />
       <circle cx="357.0" cy="437.79999999999995" r="1.0" fill="#8B0000" />
-      <text x="357.0" y="447.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#8B0000" font-size="5.0" text-anchor="middle">The Golden Ratio</text>
-      <text x="357.0" y="454.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
+      <text x="357.0" y="447.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#8B0000" font-size="5.0" text-anchor="middle">The Golden Ratio</text>
+      <text x="357.0" y="454.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
         <tspan x="357.0" dy="0">The golden ratio φ = (1+√5)/2 governs</tspan>
         <tspan x="357.0" dy="5.0">every aspect of the tiling: triangle</tspan>
         <tspan x="357.0" dy="5.0">edge ratios, subdivision positions,</tspan>
@@ -397,8 +397,8 @@
   <g id="educational">
     <line x1="63.0" y1="500.79999999999995" x2="357.0" y2="500.79999999999995" stroke="#8B0000" stroke-width="0.3" opacity="0.35" />
     <g>
-      <text x="63.0" y="514.8" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#8B0000" font-size="5.0" text-anchor="middle">How It Works</text>
-      <text x="63.0" y="521.8" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
+      <text x="63.0" y="514.8" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#8B0000" font-size="5.0" text-anchor="middle">How It Works</text>
+      <text x="63.0" y="521.8" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
         <tspan x="63.0" dy="0">Begin with a ring of ten triangles</tspan>
         <tspan x="63.0" dy="5.0">around a central point. Each step</tspan>
         <tspan x="63.0" dy="5.0">subdivides every triangle using the</tspan>
@@ -410,8 +410,8 @@
       </text>
     </g>
     <g>
-      <text x="210.0" y="514.8" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#8B0000" font-size="5.0" text-anchor="middle">Quasicrystals</text>
-      <text x="210.0" y="521.8" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
+      <text x="210.0" y="514.8" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#8B0000" font-size="5.0" text-anchor="middle">Quasicrystals</text>
+      <text x="210.0" y="521.8" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
         <tspan x="210.0" dy="0">In 1982, Dan Shechtman discovered an</tspan>
         <tspan x="210.0" dy="5.0">aluminium alloy whose diffraction</tspan>
         <tspan x="210.0" dy="5.0">showed forbidden five-fold symmetry —</tspan>
@@ -423,8 +423,8 @@
       </text>
     </g>
     <g>
-      <text x="357.0" y="514.8" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#8B0000" font-size="5.0" text-anchor="middle">The Einstein Problem</text>
-      <text x="357.0" y="521.8" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
+      <text x="357.0" y="514.8" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#8B0000" font-size="5.0" text-anchor="middle">The Einstein Problem</text>
+      <text x="357.0" y="521.8" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
         <tspan x="357.0" dy="0">Can a single shape tile the plane</tspan>
         <tspan x="357.0" dy="5.0">aperiodically? For decades this was</tspan>
         <tspan x="357.0" dy="5.0">an open question. In 2023, David</tspan>
@@ -436,8 +436,8 @@
       </text>
     </g>
   </g>
-  <text x="210.0" y="576.0" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" font-size="4.0" fill="#555555" text-anchor="middle">Roger Penrose’s aperiodic tiling, first published in 1974, bridging geometry, physics, and art.</text>
-  <text x="210.0" y="582.0" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" font-size="3.5" fill="#777777" text-anchor="middle">Generated with 4 subdivisions  ·  340 triangles  ·  φ = (1+√5)/2</text>
+  <text x="210.0" y="576.0" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" font-size="4.0" fill="#555555" text-anchor="middle">Roger Penrose’s aperiodic tiling, first published in 1974, bridging geometry, physics, and art.</text>
+  <text x="210.0" y="582.0" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" font-size="3.5" fill="#777777" text-anchor="middle">Generated with 4 subdivisions  ·  340 triangles  ·  φ = (1+√5)/2</text>
   <rect x="4" y="4" width="412" height="586" fill="none" stroke="#1C1C1C" stroke-width="0.8" />
   <rect x="7" y="7" width="406" height="580" fill="none" stroke="#1C1C1C" stroke-width="0.2" />
 </svg>
