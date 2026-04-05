@@ -45,7 +45,7 @@ class TestApplyRule:
         """Rule 110 = 0b01101110."""
         expected = {
             (1, 1, 1): 0, (1, 1, 0): 1, (1, 0, 1): 1, (1, 0, 0): 0,
-            (0, 1, 1): 1, (0, 1, 0): 1, (0, 1, 0): 1, (0, 0, 1): 1, (0, 0, 0): 0,
+            (0, 1, 1): 1, (0, 1, 0): 1, (0, 0, 1): 1, (0, 0, 0): 0,
         }
         for (l, c, r), exp in expected.items():
             assert apply_rule(110, l, c, r) == exp, f"Rule 110 failed for ({l},{c},{r})"

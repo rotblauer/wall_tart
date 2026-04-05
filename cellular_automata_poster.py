@@ -11,7 +11,7 @@ Usage:
     python cellular_automata_poster.py [OPTIONS]
 
 Options:
-    --cell-size N        Pixel size of each cell (default: 2)
+    --cell-size N        Cell size in mm (default: 2)
     --generations N      Number of generations to simulate (default: 150)
     --output FILE        Output filename (default: cellular_automata_poster.svg)
     --format FMT         Output format: svg, pdf, or png (default: svg)
@@ -426,7 +426,7 @@ def build_arg_parser():
     )
     parser.add_argument(
         "--cell-size", type=int, default=2, dest="cell_size",
-        help="Size of each cell in SVG units (default: 2).",
+        help="Cell size in mm (default: 2).",
     )
     parser.add_argument(
         "--generations", type=int, default=150,
