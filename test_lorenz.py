@@ -177,8 +177,8 @@ class TestGeneratePoster:
         assert "Wings" in xml_str
         assert "Infinite Complexity" in xml_str
 
-    def test_butterfly_exponent_uses_pr29_unicode_literal(self):
-        """Butterfly annotation should retain PR #29's Unicode 10⁻¹⁰ literal."""
+    def test_butterfly_exponent_uses_unicode_superscript(self):
+        """Butterfly annotation should keep the Unicode literal 10⁻¹⁰."""
         svg = generate_poster(steps=1000, width_mm=200, height_mm=300)
         xml_str = ET.tostring(svg, encoding="unicode")
         assert "10⁻¹⁰" in xml_str
