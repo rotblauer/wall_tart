@@ -183,7 +183,7 @@ def _annotation_butterfly_effect(parent, ns, target_x, target_y,
     _multiline_text(
         g, ns, col_cx, body_y,
         [
-            "Two trajectories start just 10^-10",
+            "Two trajectories start just 10⁻¹⁰",
             "apart \u2014 an unimaginably tiny gap.",
             "Yet they diverge wildly: sensitive",
             "dependence on initial conditions",

@@ -177,21 +177,11 @@ class TestGeneratePoster:
         assert "Wings" in xml_str
         assert "Infinite Complexity" in xml_str
 
-    def test_butterfly_exponent_no_unicode_superscript_minus(self):
-        """The 10^-10 exponent must use an SVG tspan, not U+207B.
-
-        U+207B (SUPERSCRIPT MINUS) is absent from many PDF-embedded fonts and
-        renders as a missing-glyph square.  The exponent is expressed instead
-        via a nested <tspan> with dy/font-size so that a plain ASCII '-' is
-        used, which is universally supported.
-        """
+    def test_butterfly_exponent_uses_pr29_unicode_literal(self):
+        """Butterfly annotation should retain PR #29's Unicode 10⁻¹⁰ literal."""
         svg = generate_poster(steps=1000, width_mm=200, height_mm=300)
         xml_str = ET.tostring(svg, encoding="unicode")
-        assert "\u207b" not in xml_str, (
-            "U+207B (SUPERSCRIPT MINUS) found in SVG; use SVG tspan superscript instead"
-        )
-        # The exponent digits are rendered as plain ASCII via a tspan
-        assert "-10" in xml_str
+        assert "10⁻¹⁰" in xml_str
 
     def test_credit_designed_by(self):
         """Credit line appears when --designed-by is supplied."""
