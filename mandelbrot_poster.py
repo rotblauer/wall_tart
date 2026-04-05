@@ -46,6 +46,7 @@ from poster_utils import (
     draw_annotation_row,
     draw_row_separator,
     finalize_poster,
+    get_theme,
     run_poster_main,
     write_poster,
     write_svg,
@@ -182,10 +183,10 @@ def compute_julia_grid(c_real, c_imag, x_min, x_max, y_min, y_max,
     return grid
 
 
-def _escape_to_color(escape, max_iter):
+def _escape_to_color(escape, max_iter, set_color="#1C1C1C"):
     """Map escape iteration to an RGB hex color."""
     if escape >= max_iter:
-        return "#1C1C1C"  # in the set — near black
+        return set_color
     t = escape / max_iter
     r = int(9 * (1 - t) * t * t * t * 255)
     g = int(15 * (1 - t) * (1 - t) * t * t * 255)
@@ -205,10 +206,10 @@ DIAGRAM_COLOR = "#1C1C1C"  # near-black ink
 # ---------------------------------------------------------------------------
 
 def _annotation_self_similarity(parent, ns, target_x, target_y,
-                                col_cx, anno_y, scale=1):
+                                col_cx, anno_y, scale=1, theme=None):
     """Annotation: infinite self-similarity and zooming."""
     g = draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
-                               "Infinite Self-Similarity", scale)
+                               "Infinite Self-Similarity", scale, theme=theme)
     draw_annotation_body(g, ns, col_cx, anno_y, [
         "Zoom into the boundary of the",
         "Mandelbrot set and you will find",
@@ -216,15 +217,15 @@ def _annotation_self_similarity(parent, ns, target_x, target_y,
         "each surrounded by its own filigree.",
         "This self-similarity continues to",
         "infinite depth — no two zooms alike.",
-    ], scale)
+    ], scale, theme=theme)
     return g
 
 
 def _annotation_escape_time(parent, ns, target_x, target_y,
-                            col_cx, anno_y, scale=1):
+                            col_cx, anno_y, scale=1, theme=None):
     """Annotation: escape-time colouring algorithm."""
     g = draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
-                               "Escape-Time Colouring", scale)
+                               "Escape-Time Colouring", scale, theme=theme)
     draw_annotation_body(g, ns, col_cx, anno_y, [
         "Each point is coloured by how many",
         "iterations it takes for |z| to",
@@ -232,15 +233,15 @@ def _annotation_escape_time(parent, ns, target_x, target_y,
         "are in the set (shown dark). The",
         "smooth colour gradient reveals the",
         "fractal boundary in vivid detail.",
-    ], scale)
+    ], scale, theme=theme)
     return g
 
 
 def _annotation_julia_connection(parent, ns, target_x, target_y,
-                                 col_cx, anno_y, scale=1):
+                                 col_cx, anno_y, scale=1, theme=None):
     """Annotation: connection between Mandelbrot and Julia sets."""
     g = draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
-                               "Julia Set Connection", scale)
+                               "Julia Set Connection", scale, theme=theme)
     draw_annotation_body(g, ns, col_cx, anno_y, [
         "Every point c in the complex plane",
         "defines a unique Julia set. Points",
@@ -248,7 +249,7 @@ def _annotation_julia_connection(parent, ns, target_x, target_y,
         "connected Julia sets; points outside",
         "yield disconnected \u2018dust\u2019. The",
         "Mandelbrot set is their catalogue.",
-    ], scale)
+    ], scale, theme=theme)
     return g
 
 
@@ -404,11 +405,12 @@ def _panel_special_regions(parent, ns, col_cx, anno_y, scale=1):
 # Poster composition
 # ---------------------------------------------------------------------------
 
-def _draw_grid(parent, ns, grid, max_iter, gx, gy, cell_w, cell_h):
+def _draw_grid(parent, ns, grid, max_iter, gx, gy, cell_w, cell_h,
+               set_color="#1C1C1C"):
     """Render a 2-D escape-time grid as coloured SVG rectangles."""
     for row_idx, row_data in enumerate(grid):
         for col_idx, escape in enumerate(row_data):
-            color = _escape_to_color(escape, max_iter)
+            color = _escape_to_color(escape, max_iter, set_color)
             _rect(parent, ns,
                   round(gx + col_idx * cell_w, 2),
                   round(gy + row_idx * cell_h, 2),
@@ -419,7 +421,7 @@ def _draw_grid(parent, ns, grid, max_iter, gx, gy, cell_w, cell_h):
 
 def generate_poster(resolution=80, max_iter=100,
                     width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_MM,
-                    designed_by=None, designed_for=None):
+                    designed_by=None, designed_for=None, theme=None):
     """Build and return the full poster as an ElementTree SVG root.
 
     Parameters
@@ -438,11 +440,15 @@ def generate_poster(resolution=80, max_iter=100,
     xml.etree.ElementTree.Element
         The root ``<svg>`` element.
     """
+    t = get_theme(theme)
+    set_color = t["content_primary"]
+
     sc = build_poster_scaffold(
-        title="The Mandelbrot Set",
+        "The Mandelbrot & Julia Sets",
         subtitle="Infinite complexity from z\u00b2 + c",
         width_mm=width_mm, height_mm=height_mm,
         designed_by=designed_by, designed_for=designed_for,
+        theme=theme,
     )
     svg, ns = sc["svg"], sc["ns"]
     w_scale, h_scale, rule_y = sc["w_scale"], sc["h_scale"], sc["rule_y"]
@@ -479,7 +485,8 @@ def generate_poster(resolution=80, max_iter=100,
     # --- Draw Mandelbrot set ---
     fractal_group = _group(svg, ns, id="fractal")
     _draw_grid(fractal_group, ns, grid, max_iter,
-               fractal_x, fractal_y, cell_size, cell_size)
+               fractal_x, fractal_y, cell_size, cell_size,
+               set_color=set_color)
 
     # --- Axis labels ---
     axis_style = {
@@ -528,7 +535,8 @@ def generate_poster(resolution=80, max_iter=100,
         j_cell_w = thumb_w_mm / julia_res
         j_cell_h = thumb_h_mm / julia_h_res
         _draw_grid(julia_group, ns, j_grid, max_iter,
-                   jx, jy, j_cell_w, j_cell_h)
+                   jx, jy, j_cell_w, j_cell_h,
+                   set_color=set_color)
         _text(julia_group, ns, col_cx, jy + thumb_h_mm + 5 * h_scale,
               label, **label_style)
 
@@ -537,7 +545,7 @@ def generate_poster(resolution=80, max_iter=100,
 
     anno_sep_y = max_bot + 12 * h_scale
     draw_row_separator(anno_group, ns, width_mm, anno_sep_y, w_scale,
-                       opacity="0.5")
+                       opacity="0.5", theme=theme)
 
     anno_y = anno_sep_y + 18 * h_scale
 
@@ -563,6 +571,7 @@ def generate_poster(resolution=80, max_iter=100,
             (_annotation_julia_connection, jc_target[0], jc_target[1]),
         ],
         w_scale,
+        theme=theme,
     )
 
     # --- Second row: educational panels ---
@@ -570,7 +579,7 @@ def generate_poster(resolution=80, max_iter=100,
 
     row2_sep_y = anno_y + 55 * w_scale
     draw_row_separator(edu_group, ns, width_mm, row2_sep_y, w_scale,
-                       opacity="0.35")
+                       opacity="0.35", theme=theme)
 
     row2_y = row2_sep_y + 12 * w_scale
 
@@ -591,6 +600,7 @@ def generate_poster(resolution=80, max_iter=100,
         ),
         designed_by=designed_by,
         designed_for=designed_for,
+        theme=theme,
     )
 
     return svg
@@ -626,6 +636,7 @@ def _generate_from_args(args):
         height_mm=args.height,
         designed_by=args.designed_by,
         designed_for=args.designed_for,
+        theme=args.theme,
     )
 
 

@@ -14,25 +14,82 @@ import xml.etree.ElementTree as ET
 
 
 # ---------------------------------------------------------------------------
-# Style constants
+# Theming system
 # ---------------------------------------------------------------------------
 
-BG_COLOR = "#FFFEF8"                # warm ivory paper
-ACCENT_COLOR = "#8B0000"            # deep museum red
-TITLE_COLOR = "#1C1C1C"             # dark title text
-FOOTER_PRIMARY_COLOR = "#555555"    # footer primary text
-FOOTER_SECONDARY_COLOR = "#777777"  # footer secondary text
+THEMES = {
+    "classic": {
+        "bg_color": "#FFFEF8",           # warm ivory paper
+        "accent_color": "#8B0000",       # deep museum red
+        "title_color": "#1C1C1C",        # dark title text
+        "footer_primary": "#555555",     # footer primary text
+        "footer_secondary": "#777777",   # footer secondary text
+        "text_color": "#1C1C1C",         # general body text
+        "border_color": "#1C1C1C",       # border strokes
+        "content_primary": "#1C1C1C",    # primary visualization ink
+        "content_secondary": "#2E5090",  # secondary visualization ink
+    },
+    "blueprint": {
+        "bg_color": "#0A1628",           # deep cobalt blue
+        "accent_color": "#00BFFF",       # cyan accent
+        "title_color": "#FFFFFF",        # white title
+        "footer_primary": "#8FAADC",     # light blue footer
+        "footer_secondary": "#5B7DB1",   # muted blue footer
+        "text_color": "#E0E8F0",         # off-white text
+        "border_color": "#FFFFFF",       # white border
+        "content_primary": "#E0E8F0",    # light lines on dark bg
+        "content_secondary": "#5BC0EB",  # lighter blue
+    },
+    "chalkboard": {
+        "bg_color": "#2B2B2B",           # charcoal gray
+        "accent_color": "#FFB347",       # amber/yellow accent
+        "title_color": "#F5F5DC",        # off-white title
+        "footer_primary": "#C0B283",     # warm tan footer
+        "footer_secondary": "#8B8B78",   # muted olive footer
+        "text_color": "#F5F5DC",         # off-white text
+        "border_color": "#F5F5DC",       # off-white border
+        "content_primary": "#F5F5DC",    # chalk-white lines
+        "content_secondary": "#A8D8EA",  # soft blue chalk
+    },
+}
 
-SERIF = "Georgia, 'Times New Roman', serif"
+AVAILABLE_THEMES = list(THEMES.keys())
+DEFAULT_THEME = "classic"
+
+
+def get_theme(name=None):
+    """Return the colour dictionary for the named theme.
+
+    Falls back to ``DEFAULT_THEME`` when *name* is ``None`` or not found.
+    """
+    if name is None:
+        name = DEFAULT_THEME
+    return THEMES.get(name, THEMES[DEFAULT_THEME])
+
+
+# ---------------------------------------------------------------------------
+# Style constants (classic defaults — kept for backward compatibility)
+# ---------------------------------------------------------------------------
+
+BG_COLOR = THEMES["classic"]["bg_color"]
+ACCENT_COLOR = THEMES["classic"]["accent_color"]
+TITLE_COLOR = THEMES["classic"]["title_color"]
+FOOTER_PRIMARY_COLOR = THEMES["classic"]["footer_primary"]
+FOOTER_SECONDARY_COLOR = THEMES["classic"]["footer_secondary"]
+
+HEADER_FONT = "'Playfair Display', Georgia, 'Times New Roman', serif"
+BODY_FONT = "'Inter', 'Helvetica Neue', Arial, sans-serif"
+SERIF = HEADER_FONT  # backward-compatible alias
 
 ANNOTATION_STYLE = {
-    "font-family": SERIF,
+    "font-family": BODY_FONT,
     "fill": "#1C1C1C",
 }
 
 CALLOUT_LINE_STYLE = {
     "stroke": "#8B0000",
     "stroke-width": "0.5",
+    "stroke-dasharray": "2,1.5",
     "marker-end": "url(#arrowhead)",
 }
 
@@ -140,26 +197,46 @@ def _multiline_text(parent, ns, x, y, lines, line_height, **extra):
     return text_el
 
 
-def _add_arrow_marker(svg, ns):
+def _add_font_style(svg, ns):
+    """Inject a <style> block that imports web fonts for consistent typography."""
+    style = ET.SubElement(svg, f"{{{ns}}}style")
+    style.text = (
+        "@import url('https://fonts.googleapis.com/css2?"
+        "family=Playfair+Display:ital,wght@0,400;0,700;1,400"
+        "&family=Inter:wght@300;400;500&display=swap');"
+    )
+    return style
+
+
+def _add_arrow_marker(svg, ns, accent_color=None):
+    """Add a minimalist dot marker for callout leader lines.
+
+    Uses a small solid circle instead of the traditional heavy arrowhead,
+    giving an architectural, museum-quality feel.
+    """
+    if accent_color is None:
+        accent_color = ACCENT_COLOR
     defs = ET.SubElement(svg, f"{{{ns}}}defs")
     marker = ET.SubElement(
         defs,
         f"{{{ns}}}marker",
         attrib={
             "id": "arrowhead",
-            "markerWidth": "10",
-            "markerHeight": "7",
-            "refX": "10",
-            "refY": "3.5",
+            "markerWidth": "6",
+            "markerHeight": "6",
+            "refX": "3",
+            "refY": "3",
             "orient": "auto",
         },
     )
     ET.SubElement(
         marker,
-        f"{{{ns}}}polygon",
+        f"{{{ns}}}circle",
         attrib={
-            "points": "0 0, 10 3.5, 0 7",
-            "fill": "#8B0000",
+            "cx": "3",
+            "cy": "3",
+            "r": "2",
+            "fill": accent_color,
         },
     )
     return defs
@@ -170,11 +247,13 @@ def _add_arrow_marker(svg, ns):
 # ---------------------------------------------------------------------------
 
 def draw_poster_header(svg, ns, width_mm, height_mm, w_scale, h_scale,
-                       title, subtitle, designed_by=None, designed_for=None):
+                       title, subtitle, designed_by=None, designed_for=None,
+                       theme=None):
     """Draw title, subtitle, rule, and optional inline credits.
 
     Returns rule_y so the caller can place content below the rule.
     """
+    t = get_theme(theme)
     title_y = height_mm * 0.047
     subtitle_y = height_mm * 0.064
     rule_y = height_mm * 0.074
@@ -182,38 +261,38 @@ def draw_poster_header(svg, ns, width_mm, height_mm, w_scale, h_scale,
     _text(
         svg, ns, width_mm / 2, title_y, title,
         **{
-            "font-family": SERIF,
+            "font-family": HEADER_FONT,
             "font-size": str(round(16 * w_scale, 2)),
-            "fill": TITLE_COLOR,
+            "fill": t["title_color"],
             "text-anchor": "middle",
         },
     )
     _text(
         svg, ns, width_mm / 2, subtitle_y, subtitle,
         **{
-            "font-family": SERIF,
+            "font-family": BODY_FONT,
             "font-size": str(round(6 * w_scale, 2)),
-            "fill": ACCENT_COLOR,
+            "fill": t["accent_color"],
             "text-anchor": "middle",
         },
     )
 
-    # Thin red rule beneath the header
+    # Thin rule beneath the header
     _line(
         svg, ns,
         width_mm * 0.15, rule_y,
         width_mm * 0.85, rule_y,
-        stroke=ACCENT_COLOR,
+        stroke=t["accent_color"],
         **{"stroke-width": str(round(0.4 * w_scale, 3))},
     )
 
     # Header credits flanking the rule
     header_credit_y = rule_y + 5 * h_scale
     header_credit_style = {
-        "font-family": SERIF,
+        "font-family": BODY_FONT,
         "font-size": str(round(3.8 * w_scale, 2)),
         "font-style": "italic",
-        "fill": FOOTER_SECONDARY_COLOR,
+        "fill": t["footer_secondary"],
     }
     if designed_by:
         _text(
@@ -235,11 +314,12 @@ def draw_poster_header(svg, ns, width_mm, height_mm, w_scale, h_scale,
 
 def draw_poster_footer(svg, ns, width_mm, height_mm, w_scale, h_scale,
                        primary_line, secondary_line,
-                       designed_by=None, designed_for=None):
+                       designed_by=None, designed_for=None, theme=None):
     """Draw footer text lines and optional credit.
 
     Returns footer_y (the y coordinate of the primary footer line).
     """
+    t = get_theme(theme)
     footer_y = height_mm - 18 * h_scale
     footer_font = round(4 * w_scale, 2)
     footer_font_sm = round(3.5 * w_scale, 2)
@@ -247,18 +327,18 @@ def draw_poster_footer(svg, ns, width_mm, height_mm, w_scale, h_scale,
     _text(
         svg, ns, width_mm / 2, footer_y, primary_line,
         **{
-            "font-family": SERIF,
+            "font-family": BODY_FONT,
             "font-size": str(footer_font),
-            "fill": FOOTER_PRIMARY_COLOR,
+            "fill": t["footer_primary"],
             "text-anchor": "middle",
         },
     )
     _text(
         svg, ns, width_mm / 2, footer_y + 6 * h_scale, secondary_line,
         **{
-            "font-family": SERIF,
+            "font-family": BODY_FONT,
             "font-size": str(footer_font_sm),
-            "fill": FOOTER_SECONDARY_COLOR,
+            "fill": t["footer_secondary"],
             "text-anchor": "middle",
         },
     )
@@ -273,9 +353,9 @@ def draw_poster_footer(svg, ns, width_mm, height_mm, w_scale, h_scale,
         _text(
             svg, ns, width_mm / 2, footer_y + 12 * h_scale, credit_text,
             **{
-                "font-family": SERIF,
+                "font-family": BODY_FONT,
                 "font-size": str(footer_font_sm),
-                "fill": FOOTER_SECONDARY_COLOR,
+                "fill": t["footer_secondary"],
                 "font-style": "italic",
                 "text-anchor": "middle",
             },
@@ -284,29 +364,32 @@ def draw_poster_footer(svg, ns, width_mm, height_mm, w_scale, h_scale,
     return footer_y
 
 
-def draw_poster_border(svg, ns, width_mm, height_mm, w_scale):
+def draw_poster_border(svg, ns, width_mm, height_mm, w_scale, theme=None):
     """Draw the decorative double border (outer + inner rect)."""
+    t = get_theme(theme)
     border_w = round(0.8 * w_scale, 3)
     border_w_inner = round(0.2 * w_scale, 3)
     _rect(
         svg, ns, 4, 4, width_mm - 8, height_mm - 8,
-        fill="none", stroke=TITLE_COLOR,
+        fill="none", stroke=t["border_color"],
         **{"stroke-width": str(border_w)},
     )
     _rect(
         svg, ns, 7, 7, width_mm - 14, height_mm - 14,
-        fill="none", stroke=TITLE_COLOR,
+        fill="none", stroke=t["border_color"],
         **{"stroke-width": str(border_w_inner)},
     )
 
 
-def draw_row_separator(parent, ns, width_mm, y, w_scale, opacity="0.5"):
+def draw_row_separator(parent, ns, width_mm, y, w_scale, opacity="0.5",
+                       theme=None):
     """Draw a full-width separator line at y."""
+    t = get_theme(theme)
     _line(
         parent, ns,
         width_mm * 0.15, y,
         width_mm * 0.85, y,
-        stroke=ACCENT_COLOR,
+        stroke=t["accent_color"],
         **{"stroke-width": str(round(0.3 * w_scale, 3)), "opacity": opacity},
     )
 
@@ -330,17 +413,18 @@ def assign_annotations_no_crossing(annotations):
     return sorted(annotations, key=lambda a: a[1])
 
 
-def draw_annotation_row(parent, ns, anno_y, col_centers, annotations, scale):
+def draw_annotation_row(parent, ns, anno_y, col_centers, annotations, scale,
+                        theme=None):
     """Draw annotation callouts in order, ensuring no arrows cross.
 
     col_centers: sorted list of 3 column-centre x values
     annotations: list of 3 (callable, target_x, target_y) tuples
-    Each callable has signature: func(parent, ns, target_x, target_y, col_cx, anno_y, scale)
+    Each callable has signature: func(parent, ns, target_x, target_y, col_cx, anno_y, scale, theme=None)
     """
     for (func, tx, ty), col_cx in zip(
         assign_annotations_no_crossing(annotations), col_centers
     ):
-        func(parent, ns, tx, ty, col_cx, anno_y, scale)
+        func(parent, ns, tx, ty, col_cx, anno_y, scale, theme=theme)
 
 
 # ---------------------------------------------------------------------------
@@ -402,7 +486,7 @@ def write_poster(svg_root, fmt, filepath, dpi=150):
 # ---------------------------------------------------------------------------
 
 def add_common_poster_args(parser):
-    """Add --output, --format, --dpi, --width, --height, --designed-by, --designed-for."""
+    """Add --output, --format, --dpi, --width, --height, --theme, --designed-by, --designed-for."""
     parser.add_argument(
         "--output", type=str, default=None,
         help="Output file path.",
@@ -424,6 +508,14 @@ def add_common_poster_args(parser):
         help=f"Poster height in mm (default: {BASE_HEIGHT_MM}, A2).",
     )
     parser.add_argument(
+        "--theme", type=str, default=DEFAULT_THEME,
+        choices=AVAILABLE_THEMES,
+        help=(
+            f"Color theme (default: {DEFAULT_THEME}). "
+            f"Choices: {', '.join(AVAILABLE_THEMES)}."
+        ),
+    )
+    parser.add_argument(
         "--designed-by", type=str, default=None, dest="designed_by",
         help="Designer credit, e.g. 'Alice and Bob'.",
     )
@@ -439,25 +531,31 @@ def add_common_poster_args(parser):
 
 def build_poster_scaffold(title, subtitle, width_mm=BASE_WIDTH_MM,
                           height_mm=BASE_HEIGHT_MM, designed_by=None,
-                          designed_for=None):
+                          designed_for=None, theme=None):
     """Set up common poster elements and return computed layout values.
 
     Creates the SVG root, background, header (title/subtitle/rule/credits),
-    and arrow marker.  Returns a dict with all the values a poster-specific
-    ``generate_poster`` function needs to place its unique content.
+    font style block, and callout marker.  Returns a dict with all the
+    values a poster-specific ``generate_poster`` function needs to place
+    its unique content.
 
     Returns
     -------
     dict
         Keys: ``svg``, ``ns``, ``w_scale``, ``h_scale``, ``rule_y``,
-        ``width_mm``, ``height_mm``, ``designed_by``, ``designed_for``.
+        ``width_mm``, ``height_mm``, ``designed_by``, ``designed_for``,
+        ``theme``.
     """
+    t = get_theme(theme)
     svg, ns = _svg_root(width_mm, height_mm)
 
     w_scale = width_mm / BASE_WIDTH_MM
     h_scale = height_mm / BASE_HEIGHT_MM
 
-    _rect(svg, ns, 0, 0, width_mm, height_mm, fill=BG_COLOR)
+    # Font embedding
+    _add_font_style(svg, ns)
+
+    _rect(svg, ns, 0, 0, width_mm, height_mm, fill=t["bg_color"])
 
     rule_y = draw_poster_header(
         svg, ns, width_mm, height_mm, w_scale, h_scale,
@@ -465,9 +563,10 @@ def build_poster_scaffold(title, subtitle, width_mm=BASE_WIDTH_MM,
         subtitle=subtitle,
         designed_by=designed_by,
         designed_for=designed_for,
+        theme=theme,
     )
 
-    _add_arrow_marker(svg, ns)
+    _add_arrow_marker(svg, ns, accent_color=t["accent_color"])
 
     return {
         "svg": svg,
@@ -479,6 +578,7 @@ def build_poster_scaffold(title, subtitle, width_mm=BASE_WIDTH_MM,
         "height_mm": height_mm,
         "designed_by": designed_by,
         "designed_for": designed_for,
+        "theme": theme,
     }
 
 
@@ -515,7 +615,7 @@ def content_area(rule_y, width_mm, height_mm, margin_frac=0.10):
 
 def finalize_poster(svg, ns, width_mm, height_mm, w_scale, h_scale,
                     primary_line, secondary_line,
-                    designed_by=None, designed_for=None):
+                    designed_by=None, designed_for=None, theme=None):
     """Draw the footer and border — the common closing of every poster."""
     draw_poster_footer(
         svg, ns, width_mm, height_mm, w_scale, h_scale,
@@ -523,8 +623,9 @@ def finalize_poster(svg, ns, width_mm, height_mm, w_scale, h_scale,
         secondary_line=secondary_line,
         designed_by=designed_by,
         designed_for=designed_for,
+        theme=theme,
     )
-    draw_poster_border(svg, ns, width_mm, height_mm, w_scale)
+    draw_poster_border(svg, ns, width_mm, height_mm, w_scale, theme=theme)
 
 
 # ---------------------------------------------------------------------------
@@ -532,7 +633,7 @@ def finalize_poster(svg, ns, width_mm, height_mm, w_scale, h_scale,
 # ---------------------------------------------------------------------------
 
 def draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
-                           title, scale):
+                           title, scale, theme=None):
     """Draw the common annotation callout elements.
 
     Creates a ``<g>`` group, draws the arrow line from the callout origin
@@ -540,25 +641,42 @@ def draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
 
     Returns the group element so the caller can append body content.
     """
+    t = get_theme(theme)
+    callout = {
+        "stroke": t["accent_color"],
+        "stroke-width": "0.5",
+        "stroke-dasharray": "2,1.5",
+        "marker-end": "url(#arrowhead)",
+    }
+    anno_style = {
+        "font-family": BODY_FONT,
+        "fill": t["text_color"],
+    }
+
     g = _group(parent, ns)
 
     arrow_y = anno_y - 8 * scale
-    _line(g, ns, col_cx, arrow_y, target_x, target_y, **CALLOUT_LINE_STYLE)
-    _circle(g, ns, col_cx, arrow_y, 1 * scale, fill=ACCENT_COLOR)
+    _line(g, ns, col_cx, arrow_y, target_x, target_y, **callout)
+    _circle(g, ns, col_cx, arrow_y, 1 * scale, fill=t["accent_color"])
 
     _text(g, ns, col_cx, anno_y + 2 * scale, title,
-          **{**ANNOTATION_STYLE, "font-size": str(round(5 * scale, 2)),
-             "fill": ACCENT_COLOR, "text-anchor": "middle"})
+          **{**anno_style, "font-size": str(round(5 * scale, 2)),
+             "fill": t["accent_color"], "text-anchor": "middle"})
 
     return g
 
 
-def draw_annotation_body(g, ns, col_cx, anno_y, lines, scale):
+def draw_annotation_body(g, ns, col_cx, anno_y, lines, scale, theme=None):
     """Draw the common annotation body text (multiline, below the title)."""
+    t = get_theme(theme)
+    anno_style = {
+        "font-family": BODY_FONT,
+        "fill": t["text_color"],
+    }
     _multiline_text(
         g, ns, col_cx, anno_y + 9 * scale,
         lines, line_height=5 * scale,
-        **{**ANNOTATION_STYLE, "font-size": str(round(3.8 * scale, 2)),
+        **{**anno_style, "font-size": str(round(3.8 * scale, 2)),
            "text-anchor": "middle"},
     )
 
