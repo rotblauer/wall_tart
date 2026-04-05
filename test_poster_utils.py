@@ -443,7 +443,8 @@ class TestScaffoldTheme:
 
     def test_scaffold_default_theme(self):
         sc = build_poster_scaffold("T", "S")
-        assert sc["theme"] is None  # defaults to None, get_theme resolves
+        # Scaffold stores None; get_theme(None) resolves to DEFAULT_THEME
+        assert sc["theme"] is None
 
     def test_scaffold_blueprint_uses_blue_bg(self):
         t = get_theme("blueprint")
