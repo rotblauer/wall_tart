@@ -231,7 +231,11 @@ def _annotation_two_wings(parent, ns, target_x, target_y,
 
 def _annotation_infinite_complexity(parent, ns, target_x, target_y,
                                      col_cx, anno_y, scale=1, theme=None):
-    """Annotation: the fractal nature of the strange attractor."""
+    """Annotation: the fractal nature of the strange attractor.
+
+    The callout line points to the zoom inset panel (target_x/target_y are
+    set to the panel's centre so the arrow terminates there).
+    """
     g = draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
                                "Infinite Complexity", scale, theme=theme)
     draw_annotation_body(g, ns, col_cx, anno_y, [
@@ -242,6 +246,155 @@ def _annotation_infinite_complexity(parent, ns, target_x, target_y,
         "layers, like pages of a closed book.",
     ], scale, theme=theme)
     return g
+
+
+# ---------------------------------------------------------------------------
+# Zoom inset panel
+# ---------------------------------------------------------------------------
+
+def _draw_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
+                     center_x, center_y, avail_w, avail_h, min_top,
+                     width_mm, attractor_color, theme=None):
+    """Draw a zoom-inset panel highlighting a dense region of the attractor.
+
+    Adds:
+      - a small target bounding box on the main attractor in a dense region,
+      - faint dashed connector lines from the target box corners to the zoom
+        panel corners,
+      - a background-filled zoom panel in the upper-right free area,
+      - high-magnification attractor lines clipped to the panel boundary, and
+      - a subtle border and label on the zoom panel.
+
+    Returns
+    -------
+    tuple[float, float]
+        ``(cx, cy)`` of the zoom panel centre — use this as the pointer
+        target for the 'Infinite Complexity' annotation.
+    """
+    t = get_theme(theme)
+    border_color = t["border_color"]
+    bg_color = t["bg_color"]
+
+    # --- Source (target) box in poster space ---
+    # Centre on a dense spiral band of the right wing of the projected attractor.
+    # The right-wing fixed-point projects to roughly (+13 % avail_w, +12 % avail_h)
+    # relative to the attractor centre, so this lands in a dense layered region.
+    src_cx = center_x + avail_w * 0.13    # right of attractor centre
+    src_cy = center_y + avail_h * 0.12    # SVG y increases downward; positive
+                                           # offset → below attractor centre
+    src_hw = 6.0 * w_scale               # half-width  → 12 mm total
+    src_hh = 6.0 * w_scale               # half-height → 12 mm total
+
+    src_x1, src_y1 = src_cx - src_hw, src_cy - src_hh
+    src_x2, src_y2 = src_cx + src_hw, src_cy + src_hh
+
+    # --- Zoom panel in the upper-right free area ---
+    zoom_w = 58.0 * w_scale
+    zoom_h = 58.0 * w_scale
+    zoom_x = width_mm * 0.85 - zoom_w   # flush with right text margin
+    zoom_y = min_top + 4.0 * h_scale    # just below the header-rule gap
+    zoom_cx = zoom_x + zoom_w / 2
+    zoom_cy = zoom_y + zoom_h / 2
+
+    magnify = zoom_w / (2 * src_hw)     # ≈ 4.8 ×
+
+    # Round to one decimal for display in the label.
+    magnify_label = f"{magnify:.1f}\u00d7 magnified"
+
+    # --- Add clipPath for the zoom panel to <defs> ---
+    defs_el = svg.find(f"{{{ns}}}defs")
+    if defs_el is None:
+        defs_el = ET.SubElement(svg, f"{{{ns}}}defs")
+    clip_id = "zoom_panel_clip"
+    clip_path_el = ET.SubElement(defs_el, f"{{{ns}}}clipPath",
+                                  attrib={"id": clip_id})
+    ET.SubElement(clip_path_el, f"{{{ns}}}rect", attrib={
+        "x": str(round(zoom_x, 4)),
+        "y": str(round(zoom_y, 4)),
+        "width": str(round(zoom_w, 4)),
+        "height": str(round(zoom_h, 4)),
+    })
+
+    # --- Group that holds all zoom-inset elements ---
+    zoom_group = _group(svg, ns, id="zoom_inset")
+
+    # --- Connector lines: source-box corners → zoom-panel corners ---
+    conn_style = {
+        "stroke": border_color,
+        "stroke-width": str(round(0.25 * w_scale, 3)),
+        "stroke-dasharray": "1.5,1.5",
+        "opacity": "0.35",
+    }
+    src_corners = [
+        (src_x1, src_y1), (src_x2, src_y1),
+        (src_x2, src_y2), (src_x1, src_y2),
+    ]
+    zoom_corners = [
+        (zoom_x, zoom_y), (zoom_x + zoom_w, zoom_y),
+        (zoom_x + zoom_w, zoom_y + zoom_h), (zoom_x, zoom_y + zoom_h),
+    ]
+    for (sx, sy), (zx, zy) in zip(src_corners, zoom_corners):
+        _line(zoom_group, ns, sx, sy, zx, zy, **conn_style)
+
+    # --- Zoom panel background (covers underlying attractor lines) ---
+    _rect(zoom_group, ns, zoom_x, zoom_y, zoom_w, zoom_h,
+          fill=bg_color, stroke="none", opacity="0.92")
+
+    # --- Zoomed attractor lines (clipped to the panel) ---
+    # Sample region: extend to 2× the source-box half-dimensions so that
+    # trajectory segments entering/exiting the box are included and smoothly
+    # clipped by the clipPath (total sampled area = 4× source-box area).
+    sample_hw = src_hw * 2.0
+    sample_hh = src_hh * 2.0
+    zoom_lines_g = _group(zoom_group, ns, **{"clip-path": f"url(#{clip_id})"})
+
+    thin_sw = str(round(0.10 * w_scale, 3))
+
+    def _to_zoom(px, py):
+        return (zoom_cx + (px - src_cx) * magnify,
+                zoom_cy + (py - src_cy) * magnify)
+
+    segment = []
+    for px, py in scaled_main:
+        if abs(px - src_cx) <= sample_hw and abs(py - src_cy) <= sample_hh:
+            segment.append(_to_zoom(px, py))
+        else:
+            if len(segment) >= 2:
+                _polyline(zoom_lines_g, ns, segment,
+                          stroke=attractor_color, opacity="0.75",
+                          **{"stroke-width": thin_sw,
+                             "stroke-linejoin": "round",
+                             "stroke-linecap": "round"})
+            segment = []
+    if len(segment) >= 2:
+        _polyline(zoom_lines_g, ns, segment,
+                  stroke=attractor_color, opacity="0.75",
+                  **{"stroke-width": thin_sw,
+                     "stroke-linejoin": "round",
+                     "stroke-linecap": "round"})
+
+    # --- Zoom panel border ---
+    _rect(zoom_group, ns, zoom_x, zoom_y, zoom_w, zoom_h,
+          fill="none", stroke=border_color,
+          **{"stroke-width": str(round(0.5 * w_scale, 3))})
+
+    # --- Subtle label in bottom of zoom panel ---
+    _text(zoom_group, ns, zoom_cx, zoom_y + zoom_h - 3.5 * h_scale,
+          magnify_label,
+          **{**ANNOTATION_STYLE,
+             "fill": border_color,
+             "font-size": str(round(2.8 * w_scale, 2)),
+             "text-anchor": "middle",
+             "opacity": "0.55"})
+
+    # --- Source (target) box on the main attractor ---
+    _rect(zoom_group, ns, src_x1, src_y1, 2 * src_hw, 2 * src_hh,
+          fill=border_color,
+          **{"fill-opacity": "0.07",
+             "stroke": border_color,
+             "stroke-width": str(round(0.35 * w_scale, 3))})
+
+    return zoom_cx, zoom_cy
 
 
 # ---------------------------------------------------------------------------
@@ -492,6 +645,13 @@ def generate_poster(steps=200000, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_
                      "stroke-linejoin": "round",
                      "stroke-linecap": "round"})
 
+    # --- Zoom inset panel (drawn before annotations so it sits in the right layer) ---
+    zoom_target_x, zoom_target_y = _draw_zoom_inset(
+        svg, ns, scaled_main, w_scale, h_scale,
+        center_x, center_y, avail_w, avail_h, min_top,
+        width_mm, attractor_color, theme=theme,
+    )
+
     # --- Annotations ---
     anno_group = _group(svg, ns, id="annotations")
 
@@ -521,16 +681,14 @@ def generate_poster(steps=200000, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_
     wing_target_x = scaled_main[left_idx][0]
     wing_target_y = scaled_main[left_idx][1]
 
-    dense_target_x = center_x
-    dense_target_y = center_y + avail_h * 0.15
-
+    # 'Infinite Complexity' now points to the zoom inset panel centre
     draw_annotation_row(
         anno_group, ns, anno_y,
         [col1_cx, col2_cx, col3_cx],
         [
             (_annotation_butterfly_effect, be_target_x, be_target_y),
             (_annotation_two_wings, wing_target_x, wing_target_y),
-            (_annotation_infinite_complexity, dense_target_x, dense_target_y),
+            (_annotation_infinite_complexity, zoom_target_x, zoom_target_y),
         ],
         w_scale,
         theme=theme,
