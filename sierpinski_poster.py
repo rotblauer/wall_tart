@@ -196,21 +196,20 @@ CALLOUT_LINE_STYLE = {
 
 
 def _annotation_self_similarity(parent, ns, target_x, target_y,
-                                col_x, anno_y, scale=1):
+                                col_cx, anno_y, scale=1):
     """Annotation: self-similarity callout (below the fractal)."""
     g = _group(parent, ns)
 
     # Arrow from above the title up to the fractal target
-    arrow_x = col_x + 25 * scale
     arrow_y = anno_y - 8 * scale
-    _line(g, ns, arrow_x, arrow_y, target_x, target_y,
+    _line(g, ns, col_cx, arrow_y, target_x, target_y,
           **CALLOUT_LINE_STYLE)
-    _circle(g, ns, arrow_x, arrow_y, 1 * scale, fill=ACCENT_COLOR)
+    _circle(g, ns, col_cx, arrow_y, 1 * scale, fill=ACCENT_COLOR)
 
     # Title
-    _text(g, ns, col_x, anno_y + 2 * scale, "Self-Similarity",
+    _text(g, ns, col_cx, anno_y + 2 * scale, "Self-Similarity",
           **{**ANNOTATION_STYLE, "font-size": str(round(5 * scale, 2)),
-             "fill": ACCENT_COLOR})
+             "fill": ACCENT_COLOR, "text-anchor": "middle"})
 
     # Body text
     lines = [
@@ -220,29 +219,29 @@ def _annotation_self_similarity(parent, ns, target_x, target_y,
         "repeats at every scale, forever.",
     ]
     _multiline_text(
-        g, ns, col_x, anno_y + 9 * scale,
+        g, ns, col_cx, anno_y + 9 * scale,
         lines, line_height=5 * scale,
-        **{**ANNOTATION_STYLE, "font-size": str(round(3.8 * scale, 2))},
+        **{**ANNOTATION_STYLE, "font-size": str(round(3.8 * scale, 2)),
+           "text-anchor": "middle"},
     )
     return g
 
 
 def _annotation_recursion(parent, ns, target_x, target_y,
-                           col_x, anno_y, scale=1):
+                           col_cx, anno_y, scale=1):
     """Annotation: recursion callout with step diagram (below the fractal)."""
     g = _group(parent, ns)
 
     # Arrow from above the title up to the fractal target
-    arrow_x = col_x + 25 * scale
     arrow_y = anno_y - 8 * scale
-    _line(g, ns, arrow_x, arrow_y, target_x, target_y,
+    _line(g, ns, col_cx, arrow_y, target_x, target_y,
           **CALLOUT_LINE_STYLE)
-    _circle(g, ns, arrow_x, arrow_y, 1 * scale, fill=ACCENT_COLOR)
+    _circle(g, ns, col_cx, arrow_y, 1 * scale, fill=ACCENT_COLOR)
 
     # Title
-    _text(g, ns, col_x, anno_y + 2 * scale, "Recursion",
+    _text(g, ns, col_cx, anno_y + 2 * scale, "Recursion",
           **{**ANNOTATION_STYLE, "font-size": str(round(5 * scale, 2)),
-             "fill": ACCENT_COLOR})
+             "fill": ACCENT_COLOR, "text-anchor": "middle"})
 
     # Body text
     lines = [
@@ -251,21 +250,23 @@ def _annotation_recursion(parent, ns, target_x, target_y,
         "Repeat on each copy \u2014 that\u2019s recursion!",
     ]
     _multiline_text(
-        g, ns, col_x, anno_y + 9 * scale,
+        g, ns, col_cx, anno_y + 9 * scale,
         lines, line_height=5 * scale,
-        **{**ANNOTATION_STYLE, "font-size": str(round(3.8 * scale, 2))},
+        **{**ANNOTATION_STYLE, "font-size": str(round(3.8 * scale, 2)),
+           "text-anchor": "middle"},
     )
 
-    # Mini step diagram: 3 tiny triangles showing depth 0, 1, 2
+    # Mini step diagram: 3 tiny triangles showing depth 0, 1, 2 — centred at col_cx
     mini_y = anno_y + 32 * scale
     for i, d in enumerate([0, 1, 2]):
-        mini_cx = col_x + (12 + i * 22) * scale
+        mini_cx = col_cx + (-22 + i * 22) * scale
         side = 14 * scale
         verts = equilateral_triangle_vertices(mini_cx, mini_y, side)
         for tri in sierpinski_triangles(verts, d):
             _polygon(g, ns, tri, fill=TRIANGLE_COLOR, opacity="0.85")
-        _text(g, ns, mini_cx - 4 * scale, mini_y + 13 * scale, f"depth {d}",
-              **{**ANNOTATION_STYLE, "font-size": str(round(3 * scale, 2))})
+        _text(g, ns, mini_cx, mini_y + 13 * scale, f"depth {d}",
+              **{**ANNOTATION_STYLE, "font-size": str(round(3 * scale, 2)),
+                 "text-anchor": "middle"})
         if i < 2:
             _text(g, ns, mini_cx + 8 * scale, mini_y, "\u2192",
                   **{**ANNOTATION_STYLE, "font-size": str(round(5 * scale, 2))})
@@ -274,23 +275,22 @@ def _annotation_recursion(parent, ns, target_x, target_y,
 
 
 def _annotation_dimension(parent, ns, target_x, target_y,
-                           col_x, anno_y, scale=1):
+                           col_cx, anno_y, scale=1):
     """Annotation: fractional (Hausdorff) dimension callout (below fractal)."""
     g = _group(parent, ns)
 
     # Arrow from above the title up to the fractal target
-    arrow_x = col_x + 25 * scale
     arrow_y = anno_y - 8 * scale
-    _line(g, ns, arrow_x, arrow_y, target_x, target_y,
+    _line(g, ns, col_cx, arrow_y, target_x, target_y,
           **CALLOUT_LINE_STYLE)
-    _circle(g, ns, arrow_x, arrow_y, 1 * scale, fill=ACCENT_COLOR)
+    _circle(g, ns, col_cx, arrow_y, 1 * scale, fill=ACCENT_COLOR)
 
     dim_val = f"{math.log(3) / math.log(2):.4f}"
 
     # Title
-    _text(g, ns, col_x, anno_y + 2 * scale, "Fractional Dimension",
+    _text(g, ns, col_cx, anno_y + 2 * scale, "Fractional Dimension",
           **{**ANNOTATION_STYLE, "font-size": str(round(5 * scale, 2)),
-             "fill": ACCENT_COLOR})
+             "fill": ACCENT_COLOR, "text-anchor": "middle"})
 
     # Body text
     lines = [
@@ -301,9 +301,10 @@ def _annotation_dimension(parent, ns, target_x, target_y,
         "somewhere magically in between.",
     ]
     _multiline_text(
-        g, ns, col_x, anno_y + 9 * scale,
+        g, ns, col_cx, anno_y + 9 * scale,
         lines, line_height=5 * scale,
-        **{**ANNOTATION_STYLE, "font-size": str(round(3.8 * scale, 2))},
+        **{**ANNOTATION_STYLE, "font-size": str(round(3.8 * scale, 2)),
+           "text-anchor": "middle"},
     )
     return g
 
@@ -312,14 +313,14 @@ def _annotation_dimension(parent, ns, target_x, target_y,
 # Educational panel builders (second row)
 # ---------------------------------------------------------------------------
 
-def _panel_pascal(parent, ns, col_x, anno_y, scale=1):
+def _panel_pascal(parent, ns, col_cx, anno_y, scale=1):
     """Panel: Pascal\u2019s triangle mod 2 \u2192 Sierpi\u0144ski pattern."""
     g = _group(parent, ns)
 
-    _text(g, ns, col_x, anno_y + 2 * scale,
+    _text(g, ns, col_cx, anno_y + 2 * scale,
           "Hidden in Pascal\u2019s Triangle",
           **{**ANNOTATION_STYLE, "font-size": str(round(5 * scale, 2)),
-             "fill": ACCENT_COLOR})
+             "fill": ACCENT_COLOR, "text-anchor": "middle"})
 
     lines = [
         "Color the odd entries of Pascal\u2019s",
@@ -328,17 +329,18 @@ def _panel_pascal(parent, ns, col_x, anno_y, scale=1):
         "number theory and geometry.",
     ]
     _multiline_text(
-        g, ns, col_x, anno_y + 9 * scale,
+        g, ns, col_cx, anno_y + 9 * scale,
         lines, line_height=5 * scale,
-        **{**ANNOTATION_STYLE, "font-size": str(round(3.8 * scale, 2))},
+        **{**ANNOTATION_STYLE, "font-size": str(round(3.8 * scale, 2)),
+           "text-anchor": "middle"},
     )
 
-    # Pascal's triangle mod 2 — rows of small squares
+    # Pascal's triangle mod 2 — rows of small squares, centred at col_cx
     cell = 3.2 * scale
     gap = 0.4 * scale
     step = cell + gap
     base_y = anno_y + 33 * scale
-    center_x = col_x + 28 * scale
+    center_x = col_cx
     num_rows = 8
 
     for n in range(num_rows):
@@ -358,13 +360,13 @@ def _panel_pascal(parent, ns, col_x, anno_y, scale=1):
     return g
 
 
-def _panel_chaos_game(parent, ns, col_x, anno_y, scale=1):
+def _panel_chaos_game(parent, ns, col_cx, anno_y, scale=1):
     """Panel: the chaos game algorithm with dot demonstration."""
     g = _group(parent, ns)
 
-    _text(g, ns, col_x, anno_y + 2 * scale, "The Chaos Game",
+    _text(g, ns, col_cx, anno_y + 2 * scale, "The Chaos Game",
           **{**ANNOTATION_STYLE, "font-size": str(round(5 * scale, 2)),
-             "fill": ACCENT_COLOR})
+             "fill": ACCENT_COLOR, "text-anchor": "middle"})
 
     lines = [
         "Pick any starting point inside the",
@@ -373,13 +375,14 @@ def _panel_chaos_game(parent, ns, col_x, anno_y, scale=1):
         "The dots trace the Sierpi\u0144ski triangle!",
     ]
     _multiline_text(
-        g, ns, col_x, anno_y + 9 * scale,
+        g, ns, col_cx, anno_y + 9 * scale,
         lines, line_height=5 * scale,
-        **{**ANNOTATION_STYLE, "font-size": str(round(3.8 * scale, 2))},
+        **{**ANNOTATION_STYLE, "font-size": str(round(3.8 * scale, 2)),
+           "text-anchor": "middle"},
     )
 
-    # Small demonstration: chaos game scatter dots
-    tri_cx = col_x + 28 * scale
+    # Small demonstration: chaos game scatter dots centred at col_cx
+    tri_cx = col_cx
     tri_cy = anno_y + 48 * scale
     tri_side = 32 * scale
     demo_verts = equilateral_triangle_vertices(tri_cx, tri_cy, tri_side)
@@ -414,13 +417,13 @@ def _panel_chaos_game(parent, ns, col_x, anno_y, scale=1):
     return g
 
 
-def _panel_area_paradox(parent, ns, col_x, anno_y, scale=1):
+def _panel_area_paradox(parent, ns, col_cx, anno_y, scale=1):
     """Panel: the area/perimeter paradox with formula and visual."""
     g = _group(parent, ns)
 
-    _text(g, ns, col_x, anno_y + 2 * scale, "The Area Paradox",
+    _text(g, ns, col_cx, anno_y + 2 * scale, "The Area Paradox",
           **{**ANNOTATION_STYLE, "font-size": str(round(5 * scale, 2)),
-             "fill": ACCENT_COLOR})
+             "fill": ACCENT_COLOR, "text-anchor": "middle"})
 
     lines = [
         "At each step, \u00BC of remaining area",
@@ -430,32 +433,34 @@ def _panel_area_paradox(parent, ns, col_x, anno_y, scale=1):
         "without limit!",
     ]
     _multiline_text(
-        g, ns, col_x, anno_y + 9 * scale,
+        g, ns, col_cx, anno_y + 9 * scale,
         lines, line_height=5 * scale,
-        **{**ANNOTATION_STYLE, "font-size": str(round(3.8 * scale, 2))},
+        **{**ANNOTATION_STYLE, "font-size": str(round(3.8 * scale, 2)),
+           "text-anchor": "middle"},
     )
 
-    # Formulas
+    # Formulas — centred at col_cx
     formula_y = anno_y + 40 * scale
-    _text(g, ns, col_x + 4 * scale, formula_y,
+    _text(g, ns, col_cx, formula_y,
           "Area(n) = (\u00BE)\u207F \u2192 0",
           **{**ANNOTATION_STYLE, "font-size": str(round(4.2 * scale, 2)),
-             "font-style": "italic"})
-    _text(g, ns, col_x + 4 * scale, formula_y + 7 * scale,
+             "font-style": "italic", "text-anchor": "middle"})
+    _text(g, ns, col_cx, formula_y + 7 * scale,
           "Perimeter(n) \u2192 \u221E",
           **{**ANNOTATION_STYLE, "font-size": str(round(4.2 * scale, 2)),
-             "font-style": "italic"})
+             "font-style": "italic", "text-anchor": "middle"})
 
-    # Visual: three stages showing decreasing filled area
+    # Visual: three stages showing decreasing filled area — centred at col_cx
     demo_y = anno_y + 58 * scale
     for i, (d, label) in enumerate([(0, "n=0"), (1, "n=1"), (3, "n=3")]):
-        cx = col_x + (8 + i * 18) * scale
+        cx = col_cx + (-18 + i * 18) * scale
         side = 12 * scale
         verts = equilateral_triangle_vertices(cx, demo_y, side)
         for tri in sierpinski_triangles(verts, d):
             _polygon(g, ns, tri, fill=TRIANGLE_COLOR, opacity="0.8")
-        _text(g, ns, cx - 3 * scale, demo_y + 12 * scale, label,
-              **{**ANNOTATION_STYLE, "font-size": str(round(2.8 * scale, 2))})
+        _text(g, ns, cx, demo_y + 12 * scale, label,
+              **{**ANNOTATION_STYLE, "font-size": str(round(2.8 * scale, 2)),
+                 "text-anchor": "middle"})
 
     return g
 
@@ -597,11 +602,11 @@ def generate_poster(depth=7, width_mm=420, height_mm=594,
 
     anno_y = anno_sep_y + 18 * h_scale  # annotation text starts here
 
-    # Three-column x positions — anchored so arrow origins land at ~10%, ~50%,
-    # ~90% of width (all arrow_x = col_x + 25*scale, w_scale = width_mm/420).
-    col1_x = width_mm * 0.04
-    col2_x = width_mm * 0.44
-    col3_x = width_mm * 0.84
+    # Three-column symmetric layout — column centres at 15 %, 50 %, 85 % of
+    # width so both outer columns are equidistant from their nearest border.
+    col1_cx = width_mm * 0.15
+    col2_cx = width_mm * 0.50
+    col3_cx = width_mm * 0.85
 
     # Compute sub-triangle midpoints for precise arrow targets
     ab = midpoint(vertices[0], vertices[1])
@@ -613,21 +618,21 @@ def generate_poster(depth=7, width_mm=420, height_mm=594,
     ss_target_y = (vertices[0][1] + ab[1] + ac[1]) / 3
     _annotation_self_similarity(anno_group, ns,
                                 ss_target_x, ss_target_y,
-                                col1_x, anno_y, w_scale)
+                                col1_cx, anno_y, w_scale)
 
     # Recursion → centroid of removed centre triangle
     rec_target_x = (ab[0] + ac[0] + bc[0]) / 3
     rec_target_y = (ab[1] + ac[1] + bc[1]) / 3
     _annotation_recursion(anno_group, ns,
                           rec_target_x, rec_target_y,
-                          col2_x, anno_y, w_scale)
+                          col2_cx, anno_y, w_scale)
 
     # Dimension → centroid of bottom-right sub-triangle
     dim_target_x = (ac[0] + bc[0] + vertices[2][0]) / 3
     dim_target_y = (ac[1] + bc[1] + vertices[2][1]) / 3
     _annotation_dimension(anno_group, ns,
                           dim_target_x, dim_target_y,
-                          col3_x, anno_y, w_scale)
+                          col3_cx, anno_y, w_scale)
 
     # --- Second row: educational connections ---
     edu_group = _group(svg, ns, id="educational")
@@ -644,9 +649,9 @@ def generate_poster(depth=7, width_mm=420, height_mm=594,
 
     row2_y = row2_sep_y + 12 * w_scale
 
-    _panel_pascal(edu_group, ns, col1_x, row2_y, w_scale)
-    _panel_chaos_game(edu_group, ns, col2_x, row2_y, w_scale)
-    _panel_area_paradox(edu_group, ns, col3_x, row2_y, w_scale)
+    _panel_pascal(edu_group, ns, col1_cx, row2_y, w_scale)
+    _panel_chaos_game(edu_group, ns, col2_cx, row2_y, w_scale)
+    _panel_area_paradox(edu_group, ns, col3_cx, row2_y, w_scale)
 
     # --- Footer ---
     footer_y = height_mm - 18 * h_scale
