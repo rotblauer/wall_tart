@@ -244,6 +244,60 @@ class TestGeneratePoster:
         polylines = attractor.findall(f"{{{ns}}}polyline")
         assert len(polylines) >= 2
 
+    def test_zoom_inset_group_present(self):
+        """A 'zoom_inset' group exists in the SVG."""
+        svg = generate_poster(steps=1000, width_mm=200, height_mm=300)
+        ns = "http://www.w3.org/2000/svg"
+        zoom = svg.find(f".//{{{ns}}}g[@id='zoom_inset']")
+        assert zoom is not None
+
+    def test_zoom_inset_clip_path_present(self):
+        """A clipPath with id 'zoom_panel_clip' exists in <defs>."""
+        svg = generate_poster(steps=1000, width_mm=200, height_mm=300)
+        ns = "http://www.w3.org/2000/svg"
+        clip = svg.find(f".//{{{ns}}}clipPath[@id='zoom_panel_clip']")
+        assert clip is not None
+        # The clipPath must contain a rect that defines the zoom panel bounds.
+        rect = clip.find(f"{{{ns}}}rect")
+        assert rect is not None
+        assert float(rect.get("width")) > 0
+        assert float(rect.get("height")) > 0
+
+    def test_zoom_inset_connector_lines_present(self):
+        """The zoom_inset group contains exactly 4 dashed connector lines."""
+        svg = generate_poster(steps=1000, width_mm=200, height_mm=300)
+        ns = "http://www.w3.org/2000/svg"
+        zoom = svg.find(f".//{{{ns}}}g[@id='zoom_inset']")
+        lines = zoom.findall(f"{{{ns}}}line")
+        assert len(lines) == 4
+
+    def test_zoom_inset_target_box_present(self):
+        """The zoom_inset group contains the small source target rect."""
+        svg = generate_poster(steps=1000, width_mm=200, height_mm=300)
+        ns = "http://www.w3.org/2000/svg"
+        zoom = svg.find(f".//{{{ns}}}g[@id='zoom_inset']")
+        rects = zoom.findall(f"{{{ns}}}rect")
+        # 3 rects: background, border, source target box
+        assert len(rects) == 3
+
+    def test_zoom_inset_panel_polylines_present(self):
+        """The zoom_inset group contains at least one magnified polyline."""
+        svg = generate_poster(steps=5000, width_mm=200, height_mm=300)
+        ns = "http://www.w3.org/2000/svg"
+        zoom = svg.find(f".//{{{ns}}}g[@id='zoom_inset']")
+        polylines = zoom.findall(f".//{{{ns}}}polyline")
+        assert len(polylines) >= 1
+
+    def test_zoom_inset_all_themes(self):
+        """zoom_inset renders without error for all built-in themes."""
+        from poster_utils import AVAILABLE_THEMES
+        for theme in AVAILABLE_THEMES:
+            svg = generate_poster(steps=1000, width_mm=200, height_mm=300,
+                                  theme=theme)
+            ns = "http://www.w3.org/2000/svg"
+            zoom = svg.find(f".//{{{ns}}}g[@id='zoom_inset']")
+            assert zoom is not None, f"zoom_inset missing for theme '{theme}'"
+
 
 # ---------------------------------------------------------------------------
 # SVG file output
