@@ -1,12 +1,13 @@
 <?xml version='1.0' encoding='utf-8'?>
 <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="420mm" height="594mm" viewBox="0 0 420 594">
+  <style>@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&amp;family=Inter:wght@300;400;500&amp;display=swap');</style>
   <rect x="0" y="0" width="420" height="594" fill="#FFFEF8" />
-  <text x="210.0" y="27.918" font-family="Georgia, 'Times New Roman', serif" font-size="16.0" fill="#1C1C1C" text-anchor="middle">The Mandelbrot Set</text>
-  <text x="210.0" y="38.016" font-family="Georgia, 'Times New Roman', serif" font-size="6.0" fill="#8B0000" text-anchor="middle">Infinite complexity from z² + c</text>
+  <text x="210.0" y="27.918" font-family="'Playfair Display', Georgia, 'Times New Roman', serif" font-size="16.0" fill="#1C1C1C" text-anchor="middle">The Mandelbrot &amp; Julia Sets</text>
+  <text x="210.0" y="38.016" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" font-size="6.0" fill="#8B0000" text-anchor="middle">Infinite complexity from z² + c</text>
   <line x1="63.0" y1="43.955999999999996" x2="357.0" y2="43.955999999999996" stroke="#8B0000" stroke-width="0.4" />
   <defs>
-    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
-      <polygon points="0 0, 10 3.5, 0 7" fill="#8B0000" />
+    <marker id="arrowhead" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+      <circle cx="3" cy="3" r="2" fill="#8B0000" />
     </marker>
   </defs>
   <g id="fractal">
@@ -1011,8 +1012,8 @@
     <rect x="361.2" y="303.69" width="8.9" height="8.9" fill="#00054c" />
     <rect x="369.6" y="303.69" width="8.9" height="8.9" fill="#00054c" />
   </g>
-  <text x="210.0" y="345.52831999999995" font-family="Georgia, 'Times New Roman', serif" font-size="4.0" fill="#555555" font-style="italic" text-anchor="middle">Re(c)</text>
-  <text x="34.0" y="207.09215999999998" font-family="Georgia, 'Times New Roman', serif" font-size="4.0" fill="#555555" font-style="italic" text-anchor="middle" transform="rotate(-90, 34.0, 207.09215999999998)">Im(c)</text>
+  <text x="210.0" y="345.52831999999995" font-family="'Playfair Display', Georgia, 'Times New Roman', serif" font-size="4.0" fill="#555555" font-style="italic" text-anchor="middle">Re(c)</text>
+  <text x="34.0" y="207.09215999999998" font-family="'Playfair Display', Georgia, 'Times New Roman', serif" font-size="4.0" fill="#555555" font-style="italic" text-anchor="middle" transform="rotate(-90, 34.0, 207.09215999999998)">Im(c)</text>
   <g id="julia_sets">
     <rect x="31.5" y="350.53" width="5.35" height="5.54" fill="#000128" />
     <rect x="36.35" y="350.53" width="5.35" height="5.54" fill="#000128" />
@@ -1144,7 +1145,7 @@
     <rect x="79.96" y="395.89" width="5.35" height="5.54" fill="#000128" />
     <rect x="84.81" y="395.89" width="5.35" height="5.54" fill="#000128" />
     <rect x="89.65" y="395.89" width="5.35" height="5.54" fill="#000128" />
-    <text x="63.0" y="405.92832" font-family="Georgia, 'Times New Roman', serif" font-size="3.5" fill="#555555" text-anchor="middle" font-style="italic">c = −0.70 + 0.27i</text>
+    <text x="63.0" y="405.92832" font-family="'Playfair Display', Georgia, 'Times New Roman', serif" font-size="3.5" fill="#555555" text-anchor="middle" font-style="italic">c = −0.70 + 0.27i</text>
     <rect x="178.5" y="350.53" width="5.35" height="5.54" fill="#000128" />
     <rect x="183.35" y="350.53" width="5.35" height="5.54" fill="#000128" />
     <rect x="188.19" y="350.53" width="5.35" height="5.54" fill="#000128" />
@@ -1275,7 +1276,7 @@
     <rect x="226.96" y="395.89" width="5.35" height="5.54" fill="#000128" />
     <rect x="231.81" y="395.89" width="5.35" height="5.54" fill="#000128" />
     <rect x="236.65" y="395.89" width="5.35" height="5.54" fill="#000128" />
-    <text x="210.0" y="405.92832" font-family="Georgia, 'Times New Roman', serif" font-size="3.5" fill="#555555" text-anchor="middle" font-style="italic">c = 0.355 + 0.355i</text>
+    <text x="210.0" y="405.92832" font-family="'Playfair Display', Georgia, 'Times New Roman', serif" font-size="3.5" fill="#555555" text-anchor="middle" font-style="italic">c = 0.355 + 0.355i</text>
     <rect x="325.5" y="350.53" width="5.35" height="5.54" fill="#000128" />
     <rect x="330.35" y="350.53" width="5.35" height="5.54" fill="#000128" />
     <rect x="335.19" y="350.53" width="5.35" height="5.54" fill="#000128" />
@@ -1406,15 +1407,15 @@
     <rect x="373.96" y="395.89" width="5.35" height="5.54" fill="#000128" />
     <rect x="378.81" y="395.89" width="5.35" height="5.54" fill="#000128" />
     <rect x="383.65" y="395.89" width="5.35" height="5.54" fill="#000128" />
-    <text x="357.0" y="405.92832" font-family="Georgia, 'Times New Roman', serif" font-size="3.5" fill="#555555" text-anchor="middle" font-style="italic">c = −0.80 + 0.16i</text>
+    <text x="357.0" y="405.92832" font-family="'Playfair Display', Georgia, 'Times New Roman', serif" font-size="3.5" fill="#555555" text-anchor="middle" font-style="italic">c = −0.80 + 0.16i</text>
   </g>
   <g id="annotations">
     <line x1="63.0" y1="427.79999999999995" x2="357.0" y2="427.79999999999995" stroke="#8B0000" stroke-width="0.3" opacity="0.5" />
     <g>
-      <line x1="63.0" y1="437.79999999999995" x2="113.04" y2="207.09215999999998" stroke="#8B0000" stroke-width="0.5" marker-end="url(#arrowhead)" />
+      <line x1="63.0" y1="437.79999999999995" x2="113.04" y2="207.09215999999998" stroke="#8B0000" stroke-width="0.5" stroke-dasharray="2,1.5" marker-end="url(#arrowhead)" />
       <circle cx="63.0" cy="437.79999999999995" r="1.0" fill="#8B0000" />
-      <text x="63.0" y="447.79999999999995" font-family="Georgia, 'Times New Roman', serif" fill="#8B0000" font-size="5.0" text-anchor="middle">Infinite Self-Similarity</text>
-      <text x="63.0" y="454.79999999999995" font-family="Georgia, 'Times New Roman', serif" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
+      <text x="63.0" y="447.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#8B0000" font-size="5.0" text-anchor="middle">Infinite Self-Similarity</text>
+      <text x="63.0" y="454.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
         <tspan x="63.0" dy="0">Zoom into the boundary of the</tspan>
         <tspan x="63.0" dy="5.0">Mandelbrot set and you will find</tspan>
         <tspan x="63.0" dy="5.0">miniature copies of the whole set,</tspan>
@@ -1424,10 +1425,10 @@
       </text>
     </g>
     <g>
-      <line x1="210.0" y1="437.79999999999995" x2="234.0" y2="207.09215999999998" stroke="#8B0000" stroke-width="0.5" marker-end="url(#arrowhead)" />
+      <line x1="210.0" y1="437.79999999999995" x2="234.0" y2="207.09215999999998" stroke="#8B0000" stroke-width="0.5" stroke-dasharray="2,1.5" marker-end="url(#arrowhead)" />
       <circle cx="210.0" cy="437.79999999999995" r="1.0" fill="#8B0000" />
-      <text x="210.0" y="447.79999999999995" font-family="Georgia, 'Times New Roman', serif" fill="#8B0000" font-size="5.0" text-anchor="middle">Julia Set Connection</text>
-      <text x="210.0" y="454.79999999999995" font-family="Georgia, 'Times New Roman', serif" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
+      <text x="210.0" y="447.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#8B0000" font-size="5.0" text-anchor="middle">Julia Set Connection</text>
+      <text x="210.0" y="454.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
         <tspan x="210.0" dy="0">Every point c in the complex plane</tspan>
         <tspan x="210.0" dy="5.0">defines a unique Julia set. Points</tspan>
         <tspan x="210.0" dy="5.0">inside the Mandelbrot set produce</tspan>
@@ -1437,10 +1438,10 @@
       </text>
     </g>
     <g>
-      <line x1="357.0" y1="437.79999999999995" x2="266.64" y2="306.36488727272723" stroke="#8B0000" stroke-width="0.5" marker-end="url(#arrowhead)" />
+      <line x1="357.0" y1="437.79999999999995" x2="266.64" y2="306.36488727272723" stroke="#8B0000" stroke-width="0.5" stroke-dasharray="2,1.5" marker-end="url(#arrowhead)" />
       <circle cx="357.0" cy="437.79999999999995" r="1.0" fill="#8B0000" />
-      <text x="357.0" y="447.79999999999995" font-family="Georgia, 'Times New Roman', serif" fill="#8B0000" font-size="5.0" text-anchor="middle">Escape-Time Colouring</text>
-      <text x="357.0" y="454.79999999999995" font-family="Georgia, 'Times New Roman', serif" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
+      <text x="357.0" y="447.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#8B0000" font-size="5.0" text-anchor="middle">Escape-Time Colouring</text>
+      <text x="357.0" y="454.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
         <tspan x="357.0" dy="0">Each point is coloured by how many</tspan>
         <tspan x="357.0" dy="5.0">iterations it takes for |z| to</tspan>
         <tspan x="357.0" dy="5.0">exceed 2. Points that never escape</tspan>
@@ -1453,25 +1454,25 @@
   <g id="educational">
     <line x1="63.0" y1="500.79999999999995" x2="357.0" y2="500.79999999999995" stroke="#8B0000" stroke-width="0.3" opacity="0.35" />
     <g>
-      <text x="63.0" y="514.8" font-family="Georgia, 'Times New Roman', serif" fill="#8B0000" font-size="5.0" text-anchor="middle">The Equation</text>
-      <text x="63.0" y="521.8" font-family="Georgia, 'Times New Roman', serif" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
+      <text x="63.0" y="514.8" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#8B0000" font-size="5.0" text-anchor="middle">The Equation</text>
+      <text x="63.0" y="521.8" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
         <tspan x="63.0" dy="0">The Mandelbrot set is defined by</tspan>
         <tspan x="63.0" dy="5.0">iterating a single recurrence:</tspan>
       </text>
-      <text x="39.0" y="536.8" font-family="Georgia, 'Times New Roman', serif" fill="#1C1C1C" font-size="4.5" font-style="italic">z<tspan dy="1.2" font-size="3.0">n+1</tspan>
+      <text x="39.0" y="536.8" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#1C1C1C" font-size="4.5" font-style="italic">z<tspan dy="1.2" font-size="3.0">n+1</tspan>
         <tspan dy="-1.2"> = z<tspan dy="1.2" font-size="3.0">n</tspan>
           <tspan dy="-2.4" font-size="3.0">2</tspan>
           <tspan dy="1.2"> + c</tspan>
         </tspan>
       </text>
-      <text x="39.0" y="546.8" font-family="Georgia, 'Times New Roman', serif" fill="#1C1C1C" font-size="3.8">
+      <text x="39.0" y="546.8" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#1C1C1C" font-size="3.8">
         <tspan x="39.0" dy="0">z₀ = 0,   c ∈ ℂ</tspan>
         <tspan x="39.0" dy="5.0">In set if |z| stays ≤ 2 forever</tspan>
       </text>
     </g>
     <g>
-      <text x="210.0" y="514.8" font-family="Georgia, 'Times New Roman', serif" fill="#8B0000" font-size="5.0" text-anchor="middle">The Complex Plane</text>
-      <text x="210.0" y="521.8" font-family="Georgia, 'Times New Roman', serif" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
+      <text x="210.0" y="514.8" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#8B0000" font-size="5.0" text-anchor="middle">The Complex Plane</text>
+      <text x="210.0" y="521.8" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
         <tspan x="210.0" dy="0">The horizontal axis represents the</tspan>
         <tspan x="210.0" dy="5.0">real part of c, and the vertical axis</tspan>
         <tspan x="210.0" dy="5.0">the imaginary part. Each pixel is a</tspan>
@@ -1483,8 +1484,8 @@
       </text>
     </g>
     <g>
-      <text x="357.0" y="514.8" font-family="Georgia, 'Times New Roman', serif" fill="#8B0000" font-size="5.0" text-anchor="middle">Special Regions</text>
-      <text x="357.0" y="521.8" font-family="Georgia, 'Times New Roman', serif" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
+      <text x="357.0" y="514.8" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#8B0000" font-size="5.0" text-anchor="middle">Special Regions</text>
+      <text x="357.0" y="521.8" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
         <tspan x="357.0" dy="0">The large heart-shaped body is the</tspan>
         <tspan x="357.0" dy="5.0">main cardioid, where c produces a</tspan>
         <tspan x="357.0" dy="5.0">single attracting fixed point. The</tspan>
@@ -1496,8 +1497,8 @@
       </text>
     </g>
   </g>
-  <text x="210.0" y="576.0" font-family="Georgia, 'Times New Roman', serif" font-size="4.0" fill="#555555" text-anchor="middle">Discovered by Benoît Mandelbrot in 1980, this set reveals nature’s hidden geometry.</text>
-  <text x="210.0" y="582.0" font-family="Georgia, 'Times New Roman', serif" font-size="3.5" fill="#777777" text-anchor="middle">Generated with 40×25 grid  ·  max 50 iterations  ·  3 Julia set thumbnails at 13×10</text>
+  <text x="210.0" y="576.0" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" font-size="4.0" fill="#555555" text-anchor="middle">Discovered by Benoît Mandelbrot in 1980, this set reveals nature’s hidden geometry.</text>
+  <text x="210.0" y="582.0" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" font-size="3.5" fill="#777777" text-anchor="middle">Generated with 40×25 grid  ·  max 50 iterations  ·  3 Julia set thumbnails at 13×10</text>
   <rect x="4" y="4" width="412" height="586" fill="none" stroke="#1C1C1C" stroke-width="0.8" />
   <rect x="7" y="7" width="406" height="580" fill="none" stroke="#1C1C1C" stroke-width="0.2" />
 </svg>

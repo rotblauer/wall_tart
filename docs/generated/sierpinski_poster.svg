@@ -1,12 +1,13 @@
 <?xml version='1.0' encoding='utf-8'?>
 <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="420mm" height="594mm" viewBox="0 0 420 594">
+  <style>@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&amp;family=Inter:wght@300;400;500&amp;display=swap');</style>
   <rect x="0" y="0" width="420" height="594" fill="#FFFEF8" />
-  <text x="210.0" y="27.918" font-family="Georgia, 'Times New Roman', serif" font-size="16.0" fill="#1C1C1C" text-anchor="middle">The Sierpiński Triangle</text>
-  <text x="210.0" y="38.016" font-family="Georgia, 'Times New Roman', serif" font-size="6.0" fill="#8B0000" text-anchor="middle">A fractal of infinite complexity from a simple rule</text>
+  <text x="210.0" y="27.918" font-family="'Playfair Display', Georgia, 'Times New Roman', serif" font-size="16.0" fill="#1C1C1C" text-anchor="middle">The Sierpiński Triangle</text>
+  <text x="210.0" y="38.016" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" font-size="6.0" fill="#8B0000" text-anchor="middle">A fractal of infinite complexity from a simple rule</text>
   <line x1="63.0" y1="43.955999999999996" x2="357.0" y2="43.955999999999996" stroke="#8B0000" stroke-width="0.4" />
   <defs>
-    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
-      <polygon points="0 0, 10 3.5, 0 7" fill="#8B0000" />
+    <marker id="arrowhead" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+      <circle cx="3" cy="3" r="2" fill="#8B0000" />
     </marker>
   </defs>
   <g id="fractal">
@@ -257,10 +258,10 @@
   <g id="annotations">
     <line x1="63.0" y1="360.0913088879928" x2="357.0" y2="360.0913088879928" stroke="#8B0000" stroke-width="0.3" opacity="0.5" />
     <g>
-      <line x1="63.0" y1="370.0913088879928" x2="210.0" y2="165.80110296266426" stroke="#8B0000" stroke-width="0.5" marker-end="url(#arrowhead)" />
+      <line x1="63.0" y1="370.0913088879928" x2="210.0" y2="165.80110296266426" stroke="#8B0000" stroke-width="0.5" stroke-dasharray="2,1.5" marker-end="url(#arrowhead)" />
       <circle cx="63.0" cy="370.0913088879928" r="1.0" fill="#8B0000" />
-      <text x="63.0" y="380.0913088879928" font-family="Georgia, 'Times New Roman', serif" fill="#8B0000" font-size="5.0" text-anchor="middle">Self-Similarity</text>
-      <text x="63.0" y="387.0913088879928" font-family="Georgia, 'Times New Roman', serif" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
+      <text x="63.0" y="380.0913088879928" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#8B0000" font-size="5.0" text-anchor="middle">Self-Similarity</text>
+      <text x="63.0" y="387.0913088879928" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
         <tspan x="63.0" dy="0">Every smaller triangle is an exact</tspan>
         <tspan x="63.0" dy="5.0">copy of the whole shape. Zoom in</tspan>
         <tspan x="63.0" dy="5.0">anywhere — the same pattern</tspan>
@@ -268,22 +269,22 @@
       </text>
     </g>
     <g>
-      <line x1="210.0" y1="370.0913088879928" x2="210.0" y2="257.9462059253285" stroke="#8B0000" stroke-width="0.5" marker-end="url(#arrowhead)" />
+      <line x1="210.0" y1="370.0913088879928" x2="210.0" y2="257.9462059253285" stroke="#8B0000" stroke-width="0.5" stroke-dasharray="2,1.5" marker-end="url(#arrowhead)" />
       <circle cx="210.0" cy="370.0913088879928" r="1.0" fill="#8B0000" />
-      <text x="210.0" y="380.0913088879928" font-family="Georgia, 'Times New Roman', serif" fill="#8B0000" font-size="5.0" text-anchor="middle">Recursion</text>
-      <text x="210.0" y="387.0913088879928" font-family="Georgia, 'Times New Roman', serif" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
+      <text x="210.0" y="380.0913088879928" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#8B0000" font-size="5.0" text-anchor="middle">Recursion</text>
+      <text x="210.0" y="387.0913088879928" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
         <tspan x="210.0" dy="0">Start with one triangle. Remove the</tspan>
         <tspan x="210.0" dy="5.0">centre to get three smaller copies.</tspan>
         <tspan x="210.0" dy="5.0">Repeat on each copy — that’s recursion!</tspan>
       </text>
       <polygon points="188.0000,402.0084 181.0000,414.1328 195.0000,414.1328" fill="#1C1C1C" opacity="0.85" />
-      <text x="188.0" y="423.0913088879928" font-family="Georgia, 'Times New Roman', serif" fill="#1C1C1C" font-size="3.0" text-anchor="middle">depth 0</text>
-      <text x="196.0" y="410.0913088879928" font-family="Georgia, 'Times New Roman', serif" fill="#1C1C1C" font-size="5.0">→</text>
+      <text x="188.0" y="423.0913088879928" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#1C1C1C" font-size="3.0" text-anchor="middle">depth 0</text>
+      <text x="196.0" y="410.0913088879928" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#1C1C1C" font-size="5.0">→</text>
       <polygon points="213.5000,408.0706 210.0000,414.1328 217.0000,414.1328" fill="#1C1C1C" opacity="0.85" />
       <polygon points="206.5000,408.0706 203.0000,414.1328 210.0000,414.1328" fill="#1C1C1C" opacity="0.85" />
       <polygon points="210.0000,402.0084 206.5000,408.0706 213.5000,408.0706" fill="#1C1C1C" opacity="0.85" />
-      <text x="210.0" y="423.0913088879928" font-family="Georgia, 'Times New Roman', serif" fill="#1C1C1C" font-size="3.0" text-anchor="middle">depth 1</text>
-      <text x="218.0" y="410.0913088879928" font-family="Georgia, 'Times New Roman', serif" fill="#1C1C1C" font-size="5.0">→</text>
+      <text x="210.0" y="423.0913088879928" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#1C1C1C" font-size="3.0" text-anchor="middle">depth 1</text>
+      <text x="218.0" y="410.0913088879928" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#1C1C1C" font-size="5.0">→</text>
       <polygon points="237.2500,411.1017 235.5000,414.1328 239.0000,414.1328" fill="#1C1C1C" opacity="0.85" />
       <polygon points="233.7500,411.1017 232.0000,414.1328 235.5000,414.1328" fill="#1C1C1C" opacity="0.85" />
       <polygon points="235.5000,408.0706 233.7500,411.1017 237.2500,411.1017" fill="#1C1C1C" opacity="0.85" />
@@ -293,13 +294,13 @@
       <polygon points="233.7500,405.0395 232.0000,408.0706 235.5000,408.0706" fill="#1C1C1C" opacity="0.85" />
       <polygon points="230.2500,405.0395 228.5000,408.0706 232.0000,408.0706" fill="#1C1C1C" opacity="0.85" />
       <polygon points="232.0000,402.0084 230.2500,405.0395 233.7500,405.0395" fill="#1C1C1C" opacity="0.85" />
-      <text x="232.0" y="423.0913088879928" font-family="Georgia, 'Times New Roman', serif" fill="#1C1C1C" font-size="3.0" text-anchor="middle">depth 2</text>
+      <text x="232.0" y="423.0913088879928" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#1C1C1C" font-size="3.0" text-anchor="middle">depth 2</text>
     </g>
     <g>
-      <line x1="357.0" y1="370.0913088879928" x2="289.8" y2="304.01875740666065" stroke="#8B0000" stroke-width="0.5" marker-end="url(#arrowhead)" />
+      <line x1="357.0" y1="370.0913088879928" x2="289.8" y2="304.01875740666065" stroke="#8B0000" stroke-width="0.5" stroke-dasharray="2,1.5" marker-end="url(#arrowhead)" />
       <circle cx="357.0" cy="370.0913088879928" r="1.0" fill="#8B0000" />
-      <text x="357.0" y="380.0913088879928" font-family="Georgia, 'Times New Roman', serif" fill="#8B0000" font-size="5.0" text-anchor="middle">Fractional Dimension</text>
-      <text x="357.0" y="387.0913088879928" font-family="Georgia, 'Times New Roman', serif" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
+      <text x="357.0" y="380.0913088879928" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#8B0000" font-size="5.0" text-anchor="middle">Fractional Dimension</text>
+      <text x="357.0" y="387.0913088879928" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
         <tspan x="357.0" dy="0">A line is 1-D. A square is 2-D.</tspan>
         <tspan x="357.0" dy="5.0">This fractal is 1.5850-D!</tspan>
         <tspan x="357.0" dy="5.0">It’s the Hausdorff dimension — not</tspan>
@@ -311,8 +312,8 @@
   <g id="educational">
     <line x1="63.0" y1="433.0913088879928" x2="357.0" y2="433.0913088879928" stroke="#8B0000" stroke-width="0.3" opacity="0.35" />
     <g>
-      <text x="63.0" y="447.0913088879928" font-family="Georgia, 'Times New Roman', serif" fill="#8B0000" font-size="5.0" text-anchor="middle">Hidden in Pascal’s Triangle</text>
-      <text x="63.0" y="454.0913088879928" font-family="Georgia, 'Times New Roman', serif" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
+      <text x="63.0" y="447.0913088879928" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#8B0000" font-size="5.0" text-anchor="middle">Hidden in Pascal’s Triangle</text>
+      <text x="63.0" y="454.0913088879928" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
         <tspan x="63.0" dy="0">Color the odd entries of Pascal’s</tspan>
         <tspan x="63.0" dy="5.0">triangle and the Sierpiński</tspan>
         <tspan x="63.0" dy="5.0">pattern emerges — a bridge between</tspan>
@@ -356,17 +357,17 @@
       <rect x="75.6" y="503.2913088879928" width="3.2" height="3.2" fill="#1C1C1C" stroke="#1C1C1C" stroke-width="0.15" opacity="0.85" />
     </g>
     <g>
-      <text x="210.0" y="447.0913088879928" font-family="Georgia, 'Times New Roman', serif" fill="#8B0000" font-size="5.0" text-anchor="middle">The Chaos Game</text>
-      <text x="210.0" y="454.0913088879928" font-family="Georgia, 'Times New Roman', serif" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
+      <text x="210.0" y="447.0913088879928" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#8B0000" font-size="5.0" text-anchor="middle">The Chaos Game</text>
+      <text x="210.0" y="454.0913088879928" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
         <tspan x="210.0" dy="0">Pick any starting point inside the</tspan>
         <tspan x="210.0" dy="5.0">triangle. Choose a random vertex —</tspan>
         <tspan x="210.0" dy="5.0">jump halfway there. Repeat forever.</tspan>
         <tspan x="210.0" dy="5.0">The dots trace the Sierpiński triangle!</tspan>
       </text>
       <polygon points="210.0000,474.6161 194.0000,502.3289 226.0000,502.3289" fill="none" stroke="#1C1C1C" stroke-width="0.2" opacity="0.2" />
-      <text x="210.0" y="471.61610027392476" font-family="Georgia, 'Times New Roman', serif" fill="#8B0000" font-size="2.8" text-anchor="middle">A</text>
-      <text x="190.0" y="506.3289131950268" font-family="Georgia, 'Times New Roman', serif" fill="#8B0000" font-size="2.8" text-anchor="middle">B</text>
-      <text x="230.0" y="506.3289131950268" font-family="Georgia, 'Times New Roman', serif" fill="#8B0000" font-size="2.8" text-anchor="middle">C</text>
+      <text x="210.0" y="471.61610027392476" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#8B0000" font-size="2.8" text-anchor="middle">A</text>
+      <text x="190.0" y="506.3289131950268" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#8B0000" font-size="2.8" text-anchor="middle">B</text>
+      <text x="230.0" y="506.3289131950268" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#8B0000" font-size="2.8" text-anchor="middle">C</text>
       <circle cx="224.35546875" cy="500.1435522151645" r="0.3" fill="#1C1C1C" opacity="0.55" />
       <circle cx="217.177734375" cy="487.37982624454463" r="0.3" fill="#1C1C1C" opacity="0.55" />
       <circle cx="221.5888671875" cy="494.8543697197857" r="0.3" fill="#1C1C1C" opacity="0.55" />
@@ -569,22 +570,22 @@
       <circle cx="216.5245213427255" cy="487.65028015725187" r="0.3" fill="#1C1C1C" opacity="0.55" />
     </g>
     <g>
-      <text x="357.0" y="447.0913088879928" font-family="Georgia, 'Times New Roman', serif" fill="#8B0000" font-size="5.0" text-anchor="middle">The Area Paradox</text>
-      <text x="357.0" y="454.0913088879928" font-family="Georgia, 'Times New Roman', serif" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
+      <text x="357.0" y="447.0913088879928" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#8B0000" font-size="5.0" text-anchor="middle">The Area Paradox</text>
+      <text x="357.0" y="454.0913088879928" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
         <tspan x="357.0" dy="0">At each step, ¼ of remaining area</tspan>
         <tspan x="357.0" dy="5.0">is removed. After infinitely many</tspan>
         <tspan x="357.0" dy="5.0">steps the total area reaches zero —</tspan>
         <tspan x="357.0" dy="5.0">yet the boundary length grows</tspan>
         <tspan x="357.0" dy="5.0">without limit!</tspan>
       </text>
-      <text x="357.0" y="485.0913088879928" font-family="Georgia, 'Times New Roman', serif" fill="#1C1C1C" font-size="4.2" font-style="italic" text-anchor="middle">Area(n) = (¾)ⁿ → 0</text>
-      <text x="357.0" y="492.0913088879928" font-family="Georgia, 'Times New Roman', serif" fill="#1C1C1C" font-size="4.2" font-style="italic" text-anchor="middle">Perimeter(n) → ∞</text>
+      <text x="357.0" y="485.0913088879928" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#1C1C1C" font-size="4.2" font-style="italic" text-anchor="middle">Area(n) = (¾)ⁿ → 0</text>
+      <text x="357.0" y="492.0913088879928" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#1C1C1C" font-size="4.2" font-style="italic" text-anchor="middle">Perimeter(n) → ∞</text>
       <polygon points="339.0000,496.1631 333.0000,506.5554 345.0000,506.5554" fill="#1C1C1C" opacity="0.8" />
-      <text x="339.0" y="515.0913088879928" font-family="Georgia, 'Times New Roman', serif" fill="#1C1C1C" font-size="2.8" text-anchor="middle">n=0</text>
+      <text x="339.0" y="515.0913088879928" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#1C1C1C" font-size="2.8" text-anchor="middle">n=0</text>
       <polygon points="360.0000,501.3593 357.0000,506.5554 363.0000,506.5554" fill="#1C1C1C" opacity="0.8" />
       <polygon points="354.0000,501.3593 351.0000,506.5554 357.0000,506.5554" fill="#1C1C1C" opacity="0.8" />
       <polygon points="357.0000,496.1631 354.0000,501.3593 360.0000,501.3593" fill="#1C1C1C" opacity="0.8" />
-      <text x="357.0" y="515.0913088879928" font-family="Georgia, 'Times New Roman', serif" fill="#1C1C1C" font-size="2.8" text-anchor="middle">n=1</text>
+      <text x="357.0" y="515.0913088879928" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#1C1C1C" font-size="2.8" text-anchor="middle">n=1</text>
       <polygon points="380.2500,505.2564 379.5000,506.5554 381.0000,506.5554" fill="#1C1C1C" opacity="0.8" />
       <polygon points="378.7500,505.2564 378.0000,506.5554 379.5000,506.5554" fill="#1C1C1C" opacity="0.8" />
       <polygon points="379.5000,503.9573 378.7500,505.2564 380.2500,505.2564" fill="#1C1C1C" opacity="0.8" />
@@ -612,11 +613,11 @@
       <polygon points="375.7500,497.4621 375.0000,498.7612 376.5000,498.7612" fill="#1C1C1C" opacity="0.8" />
       <polygon points="374.2500,497.4621 373.5000,498.7612 375.0000,498.7612" fill="#1C1C1C" opacity="0.8" />
       <polygon points="375.0000,496.1631 374.2500,497.4621 375.7500,497.4621" fill="#1C1C1C" opacity="0.8" />
-      <text x="375.0" y="515.0913088879928" font-family="Georgia, 'Times New Roman', serif" fill="#1C1C1C" font-size="2.8" text-anchor="middle">n=3</text>
+      <text x="375.0" y="515.0913088879928" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" fill="#1C1C1C" font-size="2.8" text-anchor="middle">n=3</text>
     </g>
   </g>
-  <text x="210.0" y="576.0" font-family="Georgia, 'Times New Roman', serif" font-size="4.0" fill="#555555" text-anchor="middle">Wacław Sierpiński first described this fractal in 1915.</text>
-  <text x="210.0" y="582.0" font-family="Georgia, 'Times New Roman', serif" font-size="3.5" fill="#777777" text-anchor="middle">Generated at depth 5  ·  243 triangles</text>
+  <text x="210.0" y="576.0" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" font-size="4.0" fill="#555555" text-anchor="middle">Wacław Sierpiński first described this fractal in 1915.</text>
+  <text x="210.0" y="582.0" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" font-size="3.5" fill="#777777" text-anchor="middle">Generated at depth 5  ·  243 triangles</text>
   <rect x="4" y="4" width="412" height="586" fill="none" stroke="#1C1C1C" stroke-width="0.8" />
   <rect x="7" y="7" width="406" height="580" fill="none" stroke="#1C1C1C" stroke-width="0.2" />
 </svg>
