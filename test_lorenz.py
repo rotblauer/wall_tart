@@ -347,10 +347,9 @@ class TestGeneratePoster:
             # it must NOT terminate above the panel top — that would indicate
             # it crosses through the connector lines.
             target_x = float(aline.get("x2"))
-            zoom_cx = float(zoom.findall(f"{{{ns}}}rect")[0].get("x"))
-            zoom_w = float(zoom.findall(f"{{{ns}}}rect")[0].get("width"))
-            panel_left = zoom_cx
-            panel_right = zoom_cx + zoom_w
+            bg_rect = zoom.findall(f"{{{ns}}}rect")[0]
+            panel_left = float(bg_rect.get("x"))
+            panel_right = panel_left + float(bg_rect.get("width"))
             if panel_left <= target_x <= panel_right:
                 assert target_y >= zoom_top_y, (
                     f"Leader line targeting zoom panel terminates at y={target_y:.1f}, "

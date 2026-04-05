@@ -273,7 +273,7 @@ def _draw_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
         density_bins[(bx, by)] = density_bins.get((bx, by), 0) + 1
 
     if density_bins:
-        best_bin = max(density_bins, key=density_bins.get)       # type: ignore[arg-type]
+        best_bin = max(density_bins, key=lambda k: density_bins[k])
         src_cx = center_x + (best_bin[0] + 0.5) * bin_size
         src_cy = center_y + (best_bin[1] + 0.5) * bin_size
     else:
