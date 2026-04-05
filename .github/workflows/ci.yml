@@ -23,7 +23,7 @@ jobs:
         run: pip install pytest cairosvg
 
       - name: Run tests
-        run: pytest test_poster_utils.py test_sierpinski.py test_lorenz.py test_logistic_map.py test_generate_all.py -v
+        run: pytest test_poster_utils.py test_sierpinski.py test_lorenz.py test_logistic_map.py test_mandelbrot.py test_double_pendulum.py test_cellular_automata.py test_generate_all.py -v
 
   docker:
     runs-on: ubuntu-latest
@@ -49,6 +49,21 @@ jobs:
         run: |
           docker run -v "$(pwd)/output:/app/output" \
             wall-tart python logistic_map_poster.py --r-count 200 --output output/logistic_map_poster.svg
+
+      - name: Generate sample Mandelbrot poster (SVG)
+        run: |
+          docker run -v "$(pwd)/output:/app/output" \
+            wall-tart python mandelbrot_poster.py --resolution 20 --max-iter 30 --output output/mandelbrot_poster.svg
+
+      - name: Generate sample Double Pendulum poster (SVG)
+        run: |
+          docker run -v "$(pwd)/output:/app/output" \
+            wall-tart python double_pendulum_poster.py --steps 2000 --output output/double_pendulum_poster.svg
+
+      - name: Generate sample Cellular Automata poster (SVG)
+        run: |
+          docker run -v "$(pwd)/output:/app/output" \
+            wall-tart python cellular_automata_poster.py --generations 50 --output output/cellular_automata_poster.svg
 
       - name: Upload poster artifacts
         uses: actions/upload-artifact@v4
