@@ -296,6 +296,182 @@ This creates **`cellular_automata_poster.svg`** — an A2-sized (420 × 594 mm) 
 
 ---
 
+## 🧪 Turing Patterns (Reaction-Diffusion) Poster
+
+![turing-patterns-preview](docs/generated/turing_patterns_poster.svg)
+
+### Quick Start
+
+```bash
+# Generate the Turing Patterns poster (no dependencies needed)
+python turing_patterns_poster.py
+```
+
+This creates **`turing_patterns_poster.svg`** — an A2-sized (420 × 594 mm) annotated poster showcasing Gray-Scott reaction-diffusion patterns. Three panels display different parameter regimes (spots, stripes, and mazes) — the same mathematics that explains how leopards get their spots.
+
+### Features
+
+- **Three pattern regimes** displayed side by side: spots, stripes, and labyrinthine mazes, each produced by different feed/kill parameters.
+- **Museum-style annotations** with leader-line callouts:
+  | Annotation | Description |
+  |---|---|
+  | **Activator-Inhibitor** | The two-chemical system where one activates growth and the other inhibits it. |
+  | **Symmetry Breaking** | How patterns emerge spontaneously from near-uniform initial conditions. |
+  | **Turing's Insight** | Alan Turing's 1952 morphogenesis paper that launched mathematical biology. |
+- **Educational panels** — a second row of scientific context:
+  | Panel | Description |
+  |---|---|
+  | **The Gray-Scott Model** | The two coupled PDEs with diffusion, feed, and kill parameters. |
+  | **Nature's Patterns** | Leopard spots, zebra stripes, coral growth, shell pigmentation. |
+  | **From Chemistry to Ecology** | How the same equations model vegetation bands, predator-prey waves, and cardiac patterns. |
+
+### Options
+
+| Flag | Default | Description |
+|---|---|---|
+| `--grid-size N` | `60` | Simulation grid dimension. |
+| `--steps N` | `3000` | Number of simulation time-steps. |
+| `--output FILE` | `turing_patterns_poster.<fmt>` | Output file path. |
+| `--format FMT` | `svg` | Output format: `svg`, `pdf`, or `png`. |
+| `--width MM` | `420` | Poster width in millimetres (A2 default). |
+| `--height MM` | `594` | Poster height in millimetres (A2 default). |
+| `--designed-by TEXT` | *(none)* | Designer credit. |
+| `--designed-for TEXT` | *(none)* | Client / purpose credit. |
+
+---
+
+## 🔷 Penrose Tiling Poster
+
+![penrose-tiling-preview](docs/generated/penrose_tiling_poster.svg)
+
+### Quick Start
+
+```bash
+# Generate the Penrose Tiling poster (no dependencies needed)
+python penrose_tiling_poster.py
+```
+
+This creates **`penrose_tiling_poster.svg`** — an A2-sized (420 × 594 mm) annotated poster of a Penrose tiling, the celebrated aperiodic pattern that tiles the plane without ever repeating.
+
+### Features
+
+- **Robinson triangle subdivision** generates a large patch of Penrose tiling with algorithmically precise golden-ratio geometry.
+- **Color-coded tiles** — thin and thick triangles are rendered in distinct colours for visual clarity.
+- **Museum-style annotations** with leader-line callouts:
+  | Annotation | Description |
+  |---|---|
+  | **Aperiodic Order** | How the pattern fills the plane without ever creating a repeating unit cell. |
+  | **Five-Fold Symmetry** | The forbidden symmetry that classical crystallography says cannot tile — but Penrose's pattern does. |
+  | **The Golden Ratio** | φ = (1+√5)/2 governs every aspect of the construction. |
+- **Educational panels** — a second row of scientific context:
+  | Panel | Description |
+  |---|---|
+  | **How It Works** | The subdivision/inflation construction method using golden triangles. |
+  | **Quasicrystals** | Dan Shechtman's 2011 Nobel Prize discovery of real materials with Penrose symmetry. |
+  | **The Einstein Problem** | The 2023 discovery of the "Hat" tile — a single shape that tiles aperiodically. |
+
+### Options
+
+| Flag | Default | Description |
+|---|---|---|
+| `--subdivisions N` | `5` | Number of Robinson-triangle subdivision steps. |
+| `--output FILE` | `penrose_tiling_poster.<fmt>` | Output file path. |
+| `--format FMT` | `svg` | Output format: `svg`, `pdf`, or `png`. |
+| `--width MM` | `420` | Poster width in millimetres (A2 default). |
+| `--height MM` | `594` | Poster height in millimetres (A2 default). |
+| `--designed-by TEXT` | *(none)* | Designer credit. |
+| `--designed-for TEXT` | *(none)* | Client / purpose credit. |
+
+---
+
+## ⭕ Fourier Epicycles Poster
+
+![fourier-epicycles-preview](docs/generated/fourier_epicycles_poster.svg)
+
+### Quick Start
+
+```bash
+# Generate the Fourier Epicycles poster (no dependencies needed)
+python fourier_epicycles_poster.py
+```
+
+This creates **`fourier_epicycles_poster.svg`** — an A2-sized (420 × 594 mm) annotated poster showing how any shape can be drawn using rotating circles (epicycles), based on the Discrete Fourier Transform.
+
+### Features
+
+- **Three-panel layout**: original target curve, full epicycle reconstruction with ghost circles, and a 5-circle partial reconstruction.
+- **Pure-Python DFT** — no external dependencies for the Fourier decomposition.
+- **Museum-style annotations** with leader-line callouts:
+  | Annotation | Description |
+  |---|---|
+  | **Amplitude & Frequency** | Each circle's radius is the amplitude; its rotation speed is the frequency. |
+  | **Phase Alignment** | The starting angle of each circle determines the final shape. |
+  | **Convergence** | More circles yield a better match, but even a few capture the basic outline. |
+- **Educational panels** — a second row of scientific context:
+  | Panel | Description |
+  |---|---|
+  | **The Fourier Transform** | Decomposing signals into frequency components — a lossless representation. |
+  | **Ancient Astronomy** | Ptolemy's epicycles modelled planetary motion as circles on circles. |
+  | **Modern Applications** | JPEG compression, music synthesis, MRI imaging, signal processing. |
+
+### Options
+
+| Flag | Default | Description |
+|---|---|---|
+| `--num-circles N` | `32` | Number of Fourier circles for reconstruction. |
+| `--output FILE` | `fourier_epicycles_poster.<fmt>` | Output file path. |
+| `--format FMT` | `svg` | Output format: `svg`, `pdf`, or `png`. |
+| `--width MM` | `420` | Poster width in millimetres (A2 default). |
+| `--height MM` | `594` | Poster height in millimetres (A2 default). |
+| `--designed-by TEXT` | *(none)* | Designer credit. |
+| `--designed-for TEXT` | *(none)* | Client / purpose credit. |
+
+---
+
+## 🌀 Harmonograph & Lissajous Curves Poster
+
+![harmonograph-preview](docs/generated/harmonograph_poster.svg)
+
+### Quick Start
+
+```bash
+# Generate the Harmonograph poster (no dependencies needed)
+python harmonograph_poster.py
+```
+
+This creates **`harmonograph_poster.svg`** — an A2-sized (420 × 594 mm) annotated poster featuring a large intricate harmonograph curve overlaid on six classic Lissajous patterns representing musical intervals.
+
+### Features
+
+- **Six Lissajous patterns** in a background grid: 1:1, 1:2, 2:3, 3:4, 3:5, and 4:5 frequency ratios — each corresponding to a musical interval.
+- **Central harmonograph** — an elaborate curve produced by four damped oscillators with slightly detuned frequencies.
+- **Museum-style annotations** with leader-line callouts:
+  | Annotation | Description |
+  |---|---|
+  | **Damped Oscillation** | The harmonograph combines pendulums that slowly lose energy to friction. |
+  | **Musical Ratios** | Frequency ratios like 2:3 (perfect fifth) and 3:4 (perfect fourth) create signature shapes. |
+  | **Sensitive to Parameters** | Tiny frequency changes produce dramatically different patterns. |
+- **Educational panels** — a second row of scientific context:
+  | Panel | Description |
+  |---|---|
+  | **The Equations** | Parametric motion: x(t) = Σ Aᵢsin(fᵢt + φᵢ)e^(−dᵢt). |
+  | **Victorian Science Art** | Harmonograph machines with pendulums drew intricate curves on paper. |
+  | **Oscilloscopes & Signals** | Lissajous patterns on oscilloscopes, laser shows, and signal analysis. |
+
+### Options
+
+| Flag | Default | Description |
+|---|---|---|
+| `--steps N` | `10000` | Number of simulation steps. |
+| `--output FILE` | `harmonograph_poster.<fmt>` | Output file path. |
+| `--format FMT` | `svg` | Output format: `svg`, `pdf`, or `png`. |
+| `--width MM` | `420` | Poster width in millimetres (A2 default). |
+| `--height MM` | `594` | Poster height in millimetres (A2 default). |
+| `--designed-by TEXT` | *(none)* | Designer credit. |
+| `--designed-for TEXT` | *(none)* | Client / purpose credit. |
+
+---
+
 ## Common Information
 
 ### Requirements
@@ -376,12 +552,16 @@ python generate_all.py \
   --mandelbrot-resolution 200 \
   --pendulum-steps 50000 \
   --automata-generations 300 \
+  --turing-grid-size 80 --turing-steps 5000 \
+  --penrose-subdivisions 6 \
+  --fourier-num-circles 64 \
+  --harmonograph-steps 20000 \
   --output-dir ./output
 ```
 
 | Flag | Default | Description |
 |---|---|---|
-| `--posters NAME [NAME ...]` | all | Which posters: `sierpinski`, `lorenz`, `logistic`, `mandelbrot`, `double_pendulum`, `cellular_automata`. |
+| `--posters NAME [NAME ...]` | all | Which posters: `sierpinski`, `lorenz`, `logistic`, `mandelbrot`, `double_pendulum`, `cellular_automata`, `turing_patterns`, `penrose_tiling`, `fourier_epicycles`, `harmonograph`. |
 | `--output-dir DIR` | `.` | Directory for output files. |
 | `--format FMT` | `svg` | Output format: `svg`, `pdf`, or `png`. |
 | `--dpi N` | `150` | Resolution for PNG output. |
@@ -397,12 +577,17 @@ python generate_all.py \
 | `--pendulum-steps N` | `10000` | Double Pendulum integration steps. |
 | `--automata-cell-size N` | `2` | Cellular Automata cell size in mm. |
 | `--automata-generations N` | `150` | Cellular Automata generations. |
+| `--turing-grid-size N` | `60` | Turing Patterns grid dimension. |
+| `--turing-steps N` | `3000` | Turing Patterns simulation steps. |
+| `--penrose-subdivisions N` | `5` | Penrose Tiling subdivision steps. |
+| `--fourier-num-circles N` | `32` | Fourier Epicycles circle count. |
+| `--harmonograph-steps N` | `10000` | Harmonograph simulation steps. |
 
 ### Running Tests
 
 ```bash
 pip install pytest
-pytest test_poster_utils.py test_sierpinski.py test_lorenz.py test_logistic_map.py test_mandelbrot.py test_double_pendulum.py test_cellular_automata.py test_generate_all.py -v
+pytest test_poster_utils.py test_sierpinski.py test_lorenz.py test_logistic_map.py test_mandelbrot.py test_double_pendulum.py test_cellular_automata.py test_generate_all.py test_turing_patterns.py test_penrose_tiling.py test_fourier_epicycles.py test_harmonograph.py -v
 ```
 
 ### Docker
@@ -440,6 +625,22 @@ docker run -v "$(pwd)/output:/app/output" \
 # Generate Cellular Automata poster
 docker run -v "$(pwd)/output:/app/output" \
   wall-tart python cellular_automata_poster.py --generations 150 --output output/cellular_automata_poster.svg
+
+# Generate Turing Patterns poster
+docker run -v "$(pwd)/output:/app/output" \
+  wall-tart python turing_patterns_poster.py --grid-size 60 --steps 3000 --output output/turing_patterns_poster.svg
+
+# Generate Penrose Tiling poster
+docker run -v "$(pwd)/output:/app/output" \
+  wall-tart python penrose_tiling_poster.py --subdivisions 5 --output output/penrose_tiling_poster.svg
+
+# Generate Fourier Epicycles poster
+docker run -v "$(pwd)/output:/app/output" \
+  wall-tart python fourier_epicycles_poster.py --num-circles 32 --output output/fourier_epicycles_poster.svg
+
+# Generate Harmonograph poster
+docker run -v "$(pwd)/output:/app/output" \
+  wall-tart python harmonograph_poster.py --steps 10000 --output output/harmonograph_poster.svg
 ```
 
 ### CI / GitHub Actions
@@ -447,12 +648,12 @@ docker run -v "$(pwd)/output:/app/output" \
 The repository includes two workflows:
 
 **`ci.yml`** — runs on every push and pull request to `main`:
-1. Runs the full test suite (`test_poster_utils.py`, `test_sierpinski.py`, `test_lorenz.py`, `test_logistic_map.py`, `test_mandelbrot.py`, `test_double_pendulum.py`, `test_cellular_automata.py`, and `test_generate_all.py`) with `pytest`.
+1. Runs the full test suite (`test_poster_utils.py`, `test_sierpinski.py`, `test_lorenz.py`, `test_logistic_map.py`, `test_mandelbrot.py`, `test_double_pendulum.py`, `test_cellular_automata.py`, `test_turing_patterns.py`, `test_penrose_tiling.py`, `test_fourier_epicycles.py`, `test_harmonograph.py`, and `test_generate_all.py`) with `pytest`.
 2. Builds the Docker image.
 3. Generates sample posters and uploads them as build artifacts.
 
 **`update-readme-images.yml`** — runs on every push to `main` that touches the poster generators, `poster_utils.py`, `generate_all.py`, or the workflow itself (and can be triggered manually via `workflow_dispatch`):
-1. Regenerates `docs/generated/sierpinski_poster.svg`, `docs/generated/lorenz_poster.svg`, `docs/generated/logistic_map_poster.svg`, `docs/generated/mandelbrot_poster.svg`, `docs/generated/double_pendulum_poster.svg`, and `docs/generated/cellular_automata_poster.svg`.
+1. Regenerates `docs/generated/sierpinski_poster.svg`, `docs/generated/lorenz_poster.svg`, `docs/generated/logistic_map_poster.svg`, `docs/generated/mandelbrot_poster.svg`, `docs/generated/double_pendulum_poster.svg`, `docs/generated/cellular_automata_poster.svg`, `docs/generated/turing_patterns_poster.svg`, `docs/generated/penrose_tiling_poster.svg`, `docs/generated/fourier_epicycles_poster.svg`, and `docs/generated/harmonograph_poster.svg`.
 2. Commits and pushes the updated images back to `main` so the README always shows the current output.
 
 ### How It Works
@@ -492,6 +693,30 @@ The repository includes two workflows:
 2. Starting from a single active cell, each generation produces a new row based on the rule.
 3. Active cells are rendered as filled `<rect>` elements, producing distinctive pixel-art patterns.
 4. Leader lines connect annotations describing each rule's unique behaviour and significance.
+
+**Turing Patterns (Reaction-Diffusion)**:
+1. The Gray-Scott reaction-diffusion model simulates two interacting chemicals (u and v) on a 2D grid with periodic boundary conditions.
+2. A 5-point stencil Laplacian computes diffusion, and the reaction terms drive pattern formation through activator-inhibitor dynamics.
+3. Three parameter regimes (spots, stripes, mazes) are simulated independently and displayed side by side as colour-mapped `<rect>` grids.
+4. Leader lines connect annotations explaining morphogenesis, symmetry breaking, and Turing's 1952 insight.
+
+**Penrose Tiling**:
+1. A wheel of 10 Robinson triangles is created around a central point, then iteratively subdivided using golden-ratio edge splits.
+2. Thin triangles split into 2 sub-triangles; thick triangles split into 3 — producing the aperiodic Penrose P3 tiling.
+3. Each triangle is rendered as a filled `<polygon>` element, colour-coded by type (thin vs thick) with thin stroke outlines.
+4. Leader lines connect annotations about aperiodic order, five-fold symmetry, and the golden ratio.
+
+**Fourier Epicycles**:
+1. A target curve is sampled parametrically, then decomposed via a pure-Python Discrete Fourier Transform into frequency, amplitude, and phase coefficients.
+2. Coefficients are sorted by amplitude and the curve is reconstructed by summing rotating circles (epicycles).
+3. Three panels show the original curve, full reconstruction with ghost circles, and a partial 5-circle approximation as `<polyline>` and `<circle>` elements.
+4. Leader lines connect annotations about amplitude/frequency, phase alignment, and convergence.
+
+**Harmonograph & Lissajous Curves**:
+1. A harmonograph curve is computed by summing four damped sinusoidal oscillators: x(t) and y(t) each combine two terms with amplitude, frequency, phase, and exponential decay.
+2. Six undamped Lissajous patterns at classic musical ratios (1:1, 1:2, 2:3, 3:4, 3:5, 4:5) are rendered as faint background overlays.
+3. All curves are rendered as `<polyline>` elements, scaled and centred in the content area.
+4. Leader lines connect annotations about damped oscillation, musical intervals, and parameter sensitivity.
 
 ## License
 
