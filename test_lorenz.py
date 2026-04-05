@@ -329,25 +329,33 @@ class TestGeneratePoster:
         # Connector lines terminate at zoom panel corners.
         lines = zoom.findall(f"{{{ns}}}line")
         assert len(lines) == 4
+        # Find the zoom panel bottom-y (largest y2 among connector lines).
+        zoom_bottom_y = max(float(ln.get("y2")) for ln in lines)
         # Find the zoom panel top-y (smallest y2 among connector lines).
-        zoom_top_ys = [float(ln.get("y2")) for ln in lines]
-        zoom_top_y = min(zoom_top_ys)
-        # The annotation leader line targets the bottom edge of the panel.
-        # Inspect the annotation group to find leader lines pointing upward.
+        zoom_top_y = min(float(ln.get("y2")) for ln in lines)
+        # The annotation leader lines originate in the annotation row (below
+        # the attractor) and point upward to their targets.
         annotations = svg.find(f".//{{{ns}}}g[@id='annotations']")
         anno_lines = annotations.findall(f".//{{{ns}}}line")
         for aline in anno_lines:
             target_y = float(aline.get("y2"))
-            # Annotation leader targets must be at or below the zoom panel
-            # bottom (i.e. >= zoom_top_y) — never above the panel top.
-            if target_y < zoom_top_y:
-                # This line points above the zoom panel top, which would
-                # mean it crosses connector lines.
-                origin_y = float(aline.get("y1"))
-                if origin_y > target_y:
-                    # Only consider lines going *upward* (from annotation row
-                    # toward the attractor/panel).
-                    pass  # Allow lines targeting the attractor itself
+            origin_y = float(aline.get("y1"))
+            # Only check upward-pointing lines (from annotation row to target).
+            if origin_y <= target_y:
+                continue
+            # If this leader targets the zoom panel region (near zoom_bottom_y),
+            # it must NOT terminate above the panel top — that would indicate
+            # it crosses through the connector lines.
+            target_x = float(aline.get("x2"))
+            zoom_cx = float(zoom.findall(f"{{{ns}}}rect")[0].get("x"))
+            zoom_w = float(zoom.findall(f"{{{ns}}}rect")[0].get("width"))
+            panel_left = zoom_cx
+            panel_right = zoom_cx + zoom_w
+            if panel_left <= target_x <= panel_right:
+                assert target_y >= zoom_top_y, (
+                    f"Leader line targeting zoom panel terminates at y={target_y:.1f}, "
+                    f"which is above the zoom panel top y={zoom_top_y:.1f}"
+                )
 
 
 # ---------------------------------------------------------------------------

@@ -266,7 +266,7 @@ def _draw_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
     bin_size = 2.0 * w_scale             # grid resolution
     density_bins: dict[tuple[int, int], int] = {}
     for px, py in scaled_main:
-        if px <= center_x:              # right hemisphere only
+        if px <= center_x:              # skip left hemisphere
             continue
         bx = int((px - center_x) / bin_size)
         by = int((py - center_y) / bin_size)
