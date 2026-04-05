@@ -5,9 +5,9 @@ Unified Poster Generator — generate all wall_tart posters in one command.
 Usage:
     python generate_all.py [OPTIONS]
 
-Generates all three posters (Sierpiński Triangle, Lorenz Attractor, and
-Logistic Map) with shared common arguments and optional poster-specific
-parameters.
+Generates all six posters (Sierpiński Triangle, Lorenz Attractor, Logistic
+Map, Mandelbrot Set, Double Pendulum, and Cellular Automata) with shared
+common arguments and optional poster-specific parameters.
 
 Examples:
     # Generate all posters with defaults (SVG, A2 size)
@@ -33,9 +33,13 @@ from poster_utils import BASE_HEIGHT_MM, BASE_WIDTH_MM, write_poster
 from sierpinski_poster import generate_poster as generate_sierpinski
 from lorenz_poster import generate_poster as generate_lorenz
 from logistic_map_poster import generate_poster as generate_logistic
+from mandelbrot_poster import generate_poster as generate_mandelbrot
+from double_pendulum_poster import generate_poster as generate_double_pendulum
+from cellular_automata_poster import generate_poster as generate_cellular_automata
 
 
-POSTER_NAMES = ("sierpinski", "lorenz", "logistic")
+POSTER_NAMES = ("sierpinski", "lorenz", "logistic", "mandelbrot",
+                "double_pendulum", "cellular_automata")
 
 
 def build_arg_parser():
@@ -47,7 +51,7 @@ def build_arg_parser():
             "examples:\n"
             "  python generate_all.py\n"
             "  python generate_all.py --format png --dpi 300 --output-dir ./output\n"
-            "  python generate_all.py --posters sierpinski lorenz\n"
+            "  python generate_all.py --posters sierpinski lorenz mandelbrot\n"
             "  python generate_all.py --sierpinski-depth 9 --lorenz-steps 500000\n"
         ),
     )
@@ -58,7 +62,8 @@ def build_arg_parser():
         choices=POSTER_NAMES, metavar="NAME",
         help=(
             "Which posters to generate (default: all). "
-            "Choices: sierpinski, lorenz, logistic."
+            "Choices: sierpinski, lorenz, logistic, mandelbrot, "
+            "double_pendulum, cellular_automata."
         ),
     )
 
@@ -112,6 +117,37 @@ def build_arg_parser():
         help="Number of r-parameter samples (default: 2000). Higher = finer.",
     )
 
+    mandelbrot = parser.add_argument_group("Mandelbrot Set options")
+    mandelbrot.add_argument(
+        "--mandelbrot-resolution", type=int, default=80,
+        dest="mandelbrot_resolution",
+        help="Grid width in pixels (default: 80). Higher = finer.",
+    )
+    mandelbrot.add_argument(
+        "--mandelbrot-max-iter", type=int, default=100,
+        dest="mandelbrot_max_iter",
+        help="Maximum escape iterations (default: 100).",
+    )
+
+    pendulum = parser.add_argument_group("Double Pendulum options")
+    pendulum.add_argument(
+        "--pendulum-steps", type=int, default=10000,
+        dest="pendulum_steps",
+        help="Integration steps (default: 10000). Higher = more detail.",
+    )
+
+    automata = parser.add_argument_group("Cellular Automata options")
+    automata.add_argument(
+        "--automata-cell-size", type=int, default=2,
+        dest="automata_cell_size",
+        help="Cell size in mm (default: 2).",
+    )
+    automata.add_argument(
+        "--automata-generations", type=int, default=150,
+        dest="automata_generations",
+        help="Number of generations (default: 150).",
+    )
+
     return parser
 
 
@@ -146,6 +182,36 @@ def main(argv=None):
             "kwargs": {"r_count": args.logistic_r_count},
             "filename": "logistic_map_poster",
             "label": f"Logistic Map (r_count={args.logistic_r_count:,})",
+        },
+        "mandelbrot": {
+            "generate": generate_mandelbrot,
+            "kwargs": {
+                "resolution": args.mandelbrot_resolution,
+                "max_iter": args.mandelbrot_max_iter,
+            },
+            "filename": "mandelbrot_poster",
+            "label": (
+                f"Mandelbrot Set (resolution={args.mandelbrot_resolution}, "
+                f"max_iter={args.mandelbrot_max_iter})"
+            ),
+        },
+        "double_pendulum": {
+            "generate": generate_double_pendulum,
+            "kwargs": {"steps": args.pendulum_steps},
+            "filename": "double_pendulum_poster",
+            "label": f"Double Pendulum (steps={args.pendulum_steps:,})",
+        },
+        "cellular_automata": {
+            "generate": generate_cellular_automata,
+            "kwargs": {
+                "cell_size": args.automata_cell_size,
+                "generations": args.automata_generations,
+            },
+            "filename": "cellular_automata_poster",
+            "label": (
+                f"Cellular Automata (cell_size={args.automata_cell_size}, "
+                f"generations={args.automata_generations})"
+            ),
         },
     }
 
