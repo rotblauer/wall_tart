@@ -78,7 +78,11 @@ FOOTER_PRIMARY_COLOR = THEMES["classic"]["footer_primary"]
 FOOTER_SECONDARY_COLOR = THEMES["classic"]["footer_secondary"]
 
 HEADER_FONT = "'Playfair Display', Georgia, 'Times New Roman', serif"
-BODY_FONT = "'Inter', 'Helvetica Neue', Arial, sans-serif"
+BODY_FONT = (
+    "'Inter', 'Helvetica Neue', Arial, sans-serif, "
+    "system-ui, -apple-system, 'Segoe UI', Roboto, "
+    "'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'"
+)
 SERIF = HEADER_FONT  # backward-compatible alias
 
 ANNOTATION_STYLE = {
