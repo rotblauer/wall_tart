@@ -6,9 +6,18 @@ import xml.etree.ElementTree as ET
 import pytest
 
 from poster_utils import (
+    ANNO_START_FRAC,
+    BASE_HEIGHT_MM,
+    BASE_WIDTH_MM,
+    CONTENT_TOP_MARGIN_FRAC,
     assign_annotations_no_crossing,
+    build_poster_scaffold,
+    content_area,
+    draw_annotation_body,
+    draw_annotation_header,
     draw_poster_border,
     draw_poster_header,
+    finalize_poster,
     _svg_root,
 )
 
@@ -180,3 +189,154 @@ class TestDrawPosterBorder:
         assert inner.get("y") == "7"
         assert inner.get("width") == str(420 - 14)
         assert inner.get("height") == str(594 - 14)
+
+
+# ---------------------------------------------------------------------------
+# build_poster_scaffold
+# ---------------------------------------------------------------------------
+
+class TestBuildPosterScaffold:
+    def test_returns_dict_with_expected_keys(self):
+        sc = build_poster_scaffold("Title", "Subtitle")
+        for key in ("svg", "ns", "w_scale", "h_scale", "rule_y",
+                     "width_mm", "height_mm", "designed_by", "designed_for"):
+            assert key in sc, f"Missing key: {key}"
+
+    def test_svg_root_element(self):
+        sc = build_poster_scaffold("T", "S")
+        assert sc["svg"].tag.endswith("svg")
+
+    def test_default_dimensions(self):
+        sc = build_poster_scaffold("T", "S")
+        assert sc["svg"].get("width") == f"{BASE_WIDTH_MM}mm"
+        assert sc["svg"].get("height") == f"{BASE_HEIGHT_MM}mm"
+        assert sc["w_scale"] == 1.0
+        assert sc["h_scale"] == 1.0
+
+    def test_custom_dimensions(self):
+        sc = build_poster_scaffold("T", "S", width_mm=300, height_mm=400)
+        assert sc["svg"].get("width") == "300mm"
+        assert sc["svg"].get("height") == "400mm"
+        assert abs(sc["w_scale"] - 300 / BASE_WIDTH_MM) < 1e-9
+        assert abs(sc["h_scale"] - 400 / BASE_HEIGHT_MM) < 1e-9
+
+    def test_title_and_subtitle_in_svg(self):
+        sc = build_poster_scaffold("My Title", "My Subtitle")
+        xml_str = ET.tostring(sc["svg"], encoding="unicode")
+        assert "My Title" in xml_str
+        assert "My Subtitle" in xml_str
+
+    def test_rule_y_is_numeric(self):
+        sc = build_poster_scaffold("T", "S")
+        assert isinstance(sc["rule_y"], float)
+        assert sc["rule_y"] > 0
+
+    def test_arrow_marker_present(self):
+        sc = build_poster_scaffold("T", "S")
+        ns = sc["ns"]
+        defs = sc["svg"].find(f"{{{ns}}}defs")
+        assert defs is not None
+        marker = defs.find(f"{{{ns}}}marker[@id='arrowhead']")
+        assert marker is not None
+
+    def test_credit_lines_stored(self):
+        sc = build_poster_scaffold("T", "S",
+                                   designed_by="Alice",
+                                   designed_for="Museum")
+        assert sc["designed_by"] == "Alice"
+        assert sc["designed_for"] == "Museum"
+
+
+# ---------------------------------------------------------------------------
+# content_area
+# ---------------------------------------------------------------------------
+
+class TestContentArea:
+    def test_returns_dict_with_expected_keys(self):
+        ca = content_area(rule_y=44.0, width_mm=420, height_mm=594)
+        for key in ("min_top", "max_bot", "margin", "avail_w", "avail_h"):
+            assert key in ca, f"Missing key: {key}"
+
+    def test_default_margin(self):
+        ca = content_area(rule_y=44.0, width_mm=420, height_mm=594)
+        assert abs(ca["margin"] - 420 * 0.10) < 1e-9
+
+    def test_custom_margin_frac(self):
+        ca = content_area(rule_y=44.0, width_mm=420, height_mm=594,
+                          margin_frac=0.12)
+        assert abs(ca["margin"] - 420 * 0.12) < 1e-9
+
+    def test_avail_w_consistent(self):
+        ca = content_area(rule_y=44.0, width_mm=420, height_mm=594)
+        assert abs(ca["avail_w"] - (420 - 2 * ca["margin"])) < 1e-9
+
+    def test_min_top_uses_constant(self):
+        rule_y = 44.0
+        ca = content_area(rule_y=rule_y, width_mm=420, height_mm=594)
+        expected = rule_y + 594 * CONTENT_TOP_MARGIN_FRAC
+        assert abs(ca["min_top"] - expected) < 1e-9
+
+    def test_max_bot_uses_constant(self):
+        ca = content_area(rule_y=44.0, width_mm=420, height_mm=594)
+        expected = 594 * ANNO_START_FRAC
+        assert abs(ca["max_bot"] - expected) < 1e-9
+
+
+# ---------------------------------------------------------------------------
+# finalize_poster
+# ---------------------------------------------------------------------------
+
+class TestFinalizePoster:
+    def test_adds_footer_and_border(self):
+        svg, ns = _svg_root(420, 594)
+        finalize_poster(svg, ns, 420, 594, 1.0, 1.0,
+                        primary_line="Primary footer",
+                        secondary_line="Secondary footer")
+        xml_str = ET.tostring(svg, encoding="unicode")
+        assert "Primary footer" in xml_str
+        assert "Secondary footer" in xml_str
+        # Border rects should be present
+        rects = svg.findall(f"{{{ns}}}rect")
+        assert len(rects) >= 2
+
+
+# ---------------------------------------------------------------------------
+# draw_annotation_header
+# ---------------------------------------------------------------------------
+
+class TestDrawAnnotationHeader:
+    def test_returns_group_element(self):
+        svg, ns = _svg_root(420, 594)
+        g = draw_annotation_header(svg, ns, 210, 400, 100, 200,
+                                   "Test Title", scale=1)
+        assert g.tag.endswith("g")
+
+    def test_contains_title_text(self):
+        svg, ns = _svg_root(420, 594)
+        g = draw_annotation_header(svg, ns, 210, 400, 100, 200,
+                                   "My Annotation", scale=1)
+        xml_str = ET.tostring(g, encoding="unicode")
+        assert "My Annotation" in xml_str
+
+    def test_contains_circle_and_line(self):
+        svg, ns = _svg_root(420, 594)
+        g = draw_annotation_header(svg, ns, 210, 400, 100, 200,
+                                   "Title", scale=1)
+        assert g.find(f"{{{ns}}}circle") is not None
+        assert g.find(f"{{{ns}}}line") is not None
+
+
+# ---------------------------------------------------------------------------
+# draw_annotation_body
+# ---------------------------------------------------------------------------
+
+class TestDrawAnnotationBody:
+    def test_adds_text_element(self):
+        svg, ns = _svg_root(420, 594)
+        g = ET.SubElement(svg, f"{{{ns}}}g")
+        draw_annotation_body(g, ns, 210, 400, ["Line 1", "Line 2"], scale=1)
+        texts = g.findall(f"{{{ns}}}text")
+        assert len(texts) >= 1
+        xml_str = ET.tostring(g, encoding="unicode")
+        assert "Line 1" in xml_str
+        assert "Line 2" in xml_str

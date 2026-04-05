@@ -12,9 +12,8 @@ from logistic_map_poster import (
     bifurcation_data,
     generate_poster,
     logistic_iterate,
-    write_png,
-    write_svg,
 )
+from poster_utils import write_png, write_svg
 
 
 # ---------------------------------------------------------------------------

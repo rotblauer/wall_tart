@@ -24,32 +24,31 @@ import math
 
 from poster_utils import (
     ACCENT_COLOR,
+    ANNO_START_FRAC,
     ANNOTATION_STYLE,
+    BASE_HEIGHT_MM,
+    BASE_WIDTH_MM,
     BG_COLOR,
     CALLOUT_LINE_STYLE,
     COLUMN_CENTERS,
-    FOOTER_PRIMARY_COLOR,
-    FOOTER_SECONDARY_COLOR,
+    CONTENT_TOP_MARGIN_FRAC,
     SERIF,
     TITLE_COLOR,
-    _add_arrow_marker,
     _circle,
     _group,
-    _line,
     _multiline_text,
     _polygon,
     _rect,
-    _svg_root,
     _text,
     add_common_poster_args,
-    assign_annotations_no_crossing,
+    build_poster_scaffold,
+    content_area,
+    draw_annotation_body,
+    draw_annotation_header,
     draw_annotation_row,
-    draw_poster_border,
-    draw_poster_footer,
-    draw_poster_header,
     draw_row_separator,
-    write_pdf,
-    write_png,
+    finalize_poster,
+    run_poster_main,
     write_poster,
     write_svg,
 )
@@ -112,57 +111,27 @@ TRIANGLE_COLOR = "#1C1C1C"  # near-black ink
 def _annotation_self_similarity(parent, ns, target_x, target_y,
                                 col_cx, anno_y, scale=1):
     """Annotation: self-similarity callout (below the fractal)."""
-    g = _group(parent, ns)
-
-    arrow_y = anno_y - 8 * scale
-    _line(g, ns, col_cx, arrow_y, target_x, target_y,
-          **CALLOUT_LINE_STYLE)
-    _circle(g, ns, col_cx, arrow_y, 1 * scale, fill=ACCENT_COLOR)
-
-    _text(g, ns, col_cx, anno_y + 2 * scale, "Self-Similarity",
-          **{**ANNOTATION_STYLE, "font-size": str(round(5 * scale, 2)),
-             "fill": ACCENT_COLOR, "text-anchor": "middle"})
-
-    lines = [
+    g = draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
+                               "Self-Similarity", scale)
+    draw_annotation_body(g, ns, col_cx, anno_y, [
         "Every smaller triangle is an exact",
         "copy of the whole shape. Zoom in",
         "anywhere \u2014 the same pattern",
         "repeats at every scale, forever.",
-    ]
-    _multiline_text(
-        g, ns, col_cx, anno_y + 9 * scale,
-        lines, line_height=5 * scale,
-        **{**ANNOTATION_STYLE, "font-size": str(round(3.8 * scale, 2)),
-           "text-anchor": "middle"},
-    )
+    ], scale)
     return g
 
 
 def _annotation_recursion(parent, ns, target_x, target_y,
                            col_cx, anno_y, scale=1):
     """Annotation: recursion callout with step diagram (below the fractal)."""
-    g = _group(parent, ns)
-
-    arrow_y = anno_y - 8 * scale
-    _line(g, ns, col_cx, arrow_y, target_x, target_y,
-          **CALLOUT_LINE_STYLE)
-    _circle(g, ns, col_cx, arrow_y, 1 * scale, fill=ACCENT_COLOR)
-
-    _text(g, ns, col_cx, anno_y + 2 * scale, "Recursion",
-          **{**ANNOTATION_STYLE, "font-size": str(round(5 * scale, 2)),
-             "fill": ACCENT_COLOR, "text-anchor": "middle"})
-
-    lines = [
+    g = draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
+                               "Recursion", scale)
+    draw_annotation_body(g, ns, col_cx, anno_y, [
         "Start with one triangle. Remove the",
         "centre to get three smaller copies.",
         "Repeat on each copy \u2014 that\u2019s recursion!",
-    ]
-    _multiline_text(
-        g, ns, col_cx, anno_y + 9 * scale,
-        lines, line_height=5 * scale,
-        **{**ANNOTATION_STYLE, "font-size": str(round(3.8 * scale, 2)),
-           "text-anchor": "middle"},
-    )
+    ], scale)
 
     # Mini step diagram: 3 tiny triangles showing depth 0, 1, 2 — centred at col_cx
     mini_y = anno_y + 32 * scale
@@ -185,32 +154,17 @@ def _annotation_recursion(parent, ns, target_x, target_y,
 def _annotation_dimension(parent, ns, target_x, target_y,
                            col_cx, anno_y, scale=1):
     """Annotation: fractional (Hausdorff) dimension callout (below fractal)."""
-    g = _group(parent, ns)
-
-    arrow_y = anno_y - 8 * scale
-    _line(g, ns, col_cx, arrow_y, target_x, target_y,
-          **CALLOUT_LINE_STYLE)
-    _circle(g, ns, col_cx, arrow_y, 1 * scale, fill=ACCENT_COLOR)
+    g = draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
+                               "Fractional Dimension", scale)
 
     dim_val = f"{math.log(3) / math.log(2):.4f}"
-
-    _text(g, ns, col_cx, anno_y + 2 * scale, "Fractional Dimension",
-          **{**ANNOTATION_STYLE, "font-size": str(round(5 * scale, 2)),
-             "fill": ACCENT_COLOR, "text-anchor": "middle"})
-
-    lines = [
+    draw_annotation_body(g, ns, col_cx, anno_y, [
         "A line is 1-D. A square is 2-D.",
         f"This fractal is {dim_val}-D!",
         "It\u2019s the Hausdorff dimension \u2014 not",
         "quite a line, not quite a plane,",
         "somewhere magically in between.",
-    ]
-    _multiline_text(
-        g, ns, col_cx, anno_y + 9 * scale,
-        lines, line_height=5 * scale,
-        **{**ANNOTATION_STYLE, "font-size": str(round(3.8 * scale, 2)),
-           "text-anchor": "middle"},
-    )
+    ], scale)
     return g
 
 
@@ -368,34 +322,25 @@ def _panel_area_paradox(parent, ns, col_cx, anno_y, scale=1):
 # Poster composition
 # ---------------------------------------------------------------------------
 
-def generate_poster(depth=7, width_mm=420, height_mm=594,
+def generate_poster(depth=7, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_MM,
                     designed_by=None, designed_for=None):
     """Build and return the full poster as an ElementTree SVG root."""
-    svg, ns = _svg_root(width_mm, height_mm)
-
-    w_scale = width_mm / 420
-    h_scale = height_mm / 594
-
-    _rect(svg, ns, 0, 0, width_mm, height_mm, fill=BG_COLOR)
-
-    rule_y = draw_poster_header(
-        svg, ns, width_mm, height_mm, w_scale, h_scale,
+    sc = build_poster_scaffold(
         title="The Sierpi\u0144ski Triangle",
         subtitle="A fractal of infinite complexity from a simple rule",
-        designed_by=designed_by,
-        designed_for=designed_for,
+        width_mm=width_mm, height_mm=height_mm,
+        designed_by=designed_by, designed_for=designed_for,
     )
-
-    _add_arrow_marker(svg, ns)
+    svg, ns = sc["svg"], sc["ns"]
+    w_scale, h_scale, rule_y = sc["w_scale"], sc["h_scale"], sc["rule_y"]
 
     # --- Main fractal ---
-    margin = width_mm * 0.12
+    ca = content_area(rule_y, width_mm, height_mm, margin_frac=0.12)
+    min_top, max_bot = ca["min_top"], ca["max_bot"]
+    margin = ca["margin"]
+
     tri_side = width_mm - 2 * margin
     tri_h = tri_side * math.sqrt(3) / 2
-
-    min_top = rule_y + height_mm * 0.05
-    anno_start_frac = 0.70
-    max_bot = height_mm * anno_start_frac
 
     tri_top = min_top
     tri_bot = tri_top + tri_h
@@ -460,7 +405,7 @@ def generate_poster(depth=7, width_mm=420, height_mm=594,
     _panel_chaos_game(edu_group, ns, col2_cx, row2_y, w_scale)
     _panel_area_paradox(edu_group, ns, col3_cx, row2_y, w_scale)
 
-    draw_poster_footer(
+    finalize_poster(
         svg, ns, width_mm, height_mm, w_scale, h_scale,
         primary_line=(
             "Wac\u0142aw Sierpi\u0144ski first described this fractal in 1915."
@@ -471,8 +416,6 @@ def generate_poster(depth=7, width_mm=420, height_mm=594,
         designed_by=designed_by,
         designed_for=designed_for,
     )
-
-    draw_poster_border(svg, ns, width_mm, height_mm, w_scale)
 
     return svg
 
@@ -494,15 +437,9 @@ def build_arg_parser():
     return parser
 
 
-def main(argv=None):
-    parser = build_arg_parser()
-    args = parser.parse_args(argv)
-
-    if args.output is None:
-        args.output = f"sierpinski_poster.{args.format}"
-
-    print(f"Generating Sierpiński Triangle poster (depth={args.depth}) …")
-    svg = generate_poster(
+def _generate_from_args(args):
+    """Adapter: call generate_poster with parsed CLI arguments."""
+    return generate_poster(
         depth=args.depth,
         width_mm=args.width,
         height_mm=args.height,
@@ -510,8 +447,16 @@ def main(argv=None):
         designed_for=args.designed_for,
     )
 
-    write_poster(svg, args.format, args.output, dpi=args.dpi)
-    print(f"Saved to {args.output}")
+
+def main(argv=None):
+    parser = build_arg_parser()
+    args = parser.parse_args(argv)
+    run_poster_main(
+        build_arg_parser, _generate_from_args,
+        filename_prefix="sierpinski_poster",
+        poster_label=f"Sierpiński Triangle poster (depth={args.depth})",
+        argv=argv,
+    )
 
 
 if __name__ == "__main__":

@@ -13,9 +13,8 @@ from sierpinski_poster import (
     generate_poster,
     midpoint,
     sierpinski_triangles,
-    write_png,
-    write_svg,
 )
+from poster_utils import write_png, write_svg
 
 
 # ---------------------------------------------------------------------------

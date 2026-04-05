@@ -27,31 +27,26 @@ import xml.etree.ElementTree as ET
 from poster_utils import (
     ACCENT_COLOR,
     ANNOTATION_STYLE,
-    BG_COLOR,
-    CALLOUT_LINE_STYLE,
+    BASE_HEIGHT_MM,
+    BASE_WIDTH_MM,
     COLUMN_CENTERS,
-    FOOTER_PRIMARY_COLOR,
-    FOOTER_SECONDARY_COLOR,
     SERIF,
-    TITLE_COLOR,
-    _add_arrow_marker,
     _circle,
     _group,
     _line,
     _multiline_text,
-    _polygon,
     _polyline,
     _rect,
-    _svg_root,
     _text,
     add_common_poster_args,
+    build_poster_scaffold,
+    content_area,
+    draw_annotation_body,
+    draw_annotation_header,
     draw_annotation_row,
-    draw_poster_border,
-    draw_poster_footer,
-    draw_poster_header,
     draw_row_separator,
-    write_pdf,
-    write_png,
+    finalize_poster,
+    run_poster_main,
     write_poster,
     write_svg,
 )
@@ -176,16 +171,8 @@ DIVERGED_COLOR = "#8B0000"   # red for diverged trajectory
 def _annotation_butterfly_effect(parent, ns, target_x, target_y,
                                   col_cx, anno_y, scale=1):
     """Annotation: sensitive dependence on initial conditions."""
-    g = _group(parent, ns)
-
-    arrow_y = anno_y - 8 * scale
-    _line(g, ns, col_cx, arrow_y, target_x, target_y,
-          **CALLOUT_LINE_STYLE)
-    _circle(g, ns, col_cx, arrow_y, 1 * scale, fill=ACCENT_COLOR)
-
-    _text(g, ns, col_cx, anno_y + 2 * scale, "The Butterfly Effect",
-          **{**ANNOTATION_STYLE, "font-size": str(round(5 * scale, 2)),
-             "fill": ACCENT_COLOR, "text-anchor": "middle"})
+    g = draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
+                               "The Butterfly Effect", scale)
 
     body_style = {**ANNOTATION_STYLE, "font-size": str(round(3.8 * scale, 2)),
                   "text-anchor": "middle"}
@@ -229,60 +216,30 @@ def _annotation_butterfly_effect(parent, ns, target_x, target_y,
 def _annotation_two_wings(parent, ns, target_x, target_y,
                            col_cx, anno_y, scale=1):
     """Annotation: the two lobes ('wings') of the attractor."""
-    g = _group(parent, ns)
-
-    arrow_y = anno_y - 8 * scale
-    _line(g, ns, col_cx, arrow_y, target_x, target_y,
-          **CALLOUT_LINE_STYLE)
-    _circle(g, ns, col_cx, arrow_y, 1 * scale, fill=ACCENT_COLOR)
-
-    _text(g, ns, col_cx, anno_y + 2 * scale, "The Two \u2018Wings\u2019",
-          **{**ANNOTATION_STYLE, "font-size": str(round(5 * scale, 2)),
-             "fill": ACCENT_COLOR, "text-anchor": "middle"})
-
-    lines = [
+    g = draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
+                               "The Two \u2018Wings\u2019", scale)
+    draw_annotation_body(g, ns, col_cx, anno_y, [
         "The trajectory orbits two unstable",
         "fixed points, spiralling around one",
         "lobe before switching to the other.",
         "The timing of each switch is",
         "unpredictable \u2014 that\u2019s chaos.",
-    ]
-    _multiline_text(
-        g, ns, col_cx, anno_y + 9 * scale,
-        lines, line_height=5 * scale,
-        **{**ANNOTATION_STYLE, "font-size": str(round(3.8 * scale, 2)),
-           "text-anchor": "middle"},
-    )
+    ], scale)
     return g
 
 
 def _annotation_infinite_complexity(parent, ns, target_x, target_y,
                                      col_cx, anno_y, scale=1):
     """Annotation: the fractal nature of the strange attractor."""
-    g = _group(parent, ns)
-
-    arrow_y = anno_y - 8 * scale
-    _line(g, ns, col_cx, arrow_y, target_x, target_y,
-          **CALLOUT_LINE_STYLE)
-    _circle(g, ns, col_cx, arrow_y, 1 * scale, fill=ACCENT_COLOR)
-
-    _text(g, ns, col_cx, anno_y + 2 * scale, "Infinite Complexity",
-          **{**ANNOTATION_STYLE, "font-size": str(round(5 * scale, 2)),
-             "fill": ACCENT_COLOR, "text-anchor": "middle"})
-
-    lines = [
+    g = draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
+                               "Infinite Complexity", scale)
+    draw_annotation_body(g, ns, col_cx, anno_y, [
         "The line never intersects itself,",
         "despite being trapped in a bounded",
         "region of space. A cross-section",
         "reveals fractal structure \u2014 infinite",
         "layers, like pages of a closed book.",
-    ]
-    _multiline_text(
-        g, ns, col_cx, anno_y + 9 * scale,
-        lines, line_height=5 * scale,
-        **{**ANNOTATION_STYLE, "font-size": str(round(3.8 * scale, 2)),
-           "text-anchor": "middle"},
-    )
+    ], scale)
     return g
 
 
@@ -443,25 +400,17 @@ def _panel_weather_model(parent, ns, col_cx, anno_y, scale=1):
 # Poster composition
 # ---------------------------------------------------------------------------
 
-def generate_poster(steps=200000, width_mm=420, height_mm=594,
+def generate_poster(steps=200000, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_MM,
                     designed_by=None, designed_for=None):
     """Build and return the full poster as an ElementTree SVG root."""
-    svg, ns = _svg_root(width_mm, height_mm)
-
-    w_scale = width_mm / 420
-    h_scale = height_mm / 594
-
-    _rect(svg, ns, 0, 0, width_mm, height_mm, fill=BG_COLOR)
-
-    rule_y = draw_poster_header(
-        svg, ns, width_mm, height_mm, w_scale, h_scale,
+    sc = build_poster_scaffold(
         title="The Lorenz Attractor",
         subtitle="Strange beauty from deterministic chaos",
-        designed_by=designed_by,
-        designed_for=designed_for,
+        width_mm=width_mm, height_mm=height_mm,
+        designed_by=designed_by, designed_for=designed_for,
     )
-
-    _add_arrow_marker(svg, ns)
+    svg, ns = sc["svg"], sc["ns"]
+    w_scale, h_scale, rule_y = sc["w_scale"], sc["h_scale"], sc["rule_y"]
 
     # --- Compute Lorenz trajectory ---
     initial_main = (1.0, 1.0, 1.0)
@@ -474,13 +423,9 @@ def generate_poster(steps=200000, width_mm=420, height_mm=594,
     proj_div = project_3d_to_2d(traj_div)
 
     # --- Fit the attractor into the poster space ---
-    min_top = rule_y + height_mm * 0.05
-    anno_start_frac = 0.70
-    max_bot = height_mm * anno_start_frac
-
-    margin = width_mm * 0.10
-    avail_w = width_mm - 2 * margin
-    avail_h = max_bot - min_top
+    ca = content_area(rule_y, width_mm, height_mm, margin_frac=0.10)
+    min_top, max_bot = ca["min_top"], ca["max_bot"]
+    margin, avail_w, avail_h = ca["margin"], ca["avail_w"], ca["avail_h"]
 
     all_px = [p[0] for p in proj_main]
     all_py = [p[1] for p in proj_main]
@@ -591,7 +536,7 @@ def generate_poster(steps=200000, width_mm=420, height_mm=594,
                                 traj_main=traj_main, traj_diverged=traj_div)
     _panel_weather_model(edu_group, ns, col3_cx, row2_y, w_scale)
 
-    draw_poster_footer(
+    finalize_poster(
         svg, ns, width_mm, height_mm, w_scale, h_scale,
         primary_line=(
             "Edward Lorenz discovered this attractor in 1963 "
@@ -604,8 +549,6 @@ def generate_poster(steps=200000, width_mm=420, height_mm=594,
         designed_by=designed_by,
         designed_for=designed_for,
     )
-
-    draw_poster_border(svg, ns, width_mm, height_mm, w_scale)
 
     return svg
 
@@ -627,15 +570,9 @@ def build_arg_parser():
     return parser
 
 
-def main(argv=None):
-    parser = build_arg_parser()
-    args = parser.parse_args(argv)
-
-    if args.output is None:
-        args.output = f"lorenz_poster.{args.format}"
-
-    print(f"Generating Lorenz Attractor poster (steps={args.steps}) \u2026")
-    svg = generate_poster(
+def _generate_from_args(args):
+    """Adapter: call generate_poster with parsed CLI arguments."""
+    return generate_poster(
         steps=args.steps,
         width_mm=args.width,
         height_mm=args.height,
@@ -643,8 +580,16 @@ def main(argv=None):
         designed_for=args.designed_for,
     )
 
-    write_poster(svg, args.format, args.output, dpi=args.dpi)
-    print(f"Saved to {args.output}")
+
+def main(argv=None):
+    parser = build_arg_parser()
+    args = parser.parse_args(argv)
+    run_poster_main(
+        build_arg_parser, _generate_from_args,
+        filename_prefix="lorenz_poster",
+        poster_label=f"Lorenz Attractor poster (steps={args.steps})",
+        argv=argv,
+    )
 
 
 if __name__ == "__main__":

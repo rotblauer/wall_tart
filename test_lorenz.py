@@ -14,9 +14,8 @@ from lorenz_poster import (
     lorenz_derivatives,
     project_3d_to_2d,
     rk4_step,
-    write_png,
-    write_svg,
 )
+from poster_utils import write_png, write_svg
 
 
 # ---------------------------------------------------------------------------

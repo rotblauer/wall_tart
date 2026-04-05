@@ -4,9 +4,11 @@ on:
   push:
     branches: [main]
     paths:
+      - "poster_utils.py"
       - "sierpinski_poster.py"
       - "lorenz_poster.py"
       - "logistic_map_poster.py"
+      - "generate_all.py"
       - ".github/workflows/update-readme-images.yml"
   workflow_dispatch:
 
