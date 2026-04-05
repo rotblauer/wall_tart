@@ -10,6 +10,6 @@ RUN apt-get update && \
 RUN pip install --no-cache-dir cairosvg
 
 WORKDIR /app
-COPY poster_utils.py sierpinski_poster.py lorenz_poster.py logistic_map_poster.py generate_all.py ./
+COPY poster_utils.py sierpinski_poster.py lorenz_poster.py logistic_map_poster.py mandelbrot_poster.py double_pendulum_poster.py cellular_automata_poster.py generate_all.py ./
 
 ENTRYPOINT []

@@ -52,6 +52,31 @@ class TestBuildArgParser:
         args = parser.parse_args([])
         assert args.logistic_r_count == 2000
 
+    def test_mandelbrot_resolution_default(self):
+        parser = build_arg_parser()
+        args = parser.parse_args([])
+        assert args.mandelbrot_resolution == 80
+
+    def test_mandelbrot_max_iter_default(self):
+        parser = build_arg_parser()
+        args = parser.parse_args([])
+        assert args.mandelbrot_max_iter == 100
+
+    def test_pendulum_steps_default(self):
+        parser = build_arg_parser()
+        args = parser.parse_args([])
+        assert args.pendulum_steps == 10000
+
+    def test_automata_cell_size_default(self):
+        parser = build_arg_parser()
+        args = parser.parse_args([])
+        assert args.automata_cell_size == 2
+
+    def test_automata_generations_default(self):
+        parser = build_arg_parser()
+        args = parser.parse_args([])
+        assert args.automata_generations == 150
+
     def test_custom_output_dir(self):
         parser = build_arg_parser()
         args = parser.parse_args(["--output-dir", "/tmp/out"])
@@ -66,10 +91,17 @@ class TestMain:
                 "--sierpinski-depth", "2",
                 "--lorenz-steps", "500",
                 "--logistic-r-count", "20",
+                "--mandelbrot-resolution", "10",
+                "--mandelbrot-max-iter", "10",
+                "--pendulum-steps", "500",
+                "--automata-generations", "10",
             ])
             assert os.path.exists(os.path.join(tmpdir, "sierpinski_poster.svg"))
             assert os.path.exists(os.path.join(tmpdir, "lorenz_poster.svg"))
             assert os.path.exists(os.path.join(tmpdir, "logistic_map_poster.svg"))
+            assert os.path.exists(os.path.join(tmpdir, "mandelbrot_poster.svg"))
+            assert os.path.exists(os.path.join(tmpdir, "double_pendulum_poster.svg"))
+            assert os.path.exists(os.path.join(tmpdir, "cellular_automata_poster.svg"))
 
     def test_generates_single_poster(self):
         with tempfile.TemporaryDirectory() as tmpdir:
