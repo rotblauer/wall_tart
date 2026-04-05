@@ -424,8 +424,8 @@ def generate_poster(steps=10000, width_mm=BASE_WIDTH_MM,
     traj_group = _group(svg, ns, id="trajectories")
 
     colors = [TRAJECTORY_COLOR_1, TRAJECTORY_COLOR_2, TRAJECTORY_COLOR_3]
-    opacities = ["0.6", "0.5", "0.5"]
-    stroke_w = str(round(0.15 * w_scale, 3))
+    opacities = ["0.4", "0.35", "0.35"]
+    stroke_w = str(round(0.12 * w_scale, 3))
 
     for scaled, color, opacity in zip(scaled_sets, colors, opacities):
         _polyline(traj_group, ns, scaled,

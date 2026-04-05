@@ -22,13 +22,22 @@ Examples:
     # Custom size with credit lines
     python generate_all.py --width 594 --height 841 \\
         --designed-by "Alice" --designed-for "the Science Museum"
+
+    # Generate all posters in the blueprint theme
+    python generate_all.py --theme blueprint --output-dir ./output
+
+    # Generate every poster in every theme for visual review
+    python generate_all.py --theme all --output-dir ./themes
 """
 
 import argparse
 import os
 import sys
 
-from poster_utils import BASE_HEIGHT_MM, BASE_WIDTH_MM, write_poster
+from poster_utils import (
+    AVAILABLE_THEMES, BASE_HEIGHT_MM, BASE_WIDTH_MM, DEFAULT_THEME,
+    write_poster,
+)
 
 from sierpinski_poster import generate_poster as generate_sierpinski
 from lorenz_poster import generate_poster as generate_lorenz
@@ -97,6 +106,15 @@ def build_arg_parser():
         "--designed-for", type=str, default=None, dest="designed_for",
         help="Client / purpose credit, e.g. 'the Science Museum'.",
     )
+    common.add_argument(
+        "--theme", type=str, default=DEFAULT_THEME,
+        choices=AVAILABLE_THEMES + ["all"],
+        help=(
+            f"Color theme (default: {DEFAULT_THEME}). "
+            f"Choices: {', '.join(AVAILABLE_THEMES)}, all. "
+            "Use 'all' to generate every poster in every theme."
+        ),
+    )
 
     # --- Poster-specific arguments ---
     sierpinski = parser.add_argument_group("Sierpiński Triangle options")
@@ -157,6 +175,9 @@ def main(argv=None):
 
     os.makedirs(args.output_dir, exist_ok=True)
 
+    # Determine which themes to generate
+    themes = AVAILABLE_THEMES if args.theme == "all" else [args.theme]
+
     common_kwargs = {
         "width_mm": args.width,
         "height_mm": args.height,
@@ -215,19 +236,29 @@ def main(argv=None):
         },
     }
 
-    for name in args.posters:
-        info = posters[name]
-        filepath = os.path.join(
-            args.output_dir, f"{info['filename']}.{args.format}"
-        )
+    total = 0
+    for theme in themes:
+        suffix = f"_{theme}" if len(themes) > 1 else ""
+        for name in args.posters:
+            info = posters[name]
+            filepath = os.path.join(
+                args.output_dir,
+                f"{info['filename']}{suffix}.{args.format}",
+            )
 
-        print(f"Generating {info['label']} \u2026")
-        svg = info["generate"](**info["kwargs"], **common_kwargs)
+            label = info["label"]
+            if len(themes) > 1:
+                label = f"{label} [{theme}]"
+            print(f"Generating {label} \u2026")
+            svg = info["generate"](
+                **info["kwargs"], **common_kwargs, theme=theme,
+            )
 
-        write_poster(svg, args.format, filepath, dpi=args.dpi)
-        print(f"  Saved to {filepath}")
+            write_poster(svg, args.format, filepath, dpi=args.dpi)
+            print(f"  Saved to {filepath}")
+            total += 1
 
-    print(f"\nDone — {len(args.posters)} poster(s) generated.")
+    print(f"\nDone — {total} poster(s) generated.")
 
 
 if __name__ == "__main__":

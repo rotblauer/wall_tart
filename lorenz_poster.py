@@ -453,7 +453,7 @@ def generate_poster(steps=200000, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_
     # --- Main attractor visualisation ---
     attractor_group = _group(svg, ns, id="attractor")
 
-    stroke_w = str(round(0.15 * w_scale, 3))
+    stroke_w = str(round(0.12 * w_scale, 3))
 
     n_segments = 5
     seg_len = len(scaled_main) // n_segments
@@ -461,7 +461,7 @@ def generate_poster(steps=200000, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_
         start = i * seg_len
         end = start + seg_len + 1 if i < n_segments - 1 else len(scaled_main)
         _polyline(attractor_group, ns, scaled_main[start:end],
-                  stroke=ATTRACTOR_COLOR, opacity="0.6",
+                  stroke=ATTRACTOR_COLOR, opacity="0.4",
                   **{"stroke-width": stroke_w,
                      "stroke-linejoin": "round",
                      "stroke-linecap": "round"})
@@ -477,7 +477,7 @@ def generate_poster(steps=200000, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_
 
     if diverge_start < len(scaled_div):
         _polyline(attractor_group, ns, scaled_div[diverge_start:],
-                  stroke=DIVERGED_COLOR, opacity="0.35",
+                  stroke=DIVERGED_COLOR, opacity="0.25",
                   **{"stroke-width": stroke_w,
                      "stroke-linejoin": "round",
                      "stroke-linecap": "round"})
