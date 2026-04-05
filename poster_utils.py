@@ -567,7 +567,7 @@ def draw_annotation_body(g, ns, col_cx, anno_y, lines, scale):
 # Unified CLI runner
 # ---------------------------------------------------------------------------
 
-def run_poster_main(build_arg_parser, generate_poster, filename_prefix,
+def run_poster_main(build_arg_parser, generate_from_args, filename_prefix,
                     poster_label, argv=None):
     """Run the common CLI main() logic for any poster generator.
 
@@ -575,10 +575,10 @@ def run_poster_main(build_arg_parser, generate_poster, filename_prefix,
     ----------
     build_arg_parser : callable
         Factory that returns a configured ``argparse.ArgumentParser``.
-    generate_poster : callable
-        The poster-specific generation function.  Will be called with
-        the keyword arguments returned by ``build_arg_parser`` (minus
-        output/format/dpi which are handled here).
+    generate_from_args : callable
+        Adapter that accepts a parsed ``argparse.Namespace`` and returns
+        an SVG root element.  Typically calls the poster-specific
+        ``generate_poster`` function with the relevant arguments.
     filename_prefix : str
         Default filename stem, e.g. ``"sierpinski_poster"``.
     poster_label : str
@@ -594,7 +594,7 @@ def run_poster_main(build_arg_parser, generate_poster, filename_prefix,
         args.output = f"{filename_prefix}.{args.format}"
 
     print(f"Generating {poster_label} \u2026")
-    svg = generate_poster(args)
+    svg = generate_from_args(args)
 
     write_poster(svg, args.format, args.output, dpi=args.dpi)
     print(f"Saved to {args.output}")
