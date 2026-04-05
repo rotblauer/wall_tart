@@ -191,10 +191,10 @@ TRAJECTORY_COLOR_3 = "#2E5090"  # blue
 # ---------------------------------------------------------------------------
 
 def _annotation_sensitive_dependence(parent, ns, target_x, target_y,
-                                     col_cx, anno_y, scale=1):
+                                     col_cx, anno_y, scale=1, theme=None):
     """Annotation: sensitive dependence on initial conditions."""
     g = draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
-                               "Sensitive Dependence", scale)
+                               "Sensitive Dependence", scale, theme=theme)
     draw_annotation_body(g, ns, col_cx, anno_y, [
         "Three pendulums start almost",
         "identically \u2014 angles differ by a",
@@ -202,15 +202,15 @@ def _annotation_sensitive_dependence(parent, ns, target_x, target_y,
         "Within seconds the trajectories",
         "diverge completely. This is the",
         "butterfly effect in action.",
-    ], scale)
+    ], scale, theme=theme)
     return g
 
 
 def _annotation_phase_space(parent, ns, target_x, target_y,
-                            col_cx, anno_y, scale=1):
+                            col_cx, anno_y, scale=1, theme=None):
     """Annotation: the 4-D phase space of the double pendulum."""
     g = draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
-                               "Four-Dimensional Phase Space", scale)
+                               "Four-Dimensional Phase Space", scale, theme=theme)
     draw_annotation_body(g, ns, col_cx, anno_y, [
         "The state of the double pendulum",
         "lives in a 4-D space: two angles",
@@ -218,15 +218,15 @@ def _annotation_phase_space(parent, ns, target_x, target_y,
         "trace you see is a projection of",
         "this high-dimensional orbit onto",
         "the physical plane.",
-    ], scale)
+    ], scale, theme=theme)
     return g
 
 
 def _annotation_energy_conservation(parent, ns, target_x, target_y,
-                                    col_cx, anno_y, scale=1):
+                                    col_cx, anno_y, scale=1, theme=None):
     """Annotation: energy conservation amid chaotic motion."""
     g = draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
-                               "Energy Conservation", scale)
+                               "Energy Conservation", scale, theme=theme)
     draw_annotation_body(g, ns, col_cx, anno_y, [
         "Total energy \u2014 kinetic plus",
         "potential \u2014 is exactly conserved.",
@@ -234,7 +234,7 @@ def _annotation_energy_conservation(parent, ns, target_x, target_y,
         "friction, no dissipation. Yet the",
         "motion is chaotic, filling a",
         "bounded region unpredictably.",
-    ], scale)
+    ], scale, theme=theme)
     return g
 
 
@@ -347,7 +347,7 @@ def _panel_physical_systems(parent, ns, col_cx, anno_y, scale=1):
 
 def generate_poster(steps=10000, width_mm=BASE_WIDTH_MM,
                     height_mm=BASE_HEIGHT_MM,
-                    designed_by=None, designed_for=None):
+                    designed_by=None, designed_for=None, theme=None):
     """Build and return the full poster as an ElementTree SVG root.
 
     Parameters
@@ -369,6 +369,7 @@ def generate_poster(steps=10000, width_mm=BASE_WIDTH_MM,
         subtitle="Deterministic chaos in a simple mechanism",
         width_mm=width_mm, height_mm=height_mm,
         designed_by=designed_by, designed_for=designed_for,
+        theme=theme,
     )
     svg, ns = sc["svg"], sc["ns"]
     w_scale, h_scale, rule_y = sc["w_scale"], sc["h_scale"], sc["rule_y"]
@@ -438,7 +439,7 @@ def generate_poster(steps=10000, width_mm=BASE_WIDTH_MM,
 
     anno_sep_y = max_bot + 12 * h_scale
     draw_row_separator(anno_group, ns, width_mm, anno_sep_y, w_scale,
-                       opacity="0.5")
+                       opacity="0.5", theme=theme)
 
     anno_y = anno_sep_y + 18 * h_scale
 
@@ -462,6 +463,7 @@ def generate_poster(steps=10000, width_mm=BASE_WIDTH_MM,
             (_annotation_energy_conservation, ec_target[0], ec_target[1]),
         ],
         w_scale,
+        theme=theme,
     )
 
     # --- Second row: educational connections ---
@@ -469,7 +471,7 @@ def generate_poster(steps=10000, width_mm=BASE_WIDTH_MM,
 
     row2_sep_y = anno_y + 55 * w_scale
     draw_row_separator(edu_group, ns, width_mm, row2_sep_y, w_scale,
-                       opacity="0.35")
+                       opacity="0.35", theme=theme)
 
     row2_y = row2_sep_y + 12 * w_scale
 
@@ -491,6 +493,7 @@ def generate_poster(steps=10000, width_mm=BASE_WIDTH_MM,
         ),
         designed_by=designed_by,
         designed_for=designed_for,
+        theme=theme,
     )
 
     return svg
@@ -521,6 +524,7 @@ def _generate_from_args(args):
         height_mm=args.height,
         designed_by=args.designed_by,
         designed_for=args.designed_for,
+        theme=args.theme,
     )
 
 

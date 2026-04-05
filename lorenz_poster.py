@@ -169,10 +169,10 @@ DIVERGED_COLOR = "#8B0000"   # red for diverged trajectory
 # ---------------------------------------------------------------------------
 
 def _annotation_butterfly_effect(parent, ns, target_x, target_y,
-                                  col_cx, anno_y, scale=1):
+                                  col_cx, anno_y, scale=1, theme=None):
     """Annotation: sensitive dependence on initial conditions."""
     g = draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
-                               "The Butterfly Effect", scale)
+                               "The Butterfly Effect", scale, theme=theme)
 
     body_style = {**ANNOTATION_STYLE, "font-size": str(round(3.8 * scale, 2)),
                   "text-anchor": "middle"}
@@ -214,32 +214,32 @@ def _annotation_butterfly_effect(parent, ns, target_x, target_y,
 
 
 def _annotation_two_wings(parent, ns, target_x, target_y,
-                           col_cx, anno_y, scale=1):
+                           col_cx, anno_y, scale=1, theme=None):
     """Annotation: the two lobes ('wings') of the attractor."""
     g = draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
-                               "The Two \u2018Wings\u2019", scale)
+                               "The Two \u2018Wings\u2019", scale, theme=theme)
     draw_annotation_body(g, ns, col_cx, anno_y, [
         "The trajectory orbits two unstable",
         "fixed points, spiralling around one",
         "lobe before switching to the other.",
         "The timing of each switch is",
         "unpredictable \u2014 that\u2019s chaos.",
-    ], scale)
+    ], scale, theme=theme)
     return g
 
 
 def _annotation_infinite_complexity(parent, ns, target_x, target_y,
-                                     col_cx, anno_y, scale=1):
+                                     col_cx, anno_y, scale=1, theme=None):
     """Annotation: the fractal nature of the strange attractor."""
     g = draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
-                               "Infinite Complexity", scale)
+                               "Infinite Complexity", scale, theme=theme)
     draw_annotation_body(g, ns, col_cx, anno_y, [
         "The line never intersects itself,",
         "despite being trapped in a bounded",
         "region of space. A cross-section",
         "reveals fractal structure \u2014 infinite",
         "layers, like pages of a closed book.",
-    ], scale)
+    ], scale, theme=theme)
     return g
 
 
@@ -401,13 +401,14 @@ def _panel_weather_model(parent, ns, col_cx, anno_y, scale=1):
 # ---------------------------------------------------------------------------
 
 def generate_poster(steps=200000, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_MM,
-                    designed_by=None, designed_for=None):
+                    designed_by=None, designed_for=None, theme=None):
     """Build and return the full poster as an ElementTree SVG root."""
     sc = build_poster_scaffold(
         title="The Lorenz Attractor",
         subtitle="Strange beauty from deterministic chaos",
         width_mm=width_mm, height_mm=height_mm,
         designed_by=designed_by, designed_for=designed_for,
+        theme=theme,
     )
     svg, ns = sc["svg"], sc["ns"]
     w_scale, h_scale, rule_y = sc["w_scale"], sc["h_scale"], sc["rule_y"]
@@ -488,7 +489,8 @@ def generate_poster(steps=200000, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_
     attractor_bottom = max(vis_ys)
 
     anno_sep_y = attractor_bottom + 10 * h_scale
-    draw_row_separator(anno_group, ns, width_mm, anno_sep_y, w_scale, opacity="0.5")
+    draw_row_separator(anno_group, ns, width_mm, anno_sep_y, w_scale, opacity="0.5",
+                       theme=theme)
 
     anno_y = anno_sep_y + 18 * h_scale
 
@@ -521,13 +523,15 @@ def generate_poster(steps=200000, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_
             (_annotation_infinite_complexity, dense_target_x, dense_target_y),
         ],
         w_scale,
+        theme=theme,
     )
 
     # --- Second row: educational connections ---
     edu_group = _group(svg, ns, id="educational")
 
     row2_sep_y = anno_y + 55 * w_scale
-    draw_row_separator(edu_group, ns, width_mm, row2_sep_y, w_scale, opacity="0.35")
+    draw_row_separator(edu_group, ns, width_mm, row2_sep_y, w_scale, opacity="0.35",
+                       theme=theme)
 
     row2_y = row2_sep_y + 12 * w_scale
 
@@ -548,6 +552,7 @@ def generate_poster(steps=200000, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_
         ),
         designed_by=designed_by,
         designed_for=designed_for,
+        theme=theme,
     )
 
     return svg
@@ -578,6 +583,7 @@ def _generate_from_args(args):
         height_mm=args.height,
         designed_by=args.designed_by,
         designed_for=args.designed_for,
+        theme=args.theme,
     )
 
 

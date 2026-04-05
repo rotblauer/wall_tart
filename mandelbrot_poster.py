@@ -205,10 +205,10 @@ DIAGRAM_COLOR = "#1C1C1C"  # near-black ink
 # ---------------------------------------------------------------------------
 
 def _annotation_self_similarity(parent, ns, target_x, target_y,
-                                col_cx, anno_y, scale=1):
+                                col_cx, anno_y, scale=1, theme=None):
     """Annotation: infinite self-similarity and zooming."""
     g = draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
-                               "Infinite Self-Similarity", scale)
+                               "Infinite Self-Similarity", scale, theme=theme)
     draw_annotation_body(g, ns, col_cx, anno_y, [
         "Zoom into the boundary of the",
         "Mandelbrot set and you will find",
@@ -216,15 +216,15 @@ def _annotation_self_similarity(parent, ns, target_x, target_y,
         "each surrounded by its own filigree.",
         "This self-similarity continues to",
         "infinite depth — no two zooms alike.",
-    ], scale)
+    ], scale, theme=theme)
     return g
 
 
 def _annotation_escape_time(parent, ns, target_x, target_y,
-                            col_cx, anno_y, scale=1):
+                            col_cx, anno_y, scale=1, theme=None):
     """Annotation: escape-time colouring algorithm."""
     g = draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
-                               "Escape-Time Colouring", scale)
+                               "Escape-Time Colouring", scale, theme=theme)
     draw_annotation_body(g, ns, col_cx, anno_y, [
         "Each point is coloured by how many",
         "iterations it takes for |z| to",
@@ -232,15 +232,15 @@ def _annotation_escape_time(parent, ns, target_x, target_y,
         "are in the set (shown dark). The",
         "smooth colour gradient reveals the",
         "fractal boundary in vivid detail.",
-    ], scale)
+    ], scale, theme=theme)
     return g
 
 
 def _annotation_julia_connection(parent, ns, target_x, target_y,
-                                 col_cx, anno_y, scale=1):
+                                 col_cx, anno_y, scale=1, theme=None):
     """Annotation: connection between Mandelbrot and Julia sets."""
     g = draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
-                               "Julia Set Connection", scale)
+                               "Julia Set Connection", scale, theme=theme)
     draw_annotation_body(g, ns, col_cx, anno_y, [
         "Every point c in the complex plane",
         "defines a unique Julia set. Points",
@@ -248,7 +248,7 @@ def _annotation_julia_connection(parent, ns, target_x, target_y,
         "connected Julia sets; points outside",
         "yield disconnected \u2018dust\u2019. The",
         "Mandelbrot set is their catalogue.",
-    ], scale)
+    ], scale, theme=theme)
     return g
 
 
@@ -419,7 +419,7 @@ def _draw_grid(parent, ns, grid, max_iter, gx, gy, cell_w, cell_h):
 
 def generate_poster(resolution=80, max_iter=100,
                     width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_MM,
-                    designed_by=None, designed_for=None):
+                    designed_by=None, designed_for=None, theme=None):
     """Build and return the full poster as an ElementTree SVG root.
 
     Parameters
@@ -443,6 +443,7 @@ def generate_poster(resolution=80, max_iter=100,
         subtitle="Infinite complexity from z\u00b2 + c",
         width_mm=width_mm, height_mm=height_mm,
         designed_by=designed_by, designed_for=designed_for,
+        theme=theme,
     )
     svg, ns = sc["svg"], sc["ns"]
     w_scale, h_scale, rule_y = sc["w_scale"], sc["h_scale"], sc["rule_y"]
@@ -537,7 +538,7 @@ def generate_poster(resolution=80, max_iter=100,
 
     anno_sep_y = max_bot + 12 * h_scale
     draw_row_separator(anno_group, ns, width_mm, anno_sep_y, w_scale,
-                       opacity="0.5")
+                       opacity="0.5", theme=theme)
 
     anno_y = anno_sep_y + 18 * h_scale
 
@@ -563,6 +564,7 @@ def generate_poster(resolution=80, max_iter=100,
             (_annotation_julia_connection, jc_target[0], jc_target[1]),
         ],
         w_scale,
+        theme=theme,
     )
 
     # --- Second row: educational panels ---
@@ -570,7 +572,7 @@ def generate_poster(resolution=80, max_iter=100,
 
     row2_sep_y = anno_y + 55 * w_scale
     draw_row_separator(edu_group, ns, width_mm, row2_sep_y, w_scale,
-                       opacity="0.35")
+                       opacity="0.35", theme=theme)
 
     row2_y = row2_sep_y + 12 * w_scale
 
@@ -591,6 +593,7 @@ def generate_poster(resolution=80, max_iter=100,
         ),
         designed_by=designed_by,
         designed_for=designed_for,
+        theme=theme,
     )
 
     return svg
@@ -626,6 +629,7 @@ def _generate_from_args(args):
         height_mm=args.height,
         designed_by=args.designed_by,
         designed_for=args.designed_for,
+        theme=args.theme,
     )
 
 

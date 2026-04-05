@@ -128,10 +128,10 @@ DIAGRAM_COLOR = "#1C1C1C"  # near-black ink
 # ---------------------------------------------------------------------------
 
 def _annotation_period_doubling(parent, ns, target_x, target_y,
-                                col_cx, anno_y, scale=1):
+                                col_cx, anno_y, scale=1, theme=None):
     """Annotation: the period-doubling cascade."""
     g = draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
-                               "Period Doubling Cascade", scale)
+                               "Period Doubling Cascade", scale, theme=theme)
     draw_annotation_body(g, ns, col_cx, anno_y, [
         "As r increases, the single stable",
         "value splits into two, then four,",
@@ -139,15 +139,15 @@ def _annotation_period_doubling(parent, ns, target_x, target_y,
         "faster than the last. This cascade",
         "of period doublings is the road",
         "from order to chaos.",
-    ], scale)
+    ], scale, theme=theme)
     return g
 
 
 def _annotation_edge_of_chaos(parent, ns, target_x, target_y,
-                               col_cx, anno_y, scale=1):
+                               col_cx, anno_y, scale=1, theme=None):
     """Annotation: the onset of chaos (Feigenbaum point)."""
     g = draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
-                               "The Edge of Chaos", scale)
+                               "The Edge of Chaos", scale, theme=theme)
 
     # Body text with r_inf value rendered via tspan for subscript
     body_style = {**ANNOTATION_STYLE, "font-size": str(round(3.8 * scale, 2)),
@@ -196,10 +196,10 @@ def _annotation_edge_of_chaos(parent, ns, target_x, target_y,
 
 
 def _annotation_windows_of_order(parent, ns, target_x, target_y,
-                                  col_cx, anno_y, scale=1):
+                                  col_cx, anno_y, scale=1, theme=None):
     """Annotation: the period-3 window amid chaos."""
     g = draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
-                               "Windows of Order", scale)
+                               "Windows of Order", scale, theme=theme)
     draw_annotation_body(g, ns, col_cx, anno_y, [
         "Deep in the chaotic regime, narrow",
         "windows of periodicity appear \u2014 the",
@@ -207,7 +207,7 @@ def _annotation_windows_of_order(parent, ns, target_x, target_y,
         "stable period-3 cycle emerges. Li &",
         "Yorke proved: \u2018period three implies",
         "chaos\u2019 \u2014 but also brief calm.",
-    ], scale)
+    ], scale, theme=theme)
     return g
 
 
@@ -388,7 +388,7 @@ def _panel_population_biology(parent, ns, col_cx, anno_y, scale=1):
 # ---------------------------------------------------------------------------
 
 def generate_poster(r_count=2000, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_MM,
-                    designed_by=None, designed_for=None):
+                    designed_by=None, designed_for=None, theme=None):
     """Build and return the full poster as an ElementTree SVG root.
 
     Parameters
@@ -410,6 +410,7 @@ def generate_poster(r_count=2000, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_
         subtitle="Order, chaos, and the road between",
         width_mm=width_mm, height_mm=height_mm,
         designed_by=designed_by, designed_for=designed_for,
+        theme=theme,
     )
     svg, ns = sc["svg"], sc["ns"]
     w_scale, h_scale, rule_y = sc["w_scale"], sc["h_scale"], sc["rule_y"]
@@ -464,7 +465,8 @@ def generate_poster(r_count=2000, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_
     anno_group = _group(svg, ns, id="annotations")
 
     anno_sep_y = max_bot + 12 * h_scale
-    draw_row_separator(anno_group, ns, width_mm, anno_sep_y, w_scale, opacity="0.5")
+    draw_row_separator(anno_group, ns, width_mm, anno_sep_y, w_scale, opacity="0.5",
+                       theme=theme)
 
     anno_y = anno_sep_y + 18 * h_scale
 
@@ -484,13 +486,15 @@ def generate_poster(r_count=2000, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_
             (_annotation_windows_of_order, wo_target[0], wo_target[1]),
         ],
         w_scale,
+        theme=theme,
     )
 
     # --- Second row: educational connections ---
     edu_group = _group(svg, ns, id="educational")
 
     row2_sep_y = anno_y + 55 * w_scale
-    draw_row_separator(edu_group, ns, width_mm, row2_sep_y, w_scale, opacity="0.35")
+    draw_row_separator(edu_group, ns, width_mm, row2_sep_y, w_scale, opacity="0.35",
+                       theme=theme)
 
     row2_y = row2_sep_y + 12 * w_scale
 
@@ -511,6 +515,7 @@ def generate_poster(r_count=2000, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_
         ),
         designed_by=designed_by,
         designed_for=designed_for,
+        theme=theme,
     )
 
     return svg
@@ -541,6 +546,7 @@ def _generate_from_args(args):
         height_mm=args.height,
         designed_by=args.designed_by,
         designed_for=args.designed_for,
+        theme=args.theme,
     )
 
 

@@ -130,10 +130,10 @@ CELL_COLORS = {
 # ---------------------------------------------------------------------------
 
 def _annotation_rule_30(parent, ns, target_x, target_y,
-                        col_cx, anno_y, scale=1):
+                        col_cx, anno_y, scale=1, theme=None):
     """Annotation: Rule 30's chaotic, pseudo-random output."""
     g = draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
-                               "Rule 30 \u2014 Chaos", scale)
+                               "Rule 30 \u2014 Chaos", scale, theme=theme)
     draw_annotation_body(g, ns, col_cx, anno_y, [
         "From a single seed, Rule 30 produces",
         "irregular, pseudo-random output that",
@@ -141,15 +141,15 @@ def _annotation_rule_30(parent, ns, target_x, target_y,
         "as the random number generator in",
         "Mathematica \u2014 proof that simple",
         "deterministic rules can mimic noise.",
-    ], scale)
+    ], scale, theme=theme)
     return g
 
 
 def _annotation_rule_90(parent, ns, target_x, target_y,
-                        col_cx, anno_y, scale=1):
+                        col_cx, anno_y, scale=1, theme=None):
     """Annotation: Rule 90 and the Sierpi\u0144ski triangle."""
     g = draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
-                               "Rule 90 \u2014 Sierpi\u0144ski", scale)
+                               "Rule 90 \u2014 Sierpi\u0144ski", scale, theme=theme)
     draw_annotation_body(g, ns, col_cx, anno_y, [
         "Rule 90 generates the Sierpi\u0144ski",
         "triangle \u2014 a fractal that also appears",
@@ -157,15 +157,15 @@ def _annotation_rule_90(parent, ns, target_x, target_y,
         "Pascal\u2019s triangle. This equivalence",
         "to Pascal\u2019s triangle mod 2 links",
         "automata to classical combinatorics.",
-    ], scale)
+    ], scale, theme=theme)
     return g
 
 
 def _annotation_rule_110(parent, ns, target_x, target_y,
-                         col_cx, anno_y, scale=1):
+                         col_cx, anno_y, scale=1, theme=None):
     """Annotation: Rule 110's Turing-completeness."""
     g = draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
-                               "Rule 110 \u2014 Universal", scale)
+                               "Rule 110 \u2014 Universal", scale, theme=theme)
     draw_annotation_body(g, ns, col_cx, anno_y, [
         "In 2004, Matthew Cook proved that",
         "Rule 110 is Turing-complete: it can",
@@ -173,7 +173,7 @@ def _annotation_rule_110(parent, ns, target_x, target_y,
         "dimensional row of cells with the",
         "simplest possible update rule is, in",
         "principle, a universal computer.",
-    ], scale)
+    ], scale, theme=theme)
     return g
 
 
@@ -274,7 +274,7 @@ def _panel_computation(parent, ns, col_cx, anno_y, scale=1):
 
 def generate_poster(cell_size=2, generations=150,
                     width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_MM,
-                    designed_by=None, designed_for=None):
+                    designed_by=None, designed_for=None, theme=None):
     """Build and return the full poster as an ElementTree SVG root.
 
     Parameters
@@ -298,6 +298,7 @@ def generate_poster(cell_size=2, generations=150,
         subtitle="Simple rules, complex worlds",
         width_mm=width_mm, height_mm=height_mm,
         designed_by=designed_by, designed_for=designed_for,
+        theme=theme,
     )
     svg, ns = sc["svg"], sc["ns"]
     w_scale, h_scale, rule_y = sc["w_scale"], sc["h_scale"], sc["rule_y"]
@@ -367,7 +368,8 @@ def generate_poster(cell_size=2, generations=150,
     anno_group = _group(svg, ns, id="annotations")
 
     anno_sep_y = max_bot + 12 * h_scale
-    draw_row_separator(anno_group, ns, width_mm, anno_sep_y, w_scale, opacity="0.5")
+    draw_row_separator(anno_group, ns, width_mm, anno_sep_y, w_scale, opacity="0.5",
+                       theme=theme)
 
     anno_y = anno_sep_y + 18 * h_scale
 
@@ -383,13 +385,15 @@ def generate_poster(cell_size=2, generations=150,
             (_annotation_rule_110, col3_cx, target_y),
         ],
         w_scale,
+        theme=theme,
     )
 
     # --- Second row: educational panels ---
     edu_group = _group(svg, ns, id="educational")
 
     row2_sep_y = anno_y + 55 * w_scale
-    draw_row_separator(edu_group, ns, width_mm, row2_sep_y, w_scale, opacity="0.35")
+    draw_row_separator(edu_group, ns, width_mm, row2_sep_y, w_scale, opacity="0.35",
+                       theme=theme)
 
     row2_y = row2_sep_y + 12 * w_scale
 
@@ -410,6 +414,7 @@ def generate_poster(cell_size=2, generations=150,
         ),
         designed_by=designed_by,
         designed_for=designed_for,
+        theme=theme,
     )
 
     return svg
@@ -445,6 +450,7 @@ def _generate_from_args(args):
         height_mm=args.height,
         designed_by=args.designed_by,
         designed_for=args.designed_for,
+        theme=args.theme,
     )
 
 

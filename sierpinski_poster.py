@@ -109,29 +109,29 @@ TRIANGLE_COLOR = "#1C1C1C"  # near-black ink
 # ---------------------------------------------------------------------------
 
 def _annotation_self_similarity(parent, ns, target_x, target_y,
-                                col_cx, anno_y, scale=1):
+                                col_cx, anno_y, scale=1, theme=None):
     """Annotation: self-similarity callout (below the fractal)."""
     g = draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
-                               "Self-Similarity", scale)
+                               "Self-Similarity", scale, theme=theme)
     draw_annotation_body(g, ns, col_cx, anno_y, [
         "Every smaller triangle is an exact",
         "copy of the whole shape. Zoom in",
         "anywhere \u2014 the same pattern",
         "repeats at every scale, forever.",
-    ], scale)
+    ], scale, theme=theme)
     return g
 
 
 def _annotation_recursion(parent, ns, target_x, target_y,
-                           col_cx, anno_y, scale=1):
+                           col_cx, anno_y, scale=1, theme=None):
     """Annotation: recursion callout with step diagram (below the fractal)."""
     g = draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
-                               "Recursion", scale)
+                               "Recursion", scale, theme=theme)
     draw_annotation_body(g, ns, col_cx, anno_y, [
         "Start with one triangle. Remove the",
         "centre to get three smaller copies.",
         "Repeat on each copy \u2014 that\u2019s recursion!",
-    ], scale)
+    ], scale, theme=theme)
 
     # Mini step diagram: 3 tiny triangles showing depth 0, 1, 2 — centred at col_cx
     mini_y = anno_y + 32 * scale
@@ -152,10 +152,10 @@ def _annotation_recursion(parent, ns, target_x, target_y,
 
 
 def _annotation_dimension(parent, ns, target_x, target_y,
-                           col_cx, anno_y, scale=1):
+                           col_cx, anno_y, scale=1, theme=None):
     """Annotation: fractional (Hausdorff) dimension callout (below fractal)."""
     g = draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
-                               "Fractional Dimension", scale)
+                               "Fractional Dimension", scale, theme=theme)
 
     dim_val = f"{math.log(3) / math.log(2):.4f}"
     draw_annotation_body(g, ns, col_cx, anno_y, [
@@ -164,7 +164,7 @@ def _annotation_dimension(parent, ns, target_x, target_y,
         "It\u2019s the Hausdorff dimension \u2014 not",
         "quite a line, not quite a plane,",
         "somewhere magically in between.",
-    ], scale)
+    ], scale, theme=theme)
     return g
 
 
@@ -323,13 +323,14 @@ def _panel_area_paradox(parent, ns, col_cx, anno_y, scale=1):
 # ---------------------------------------------------------------------------
 
 def generate_poster(depth=7, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_MM,
-                    designed_by=None, designed_for=None):
+                    designed_by=None, designed_for=None, theme=None):
     """Build and return the full poster as an ElementTree SVG root."""
     sc = build_poster_scaffold(
         title="The Sierpi\u0144ski Triangle",
         subtitle="A fractal of infinite complexity from a simple rule",
         width_mm=width_mm, height_mm=height_mm,
         designed_by=designed_by, designed_for=designed_for,
+        theme=theme,
     )
     svg, ns = sc["svg"], sc["ns"]
     w_scale, h_scale, rule_y = sc["w_scale"], sc["h_scale"], sc["rule_y"]
@@ -363,7 +364,8 @@ def generate_poster(depth=7, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_MM,
 
     fractal_bottom = vertices[1][1]
     anno_sep_y = fractal_bottom + 10 * h_scale
-    draw_row_separator(anno_group, ns, width_mm, anno_sep_y, w_scale, opacity="0.5")
+    draw_row_separator(anno_group, ns, width_mm, anno_sep_y, w_scale, opacity="0.5",
+                       theme=theme)
 
     anno_y = anno_sep_y + 18 * h_scale
 
@@ -391,13 +393,15 @@ def generate_poster(depth=7, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_MM,
             (_annotation_dimension, dim_target_x, dim_target_y),
         ],
         w_scale,
+        theme=theme,
     )
 
     # --- Second row: educational connections ---
     edu_group = _group(svg, ns, id="educational")
 
     row2_sep_y = anno_y + 55 * w_scale
-    draw_row_separator(edu_group, ns, width_mm, row2_sep_y, w_scale, opacity="0.35")
+    draw_row_separator(edu_group, ns, width_mm, row2_sep_y, w_scale, opacity="0.35",
+                       theme=theme)
 
     row2_y = row2_sep_y + 12 * w_scale
 
@@ -415,6 +419,7 @@ def generate_poster(depth=7, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_MM,
         ),
         designed_by=designed_by,
         designed_for=designed_for,
+        theme=theme,
     )
 
     return svg
@@ -445,6 +450,7 @@ def _generate_from_args(args):
         height_mm=args.height,
         designed_by=args.designed_by,
         designed_for=args.designed_for,
+        theme=args.theme,
     )
 
 
