@@ -90,6 +90,8 @@ def create_initial_wheel(cx, cy, radius):
         b = (cx + radius * math.cos(angle), cy + radius * math.sin(angle))
         c = (cx + radius * math.cos(next_angle),
              cy + radius * math.sin(next_angle))
+        # Alternate winding so adjacent triangles share a consistent
+        # edge orientation, which keeps subdivisions seamless.
         if i % 2 == 0:
             triangles.append((THIN, (cx, cy), b, c))
         else:
