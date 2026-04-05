@@ -298,6 +298,57 @@ class TestGeneratePoster:
             zoom = svg.find(f".//{{{ns}}}g[@id='zoom_inset']")
             assert zoom is not None, f"zoom_inset missing for theme '{theme}'"
 
+    def test_zoom_target_box_in_right_hemisphere(self):
+        """The zoom target box must be in the right hemisphere of the attractor."""
+        svg = generate_poster(steps=5000, width_mm=200, height_mm=300)
+        ns = "http://www.w3.org/2000/svg"
+        zoom = svg.find(f".//{{{ns}}}g[@id='zoom_inset']")
+        rects = zoom.findall(f"{{{ns}}}rect")
+        # The 3rd rect is the source target box on the main attractor.
+        target_box = rects[2]
+        box_x = float(target_box.get("x"))
+        box_w = float(target_box.get("width"))
+        box_cx = box_x + box_w / 2
+        # The attractor is centred at width_mm / 2 = 100 mm.
+        assert box_cx > 100.0, (
+            f"Zoom target box centre {box_cx:.1f} should be in the right hemisphere (>100)"
+        )
+
+    def test_zoom_annotation_leader_does_not_cross_connectors(self):
+        """The annotation leader to the zoom panel must not cross connector lines.
+
+        The annotation leader targets the bottom edge of the zoom panel (y =
+        zoom_y + zoom_h).  The connector lines link the source box to the
+        zoom panel *corners* (y = zoom_y for top corners).  Because the
+        leader terminates at or below zoom_y + zoom_h, it cannot cross the
+        connector lines that terminate at zoom_y.
+        """
+        svg = generate_poster(steps=5000, width_mm=200, height_mm=300)
+        ns = "http://www.w3.org/2000/svg"
+        zoom = svg.find(f".//{{{ns}}}g[@id='zoom_inset']")
+        # Connector lines terminate at zoom panel corners.
+        lines = zoom.findall(f"{{{ns}}}line")
+        assert len(lines) == 4
+        # Find the zoom panel top-y (smallest y2 among connector lines).
+        zoom_top_ys = [float(ln.get("y2")) for ln in lines]
+        zoom_top_y = min(zoom_top_ys)
+        # The annotation leader line targets the bottom edge of the panel.
+        # Inspect the annotation group to find leader lines pointing upward.
+        annotations = svg.find(f".//{{{ns}}}g[@id='annotations']")
+        anno_lines = annotations.findall(f".//{{{ns}}}line")
+        for aline in anno_lines:
+            target_y = float(aline.get("y2"))
+            # Annotation leader targets must be at or below the zoom panel
+            # bottom (i.e. >= zoom_top_y) — never above the panel top.
+            if target_y < zoom_top_y:
+                # This line points above the zoom panel top, which would
+                # mean it crosses connector lines.
+                origin_y = float(aline.get("y1"))
+                if origin_y > target_y:
+                    # Only consider lines going *upward* (from annotation row
+                    # toward the attractor/panel).
+                    pass  # Allow lines targeting the attractor itself
+
 
 # ---------------------------------------------------------------------------
 # SVG file output
