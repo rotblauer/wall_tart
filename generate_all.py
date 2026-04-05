@@ -5,9 +5,10 @@ Unified Poster Generator — generate all wall_tart posters in one command.
 Usage:
     python generate_all.py [OPTIONS]
 
-Generates all six posters (Sierpiński Triangle, Lorenz Attractor, Logistic
-Map, Mandelbrot Set, Double Pendulum, and Cellular Automata) with shared
-common arguments and optional poster-specific parameters.
+Generates all seven posters (Sierpiński Triangle, Lorenz Attractor, Logistic
+Map, Mandelbrot Set, Double Pendulum, Cellular Automata, and Fourier
+Epicycles) with shared common arguments and optional poster-specific
+parameters.
 
 Examples:
     # Generate all posters with defaults (SVG, A2 size)
@@ -45,10 +46,11 @@ from logistic_map_poster import generate_poster as generate_logistic
 from mandelbrot_poster import generate_poster as generate_mandelbrot
 from double_pendulum_poster import generate_poster as generate_double_pendulum
 from cellular_automata_poster import generate_poster as generate_cellular_automata
+from fourier_epicycles_poster import generate_poster as generate_fourier_epicycles
 
 
 POSTER_NAMES = ("sierpinski", "lorenz", "logistic", "mandelbrot",
-                "double_pendulum", "cellular_automata")
+                "double_pendulum", "cellular_automata", "fourier_epicycles")
 
 
 def build_arg_parser():
@@ -72,7 +74,7 @@ def build_arg_parser():
         help=(
             "Which posters to generate (default: all). "
             "Choices: sierpinski, lorenz, logistic, mandelbrot, "
-            "double_pendulum, cellular_automata."
+            "double_pendulum, cellular_automata, fourier_epicycles."
         ),
     )
 
@@ -166,6 +168,13 @@ def build_arg_parser():
         help="Number of generations (default: 150).",
     )
 
+    fourier = parser.add_argument_group("Fourier Epicycles options")
+    fourier.add_argument(
+        "--fourier-num-circles", type=int, default=32,
+        dest="fourier_num_circles",
+        help="Number of Fourier circles (default: 32).",
+    )
+
     return parser
 
 
@@ -232,6 +241,15 @@ def main(argv=None):
             "label": (
                 f"Cellular Automata (cell_size={args.automata_cell_size}, "
                 f"generations={args.automata_generations})"
+            ),
+        },
+        "fourier_epicycles": {
+            "generate": generate_fourier_epicycles,
+            "kwargs": {"num_circles": args.fourier_num_circles},
+            "filename": "fourier_epicycles_poster",
+            "label": (
+                f"Fourier Epicycles "
+                f"(num_circles={args.fourier_num_circles})"
             ),
         },
     }
