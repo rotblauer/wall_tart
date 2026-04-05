@@ -27,31 +27,25 @@ import xml.etree.ElementTree as ET
 from poster_utils import (
     ACCENT_COLOR,
     ANNOTATION_STYLE,
-    BG_COLOR,
-    CALLOUT_LINE_STYLE,
+    BASE_HEIGHT_MM,
+    BASE_WIDTH_MM,
     COLUMN_CENTERS,
     FOOTER_PRIMARY_COLOR,
-    FOOTER_SECONDARY_COLOR,
     SERIF,
-    TITLE_COLOR,
-    _add_arrow_marker,
     _circle,
     _group,
-    _line,
     _multiline_text,
-    _polygon,
-    _polyline,
     _rect,
-    _svg_root,
     _text,
     add_common_poster_args,
+    build_poster_scaffold,
+    content_area,
+    draw_annotation_body,
+    draw_annotation_header,
     draw_annotation_row,
-    draw_poster_border,
-    draw_poster_footer,
-    draw_poster_header,
     draw_row_separator,
-    write_pdf,
-    write_png,
+    finalize_poster,
+    run_poster_main,
     write_poster,
     write_svg,
 )
@@ -136,47 +130,24 @@ DIAGRAM_COLOR = "#1C1C1C"  # near-black ink
 def _annotation_period_doubling(parent, ns, target_x, target_y,
                                 col_cx, anno_y, scale=1):
     """Annotation: the period-doubling cascade."""
-    g = _group(parent, ns)
-
-    arrow_y = anno_y - 8 * scale
-    _line(g, ns, col_cx, arrow_y, target_x, target_y,
-          **CALLOUT_LINE_STYLE)
-    _circle(g, ns, col_cx, arrow_y, 1 * scale, fill=ACCENT_COLOR)
-
-    _text(g, ns, col_cx, anno_y + 2 * scale, "Period Doubling Cascade",
-          **{**ANNOTATION_STYLE, "font-size": str(round(5 * scale, 2)),
-             "fill": ACCENT_COLOR, "text-anchor": "middle"})
-
-    lines = [
+    g = draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
+                               "Period Doubling Cascade", scale)
+    draw_annotation_body(g, ns, col_cx, anno_y, [
         "As r increases, the single stable",
         "value splits into two, then four,",
         "then eight \u2014 each split arriving",
         "faster than the last. This cascade",
         "of period doublings is the road",
         "from order to chaos.",
-    ]
-    _multiline_text(
-        g, ns, col_cx, anno_y + 9 * scale,
-        lines, line_height=5 * scale,
-        **{**ANNOTATION_STYLE, "font-size": str(round(3.8 * scale, 2)),
-           "text-anchor": "middle"},
-    )
+    ], scale)
     return g
 
 
 def _annotation_edge_of_chaos(parent, ns, target_x, target_y,
                                col_cx, anno_y, scale=1):
     """Annotation: the onset of chaos (Feigenbaum point)."""
-    g = _group(parent, ns)
-
-    arrow_y = anno_y - 8 * scale
-    _line(g, ns, col_cx, arrow_y, target_x, target_y,
-          **CALLOUT_LINE_STYLE)
-    _circle(g, ns, col_cx, arrow_y, 1 * scale, fill=ACCENT_COLOR)
-
-    _text(g, ns, col_cx, anno_y + 2 * scale, "The Edge of Chaos",
-          **{**ANNOTATION_STYLE, "font-size": str(round(5 * scale, 2)),
-             "fill": ACCENT_COLOR, "text-anchor": "middle"})
+    g = draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
+                               "The Edge of Chaos", scale)
 
     # Body text with r_inf value rendered via tspan for subscript
     body_style = {**ANNOTATION_STYLE, "font-size": str(round(3.8 * scale, 2)),
@@ -227,31 +198,16 @@ def _annotation_edge_of_chaos(parent, ns, target_x, target_y,
 def _annotation_windows_of_order(parent, ns, target_x, target_y,
                                   col_cx, anno_y, scale=1):
     """Annotation: the period-3 window amid chaos."""
-    g = _group(parent, ns)
-
-    arrow_y = anno_y - 8 * scale
-    _line(g, ns, col_cx, arrow_y, target_x, target_y,
-          **CALLOUT_LINE_STYLE)
-    _circle(g, ns, col_cx, arrow_y, 1 * scale, fill=ACCENT_COLOR)
-
-    _text(g, ns, col_cx, anno_y + 2 * scale, "Windows of Order",
-          **{**ANNOTATION_STYLE, "font-size": str(round(5 * scale, 2)),
-             "fill": ACCENT_COLOR, "text-anchor": "middle"})
-
-    lines = [
+    g = draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
+                               "Windows of Order", scale)
+    draw_annotation_body(g, ns, col_cx, anno_y, [
         "Deep in the chaotic regime, narrow",
         "windows of periodicity appear \u2014 the",
         "most famous at r \u2248 3.83, where a",
         "stable period-3 cycle emerges. Li &",
         "Yorke proved: \u2018period three implies",
         "chaos\u2019 \u2014 but also brief calm.",
-    ]
-    _multiline_text(
-        g, ns, col_cx, anno_y + 9 * scale,
-        lines, line_height=5 * scale,
-        **{**ANNOTATION_STYLE, "font-size": str(round(3.8 * scale, 2)),
-           "text-anchor": "middle"},
-    )
+    ], scale)
     return g
 
 
@@ -431,7 +387,7 @@ def _panel_population_biology(parent, ns, col_cx, anno_y, scale=1):
 # Poster composition
 # ---------------------------------------------------------------------------
 
-def generate_poster(r_count=2000, width_mm=420, height_mm=594,
+def generate_poster(r_count=2000, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_MM,
                     designed_by=None, designed_for=None):
     """Build and return the full poster as an ElementTree SVG root.
 
@@ -449,22 +405,14 @@ def generate_poster(r_count=2000, width_mm=420, height_mm=594,
     xml.etree.ElementTree.Element
         The root ``<svg>`` element.
     """
-    svg, ns = _svg_root(width_mm, height_mm)
-
-    w_scale = width_mm / 420
-    h_scale = height_mm / 594
-
-    _rect(svg, ns, 0, 0, width_mm, height_mm, fill=BG_COLOR)
-
-    rule_y = draw_poster_header(
-        svg, ns, width_mm, height_mm, w_scale, h_scale,
+    sc = build_poster_scaffold(
         title="The Logistic Map",
         subtitle="Order, chaos, and the road between",
-        designed_by=designed_by,
-        designed_for=designed_for,
+        width_mm=width_mm, height_mm=height_mm,
+        designed_by=designed_by, designed_for=designed_for,
     )
-
-    _add_arrow_marker(svg, ns)
+    svg, ns = sc["svg"], sc["ns"]
+    w_scale, h_scale, rule_y = sc["w_scale"], sc["h_scale"], sc["rule_y"]
 
     # --- Compute bifurcation data ---
     r_min, r_max = 2.5, 4.0
@@ -474,13 +422,9 @@ def generate_poster(r_count=2000, width_mm=420, height_mm=594,
                             n_settle=n_settle, n_plot=n_plot)
 
     # --- Fit the diagram into the poster space ---
-    min_top = rule_y + height_mm * 0.05
-    anno_start_frac = 0.70
-    max_bot = height_mm * anno_start_frac
-
-    margin = width_mm * 0.10
-    avail_w = width_mm - 2 * margin
-    avail_h = max_bot - min_top
+    ca = content_area(rule_y, width_mm, height_mm, margin_frac=0.10)
+    min_top, max_bot = ca["min_top"], ca["max_bot"]
+    margin, avail_w, avail_h = ca["margin"], ca["avail_w"], ca["avail_h"]
 
     data_r_range = r_max - r_min if r_max != r_min else 1.0
     data_x_min, data_x_max = 0.0, 1.0
@@ -554,7 +498,7 @@ def generate_poster(r_count=2000, width_mm=420, height_mm=594,
     _panel_feigenbaum(edu_group, ns, col2_cx, row2_y, w_scale)
     _panel_population_biology(edu_group, ns, col3_cx, row2_y, w_scale)
 
-    draw_poster_footer(
+    finalize_poster(
         svg, ns, width_mm, height_mm, w_scale, h_scale,
         primary_line=(
             "Robert May popularised this map in 1976, "
@@ -568,8 +512,6 @@ def generate_poster(r_count=2000, width_mm=420, height_mm=594,
         designed_by=designed_by,
         designed_for=designed_for,
     )
-
-    draw_poster_border(svg, ns, width_mm, height_mm, w_scale)
 
     return svg
 
@@ -591,15 +533,9 @@ def build_arg_parser():
     return parser
 
 
-def main(argv=None):
-    parser = build_arg_parser()
-    args = parser.parse_args(argv)
-
-    if args.output is None:
-        args.output = f"logistic_map_poster.{args.format}"
-
-    print(f"Generating Logistic Map poster (r_count={args.r_count}) \u2026")
-    svg = generate_poster(
+def _generate_from_args(args):
+    """Adapter: call generate_poster with parsed CLI arguments."""
+    return generate_poster(
         r_count=args.r_count,
         width_mm=args.width,
         height_mm=args.height,
@@ -607,8 +543,16 @@ def main(argv=None):
         designed_for=args.designed_for,
     )
 
-    write_poster(svg, args.format, args.output, dpi=args.dpi)
-    print(f"Saved to {args.output}")
+
+def main(argv=None):
+    parser = build_arg_parser()
+    args = parser.parse_args(argv)
+    run_poster_main(
+        build_arg_parser, _generate_from_args,
+        filename_prefix="logistic_map_poster",
+        poster_label=f"Logistic Map poster (r_count={args.r_count})",
+        argv=argv,
+    )
 
 
 if __name__ == "__main__":

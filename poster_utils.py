@@ -3,10 +3,12 @@
 Shared utilities for the wall_tart poster generators.
 
 Provides SVG helpers, style constants, output helpers, layout helpers,
-no-crossing annotation utilities, and a common CLI argument builder that
-are identical across the Sierpiński, Lorenz, and Logistic Map posters.
+no-crossing annotation utilities, scaffold/finalize helpers, annotation
+builders, a unified CLI runner, and common constants that are identical
+across the Sierpiński, Lorenz, and Logistic Map posters.
 """
 
+import argparse
 import sys
 import xml.etree.ElementTree as ET
 
@@ -36,6 +38,16 @@ CALLOUT_LINE_STYLE = {
 
 # Column centres as fractions of poster width (left, centre, right)
 COLUMN_CENTERS = (0.15, 0.50, 0.85)
+
+
+# ---------------------------------------------------------------------------
+# Layout constants
+# ---------------------------------------------------------------------------
+
+BASE_WIDTH_MM = 420       # A2 width — reference for w_scale
+BASE_HEIGHT_MM = 594      # A2 height — reference for h_scale
+CONTENT_TOP_MARGIN_FRAC = 0.05   # fraction of height below header rule
+ANNO_START_FRAC = 0.70           # fraction of height where annotations begin
 
 
 # ---------------------------------------------------------------------------
@@ -342,18 +354,23 @@ def write_svg(svg_root, filepath):
     tree.write(filepath, encoding="unicode", xml_declaration=True)
 
 
-def write_pdf(svg_root, filepath):
-    """Write the poster as PDF via cairosvg (must be installed)."""
+def _require_cairosvg():
+    """Import and return cairosvg, or exit with a helpful error message."""
     try:
         import cairosvg
+        return cairosvg
     except ImportError:
         print(
-            "Error: 'cairosvg' is required for PDF output.\n"
+            "Error: 'cairosvg' is required for PDF/PNG output.\n"
             "Install it with:  pip install cairosvg",
             file=sys.stderr,
         )
         sys.exit(1)
 
+
+def write_pdf(svg_root, filepath):
+    """Write the poster as PDF via cairosvg (must be installed)."""
+    cairosvg = _require_cairosvg()
     svg_bytes = ET.tostring(svg_root, encoding="unicode", xml_declaration=True)
     cairosvg.svg2pdf(bytestring=svg_bytes.encode("utf-8"), write_to=filepath)
 
@@ -365,16 +382,7 @@ def write_png(svg_root, filepath, dpi=150):
     the requested *dpi* so that the raster output faithfully represents the
     vector layout at the chosen resolution.
     """
-    try:
-        import cairosvg
-    except ImportError:
-        print(
-            "Error: 'cairosvg' is required for PNG output.\n"
-            "Install it with:  pip install cairosvg",
-            file=sys.stderr,
-        )
-        sys.exit(1)
-
+    cairosvg = _require_cairosvg()
     svg_bytes = ET.tostring(svg_root, encoding="unicode", xml_declaration=True)
     cairosvg.svg2png(bytestring=svg_bytes.encode("utf-8"), write_to=filepath, dpi=dpi)
 
@@ -408,12 +416,12 @@ def add_common_poster_args(parser):
         help="Resolution for PNG output in dots per inch (default: 150).",
     )
     parser.add_argument(
-        "--width", type=float, default=420,
-        help="Poster width in mm (default: 420, A2).",
+        "--width", type=float, default=BASE_WIDTH_MM,
+        help=f"Poster width in mm (default: {BASE_WIDTH_MM}, A2).",
     )
     parser.add_argument(
-        "--height", type=float, default=594,
-        help="Poster height in mm (default: 594, A2).",
+        "--height", type=float, default=BASE_HEIGHT_MM,
+        help=f"Poster height in mm (default: {BASE_HEIGHT_MM}, A2).",
     )
     parser.add_argument(
         "--designed-by", type=str, default=None, dest="designed_by",
@@ -423,3 +431,170 @@ def add_common_poster_args(parser):
         "--designed-for", type=str, default=None, dest="designed_for",
         help="Client / purpose credit, e.g. 'the Science Museum'.",
     )
+
+
+# ---------------------------------------------------------------------------
+# Poster scaffold and finalize helpers
+# ---------------------------------------------------------------------------
+
+def build_poster_scaffold(title, subtitle, width_mm=BASE_WIDTH_MM,
+                          height_mm=BASE_HEIGHT_MM, designed_by=None,
+                          designed_for=None):
+    """Set up common poster elements and return computed layout values.
+
+    Creates the SVG root, background, header (title/subtitle/rule/credits),
+    and arrow marker.  Returns a dict with all the values a poster-specific
+    ``generate_poster`` function needs to place its unique content.
+
+    Returns
+    -------
+    dict
+        Keys: ``svg``, ``ns``, ``w_scale``, ``h_scale``, ``rule_y``,
+        ``width_mm``, ``height_mm``, ``designed_by``, ``designed_for``.
+    """
+    svg, ns = _svg_root(width_mm, height_mm)
+
+    w_scale = width_mm / BASE_WIDTH_MM
+    h_scale = height_mm / BASE_HEIGHT_MM
+
+    _rect(svg, ns, 0, 0, width_mm, height_mm, fill=BG_COLOR)
+
+    rule_y = draw_poster_header(
+        svg, ns, width_mm, height_mm, w_scale, h_scale,
+        title=title,
+        subtitle=subtitle,
+        designed_by=designed_by,
+        designed_for=designed_for,
+    )
+
+    _add_arrow_marker(svg, ns)
+
+    return {
+        "svg": svg,
+        "ns": ns,
+        "w_scale": w_scale,
+        "h_scale": h_scale,
+        "rule_y": rule_y,
+        "width_mm": width_mm,
+        "height_mm": height_mm,
+        "designed_by": designed_by,
+        "designed_for": designed_for,
+    }
+
+
+def content_area(rule_y, width_mm, height_mm, margin_frac=0.10):
+    """Compute the content area boundaries below the header.
+
+    Parameters
+    ----------
+    rule_y : float
+        Y-coordinate of the header rule line.
+    width_mm, height_mm : float
+        Poster dimensions in millimetres.
+    margin_frac : float
+        Horizontal margin as a fraction of width (default: 0.10).
+
+    Returns
+    -------
+    dict
+        Keys: ``min_top``, ``max_bot``, ``margin``, ``avail_w``, ``avail_h``.
+    """
+    min_top = rule_y + height_mm * CONTENT_TOP_MARGIN_FRAC
+    max_bot = height_mm * ANNO_START_FRAC
+    margin = width_mm * margin_frac
+    avail_w = width_mm - 2 * margin
+    avail_h = max_bot - min_top
+    return {
+        "min_top": min_top,
+        "max_bot": max_bot,
+        "margin": margin,
+        "avail_w": avail_w,
+        "avail_h": avail_h,
+    }
+
+
+def finalize_poster(svg, ns, width_mm, height_mm, w_scale, h_scale,
+                    primary_line, secondary_line,
+                    designed_by=None, designed_for=None):
+    """Draw the footer and border — the common closing of every poster."""
+    draw_poster_footer(
+        svg, ns, width_mm, height_mm, w_scale, h_scale,
+        primary_line=primary_line,
+        secondary_line=secondary_line,
+        designed_by=designed_by,
+        designed_for=designed_for,
+    )
+    draw_poster_border(svg, ns, width_mm, height_mm, w_scale)
+
+
+# ---------------------------------------------------------------------------
+# Annotation builder helpers
+# ---------------------------------------------------------------------------
+
+def draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
+                           title, scale):
+    """Draw the common annotation callout elements.
+
+    Creates a ``<g>`` group, draws the arrow line from the callout origin
+    to the target point, a small accent circle, and the annotation title.
+
+    Returns the group element so the caller can append body content.
+    """
+    g = _group(parent, ns)
+
+    arrow_y = anno_y - 8 * scale
+    _line(g, ns, col_cx, arrow_y, target_x, target_y, **CALLOUT_LINE_STYLE)
+    _circle(g, ns, col_cx, arrow_y, 1 * scale, fill=ACCENT_COLOR)
+
+    _text(g, ns, col_cx, anno_y + 2 * scale, title,
+          **{**ANNOTATION_STYLE, "font-size": str(round(5 * scale, 2)),
+             "fill": ACCENT_COLOR, "text-anchor": "middle"})
+
+    return g
+
+
+def draw_annotation_body(g, ns, col_cx, anno_y, lines, scale):
+    """Draw the common annotation body text (multiline, below the title)."""
+    _multiline_text(
+        g, ns, col_cx, anno_y + 9 * scale,
+        lines, line_height=5 * scale,
+        **{**ANNOTATION_STYLE, "font-size": str(round(3.8 * scale, 2)),
+           "text-anchor": "middle"},
+    )
+
+
+# ---------------------------------------------------------------------------
+# Unified CLI runner
+# ---------------------------------------------------------------------------
+
+def run_poster_main(build_arg_parser, generate_poster, filename_prefix,
+                    poster_label, argv=None):
+    """Run the common CLI main() logic for any poster generator.
+
+    Parameters
+    ----------
+    build_arg_parser : callable
+        Factory that returns a configured ``argparse.ArgumentParser``.
+    generate_poster : callable
+        The poster-specific generation function.  Will be called with
+        the keyword arguments returned by ``build_arg_parser`` (minus
+        output/format/dpi which are handled here).
+    filename_prefix : str
+        Default filename stem, e.g. ``"sierpinski_poster"``.
+    poster_label : str
+        Human-readable label printed while generating, e.g.
+        ``"Sierpiński Triangle poster (depth=7)"``.
+    argv : list[str] or None
+        CLI arguments (defaults to ``sys.argv[1:]``).
+    """
+    parser = build_arg_parser()
+    args = parser.parse_args(argv)
+
+    if args.output is None:
+        args.output = f"{filename_prefix}.{args.format}"
+
+    print(f"Generating {poster_label} \u2026")
+    svg = generate_poster(args)
+
+    write_poster(svg, args.format, args.output, dpi=args.dpi)
+    print(f"Saved to {args.output}")
