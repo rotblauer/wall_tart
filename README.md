@@ -198,11 +198,51 @@ python lorenz_poster.py --designed-by "Alice" --designed-for "the Science Museum
 python logistic_map_poster.py --designed-by "Alice" --designed-for "the Science Museum"
 ```
 
+### Generate All Posters at Once
+
+Use `generate_all.py` to generate every poster in a single command. Common
+arguments (size, format, DPI, credits) apply to all posters, while
+poster-specific parameters can be set individually:
+
+```bash
+# Generate all three posters with default settings
+python generate_all.py
+
+# Generate all posters as PNG at 300 DPI into an output directory
+python generate_all.py --format png --dpi 300 --output-dir ./output
+
+# Generate only the Sierpiński and Lorenz posters
+python generate_all.py --posters sierpinski lorenz
+
+# Custom size, credits, and poster-specific parameters
+python generate_all.py \
+  --width 594 --height 841 \
+  --designed-by "Alice" --designed-for "the Science Museum" \
+  --sierpinski-depth 9 \
+  --lorenz-steps 500000 \
+  --logistic-r-count 5000 \
+  --output-dir ./output
+```
+
+| Flag | Default | Description |
+|---|---|---|
+| `--posters NAME [NAME ...]` | all | Which posters: `sierpinski`, `lorenz`, `logistic`. |
+| `--output-dir DIR` | `.` | Directory for output files. |
+| `--format FMT` | `svg` | Output format: `svg`, `pdf`, or `png`. |
+| `--dpi N` | `150` | Resolution for PNG output. |
+| `--width MM` | `420` | Poster width in mm. |
+| `--height MM` | `594` | Poster height in mm. |
+| `--designed-by TEXT` | *(none)* | Designer credit. |
+| `--designed-for TEXT` | *(none)* | Client / purpose credit. |
+| `--sierpinski-depth N` | `7` | Sierpiński recursion depth. |
+| `--lorenz-steps N` | `200000` | Lorenz integration steps. |
+| `--logistic-r-count N` | `2000` | Logistic Map r-parameter samples. |
+
 ### Running Tests
 
 ```bash
 pip install pytest
-pytest test_sierpinski.py test_lorenz.py test_logistic_map.py -v
+pytest test_poster_utils.py test_sierpinski.py test_lorenz.py test_logistic_map.py test_generate_all.py -v
 ```
 
 ### Docker
@@ -212,6 +252,10 @@ Build and run the poster generators in a container (includes `cairosvg` for PDF)
 ```bash
 # Build the image
 docker build -t wall-tart .
+
+# Generate all posters at once
+docker run -v "$(pwd)/output:/app/output" \
+  wall-tart python generate_all.py --output-dir output
 
 # Generate Sierpiński poster
 docker run -v "$(pwd)/output:/app/output" \
@@ -231,11 +275,11 @@ docker run -v "$(pwd)/output:/app/output" \
 The repository includes two workflows:
 
 **`ci.yml`** — runs on every push and pull request to `main`:
-1. Runs the full test suite (`test_sierpinski.py`, `test_lorenz.py`, and `test_logistic_map.py`) with `pytest`.
+1. Runs the full test suite (`test_poster_utils.py`, `test_sierpinski.py`, `test_lorenz.py`, `test_logistic_map.py`, and `test_generate_all.py`) with `pytest`.
 2. Builds the Docker image.
 3. Generates sample posters and uploads them as build artifacts.
 
-**`update-readme-images.yml`** — runs on every push to `main` that touches the poster generators or the workflow itself (and can be triggered manually via `workflow_dispatch`):
+**`update-readme-images.yml`** — runs on every push to `main` that touches the poster generators, `poster_utils.py`, `generate_all.py`, or the workflow itself (and can be triggered manually via `workflow_dispatch`):
 1. Regenerates `docs/generated/sierpinski_poster.svg`, `docs/generated/lorenz_poster.svg`, and `docs/generated/logistic_map_poster.svg`.
 2. Commits and pushes the updated images back to `main` so the README always shows the current output.
 
