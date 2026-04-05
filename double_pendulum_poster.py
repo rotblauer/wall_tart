@@ -47,6 +47,7 @@ from poster_utils import (
     draw_annotation_row,
     draw_row_separator,
     finalize_poster,
+    get_theme,
     run_poster_main,
     write_poster,
     write_svg,
@@ -364,6 +365,11 @@ def generate_poster(steps=10000, width_mm=BASE_WIDTH_MM,
     xml.etree.ElementTree.Element
         The root ``<svg>`` element.
     """
+    t = get_theme(theme)
+    traj_color_1 = t["content_primary"]
+    traj_color_2 = t["accent_color"]
+    traj_color_3 = t["content_secondary"]
+
     sc = build_poster_scaffold(
         title="The Double Pendulum",
         subtitle="Deterministic chaos in a simple mechanism",
@@ -423,7 +429,7 @@ def generate_poster(steps=10000, width_mm=BASE_WIDTH_MM,
     # --- Draw trajectory traces ---
     traj_group = _group(svg, ns, id="trajectories")
 
-    colors = [TRAJECTORY_COLOR_1, TRAJECTORY_COLOR_2, TRAJECTORY_COLOR_3]
+    colors = [traj_color_1, traj_color_2, traj_color_3]
     opacities = ["0.4", "0.35", "0.35"]
     stroke_w = str(round(0.12 * w_scale, 3))
 

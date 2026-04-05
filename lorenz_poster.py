@@ -46,6 +46,7 @@ from poster_utils import (
     draw_annotation_row,
     draw_row_separator,
     finalize_poster,
+    get_theme,
     run_poster_main,
     write_poster,
     write_svg,
@@ -294,8 +295,13 @@ def _panel_equations(parent, ns, col_cx, anno_y, scale=1):
 
 
 def _panel_deterministic_chaos(parent, ns, col_cx, anno_y, scale=1,
-                                traj_main=None, traj_diverged=None):
+                                traj_main=None, traj_diverged=None,
+                                attractor_color=None, diverged_color=None):
     """Panel: deterministic chaos explanation with mini divergence plot."""
+    if attractor_color is None:
+        attractor_color = ATTRACTOR_COLOR
+    if diverged_color is None:
+        diverged_color = DIVERGED_COLOR
     g = _group(parent, ns)
 
     _text(g, ns, col_cx, anno_y + 2 * scale,
@@ -323,9 +329,9 @@ def _panel_deterministic_chaos(parent, ns, col_cx, anno_y, scale=1,
     plot_h = 28 * scale
 
     _line(g, ns, plot_x, plot_y, plot_x, plot_y + plot_h,
-          stroke="#1C1C1C", **{"stroke-width": str(round(0.2 * scale, 3))})
+          stroke=attractor_color, **{"stroke-width": str(round(0.2 * scale, 3))})
     _line(g, ns, plot_x, plot_y + plot_h, plot_x + plot_w, plot_y + plot_h,
-          stroke="#1C1C1C", **{"stroke-width": str(round(0.2 * scale, 3))})
+          stroke=attractor_color, **{"stroke-width": str(round(0.2 * scale, 3))})
 
     _text(g, ns, plot_x + plot_w / 2, plot_y + plot_h + 5 * scale, "time",
           **{**ANNOTATION_STYLE, "font-size": str(round(2.8 * scale, 2)),
@@ -356,10 +362,10 @@ def _panel_deterministic_chaos(parent, ns, col_cx, anno_y, scale=1,
                    for i in range(0, n_plot, step)]
 
         _polyline(g, ns, pts_main,
-                  stroke=ATTRACTOR_COLOR, opacity="0.7",
+                  stroke=attractor_color, opacity="0.7",
                   **{"stroke-width": str(round(0.25 * scale, 3))})
         _polyline(g, ns, pts_div,
-                  stroke=DIVERGED_COLOR, opacity="0.7",
+                  stroke=diverged_color, opacity="0.7",
                   **{"stroke-width": str(round(0.25 * scale, 3))})
 
     return g
@@ -403,6 +409,10 @@ def _panel_weather_model(parent, ns, col_cx, anno_y, scale=1):
 def generate_poster(steps=200000, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_MM,
                     designed_by=None, designed_for=None, theme=None):
     """Build and return the full poster as an ElementTree SVG root."""
+    t = get_theme(theme)
+    attractor_color = t["content_primary"]
+    diverged_color = t["accent_color"]
+
     sc = build_poster_scaffold(
         title="The Lorenz Attractor",
         subtitle="Strange beauty from deterministic chaos",
@@ -461,7 +471,7 @@ def generate_poster(steps=200000, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_
         start = i * seg_len
         end = start + seg_len + 1 if i < n_segments - 1 else len(scaled_main)
         _polyline(attractor_group, ns, scaled_main[start:end],
-                  stroke=ATTRACTOR_COLOR, opacity="0.4",
+                  stroke=attractor_color, opacity="0.4",
                   **{"stroke-width": stroke_w,
                      "stroke-linejoin": "round",
                      "stroke-linecap": "round"})
@@ -477,7 +487,7 @@ def generate_poster(steps=200000, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_
 
     if diverge_start < len(scaled_div):
         _polyline(attractor_group, ns, scaled_div[diverge_start:],
-                  stroke=DIVERGED_COLOR, opacity="0.25",
+                  stroke=diverged_color, opacity="0.25",
                   **{"stroke-width": stroke_w,
                      "stroke-linejoin": "round",
                      "stroke-linecap": "round"})
@@ -537,7 +547,9 @@ def generate_poster(steps=200000, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_
 
     _panel_equations(edu_group, ns, col1_cx, row2_y, w_scale)
     _panel_deterministic_chaos(edu_group, ns, col2_cx, row2_y, w_scale,
-                                traj_main=traj_main, traj_diverged=traj_div)
+                                traj_main=traj_main, traj_diverged=traj_div,
+                                attractor_color=attractor_color,
+                                diverged_color=diverged_color)
     _panel_weather_model(edu_group, ns, col3_cx, row2_y, w_scale)
 
     finalize_poster(

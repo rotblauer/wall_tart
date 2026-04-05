@@ -8,6 +8,7 @@ import xml.etree.ElementTree as ET
 import pytest
 
 from generate_all import build_arg_parser, main, POSTER_NAMES
+from poster_utils import AVAILABLE_THEMES, DEFAULT_THEME
 
 
 class TestBuildArgParser:
@@ -151,3 +152,54 @@ class TestMain:
             root = tree.getroot()
             assert root.get("width") == "300.0mm"
             assert root.get("height") == "400.0mm"
+
+    def test_default_theme(self):
+        parser = build_arg_parser()
+        args = parser.parse_args([])
+        assert args.theme == DEFAULT_THEME
+
+    def test_theme_blueprint(self):
+        parser = build_arg_parser()
+        args = parser.parse_args(["--theme", "blueprint"])
+        assert args.theme == "blueprint"
+
+    def test_theme_all(self):
+        parser = build_arg_parser()
+        args = parser.parse_args(["--theme", "all"])
+        assert args.theme == "all"
+
+    def test_generates_single_poster_with_theme(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            main([
+                "--output-dir", tmpdir,
+                "--posters", "sierpinski",
+                "--sierpinski-depth", "1",
+                "--theme", "blueprint",
+            ])
+            assert os.path.exists(os.path.join(tmpdir, "sierpinski_poster.svg"))
+
+    def test_theme_all_generates_themed_files(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            main([
+                "--output-dir", tmpdir,
+                "--posters", "sierpinski",
+                "--sierpinski-depth", "1",
+                "--theme", "all",
+            ])
+            for theme in AVAILABLE_THEMES:
+                path = os.path.join(tmpdir, f"sierpinski_poster_{theme}.svg")
+                assert os.path.exists(path), f"Missing {path}"
+
+    def test_theme_all_file_content_valid_svg(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            main([
+                "--output-dir", tmpdir,
+                "--posters", "sierpinski",
+                "--sierpinski-depth", "1",
+                "--theme", "all",
+            ])
+            for theme in AVAILABLE_THEMES:
+                path = os.path.join(tmpdir, f"sierpinski_poster_{theme}.svg")
+                tree = ET.parse(path)
+                root = tree.getroot()
+                assert root.tag.endswith("svg")

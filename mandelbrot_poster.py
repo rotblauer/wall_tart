@@ -46,6 +46,7 @@ from poster_utils import (
     draw_annotation_row,
     draw_row_separator,
     finalize_poster,
+    get_theme,
     run_poster_main,
     write_poster,
     write_svg,
@@ -182,10 +183,10 @@ def compute_julia_grid(c_real, c_imag, x_min, x_max, y_min, y_max,
     return grid
 
 
-def _escape_to_color(escape, max_iter):
+def _escape_to_color(escape, max_iter, set_color="#1C1C1C"):
     """Map escape iteration to an RGB hex color."""
     if escape >= max_iter:
-        return "#1C1C1C"  # in the set — near black
+        return set_color
     t = escape / max_iter
     r = int(9 * (1 - t) * t * t * t * 255)
     g = int(15 * (1 - t) * (1 - t) * t * t * 255)
@@ -404,11 +405,12 @@ def _panel_special_regions(parent, ns, col_cx, anno_y, scale=1):
 # Poster composition
 # ---------------------------------------------------------------------------
 
-def _draw_grid(parent, ns, grid, max_iter, gx, gy, cell_w, cell_h):
+def _draw_grid(parent, ns, grid, max_iter, gx, gy, cell_w, cell_h,
+               set_color="#1C1C1C"):
     """Render a 2-D escape-time grid as coloured SVG rectangles."""
     for row_idx, row_data in enumerate(grid):
         for col_idx, escape in enumerate(row_data):
-            color = _escape_to_color(escape, max_iter)
+            color = _escape_to_color(escape, max_iter, set_color)
             _rect(parent, ns,
                   round(gx + col_idx * cell_w, 2),
                   round(gy + row_idx * cell_h, 2),
@@ -438,8 +440,10 @@ def generate_poster(resolution=80, max_iter=100,
     xml.etree.ElementTree.Element
         The root ``<svg>`` element.
     """
+    t = get_theme(theme)
+    set_color = t["content_primary"]
+
     sc = build_poster_scaffold(
-        title="The Mandelbrot Set",
         subtitle="Infinite complexity from z\u00b2 + c",
         width_mm=width_mm, height_mm=height_mm,
         designed_by=designed_by, designed_for=designed_for,
@@ -480,7 +484,8 @@ def generate_poster(resolution=80, max_iter=100,
     # --- Draw Mandelbrot set ---
     fractal_group = _group(svg, ns, id="fractal")
     _draw_grid(fractal_group, ns, grid, max_iter,
-               fractal_x, fractal_y, cell_size, cell_size)
+               fractal_x, fractal_y, cell_size, cell_size,
+               set_color=set_color)
 
     # --- Axis labels ---
     axis_style = {
@@ -529,7 +534,8 @@ def generate_poster(resolution=80, max_iter=100,
         j_cell_w = thumb_w_mm / julia_res
         j_cell_h = thumb_h_mm / julia_h_res
         _draw_grid(julia_group, ns, j_grid, max_iter,
-                   jx, jy, j_cell_w, j_cell_h)
+                   jx, jy, j_cell_w, j_cell_h,
+                   set_color=set_color)
         _text(julia_group, ns, col_cx, jy + thumb_h_mm + 5 * h_scale,
               label, **label_style)
 

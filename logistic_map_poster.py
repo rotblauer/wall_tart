@@ -45,6 +45,7 @@ from poster_utils import (
     draw_annotation_row,
     draw_row_separator,
     finalize_poster,
+    get_theme,
     run_poster_main,
     write_poster,
     write_svg,
@@ -405,6 +406,9 @@ def generate_poster(r_count=2000, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_
     xml.etree.ElementTree.Element
         The root ``<svg>`` element.
     """
+    t = get_theme(theme)
+    diagram_color = t["content_primary"]
+
     sc = build_poster_scaffold(
         title="The Logistic Map",
         subtitle="Order, chaos, and the road between",
@@ -443,7 +447,7 @@ def generate_poster(r_count=2000, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_
     for r_val, x_val in data:
         px, py = _transform(r_val, x_val)
         _circle(diagram_group, ns, round(px, 2), round(py, 2), dot_r,
-                fill=DIAGRAM_COLOR, opacity="0.25")
+                fill=diagram_color, opacity="0.25")
 
     # --- Axis labels ---
     axis_style = {

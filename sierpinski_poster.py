@@ -21,6 +21,7 @@ Options:
 
 import argparse
 import math
+from functools import partial
 
 from poster_utils import (
     ACCENT_COLOR,
@@ -48,6 +49,7 @@ from poster_utils import (
     draw_annotation_row,
     draw_row_separator,
     finalize_poster,
+    get_theme,
     run_poster_main,
     write_poster,
     write_svg,
@@ -123,8 +125,11 @@ def _annotation_self_similarity(parent, ns, target_x, target_y,
 
 
 def _annotation_recursion(parent, ns, target_x, target_y,
-                           col_cx, anno_y, scale=1, theme=None):
+                           col_cx, anno_y, scale=1, theme=None,
+                           tri_color=None):
     """Annotation: recursion callout with step diagram (below the fractal)."""
+    if tri_color is None:
+        tri_color = TRIANGLE_COLOR
     g = draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
                                "Recursion", scale, theme=theme)
     draw_annotation_body(g, ns, col_cx, anno_y, [
@@ -140,7 +145,7 @@ def _annotation_recursion(parent, ns, target_x, target_y,
         side = 14 * scale
         verts = equilateral_triangle_vertices(mini_cx, mini_y, side)
         for tri in sierpinski_triangles(verts, d):
-            _polygon(g, ns, tri, fill=TRIANGLE_COLOR, opacity="0.85")
+            _polygon(g, ns, tri, fill=tri_color, opacity="0.85")
         _text(g, ns, mini_cx, mini_y + 13 * scale, f"depth {d}",
               **{**ANNOTATION_STYLE, "font-size": str(round(3 * scale, 2)),
                  "text-anchor": "middle"})
@@ -172,8 +177,10 @@ def _annotation_dimension(parent, ns, target_x, target_y,
 # Educational panel builders (second row)
 # ---------------------------------------------------------------------------
 
-def _panel_pascal(parent, ns, col_cx, anno_y, scale=1):
+def _panel_pascal(parent, ns, col_cx, anno_y, scale=1, tri_color=None):
     """Panel: Pascal\u2019s triangle mod 2 \u2192 Sierpi\u0144ski pattern."""
+    if tri_color is None:
+        tri_color = TRIANGLE_COLOR
     g = _group(parent, ns)
 
     _text(g, ns, col_cx, anno_y + 2 * scale,
@@ -208,18 +215,20 @@ def _panel_pascal(parent, ns, col_cx, anno_y, scale=1):
             is_odd = (n & k) == k
             rx = row_start_x + k * step
             ry = base_y + n * step
-            fill = TRIANGLE_COLOR if is_odd else "none"
+            fill = tri_color if is_odd else "none"
             opacity = "0.85" if is_odd else "0.15"
             _rect(g, ns, rx, ry, cell, cell,
-                  fill=fill, stroke=TRIANGLE_COLOR,
+                  fill=fill, stroke=tri_color,
                   **{"stroke-width": str(round(0.15 * scale, 3)),
                      "opacity": opacity})
 
     return g
 
 
-def _panel_chaos_game(parent, ns, col_cx, anno_y, scale=1):
+def _panel_chaos_game(parent, ns, col_cx, anno_y, scale=1, tri_color=None):
     """Panel: the chaos game algorithm with dot demonstration."""
+    if tri_color is None:
+        tri_color = TRIANGLE_COLOR
     g = _group(parent, ns)
 
     _text(g, ns, col_cx, anno_y + 2 * scale, "The Chaos Game",
@@ -245,7 +254,7 @@ def _panel_chaos_game(parent, ns, col_cx, anno_y, scale=1):
     tri_side = 32 * scale
     demo_verts = equilateral_triangle_vertices(tri_cx, tri_cy, tri_side)
 
-    _polygon(g, ns, demo_verts, fill="none", stroke=TRIANGLE_COLOR,
+    _polygon(g, ns, demo_verts, fill="none", stroke=tri_color,
              **{"stroke-width": str(round(0.2 * scale, 3)), "opacity": "0.2"})
 
     labels = ["A", "B", "C"]
@@ -267,13 +276,15 @@ def _panel_chaos_game(parent, ns, col_cx, anno_y, scale=1):
         y = (y + vy) / 2
         if i >= 10:
             _circle(g, ns, x, y, dot_r,
-                    fill=TRIANGLE_COLOR, opacity="0.55")
+                    fill=tri_color, opacity="0.55")
 
     return g
 
 
-def _panel_area_paradox(parent, ns, col_cx, anno_y, scale=1):
+def _panel_area_paradox(parent, ns, col_cx, anno_y, scale=1, tri_color=None):
     """Panel: the area/perimeter paradox with formula and visual."""
+    if tri_color is None:
+        tri_color = TRIANGLE_COLOR
     g = _group(parent, ns)
 
     _text(g, ns, col_cx, anno_y + 2 * scale, "The Area Paradox",
@@ -310,7 +321,7 @@ def _panel_area_paradox(parent, ns, col_cx, anno_y, scale=1):
         side = 12 * scale
         verts = equilateral_triangle_vertices(cx, demo_y, side)
         for tri in sierpinski_triangles(verts, d):
-            _polygon(g, ns, tri, fill=TRIANGLE_COLOR, opacity="0.8")
+            _polygon(g, ns, tri, fill=tri_color, opacity="0.8")
         _text(g, ns, cx, demo_y + 12 * scale, label,
               **{**ANNOTATION_STYLE, "font-size": str(round(2.8 * scale, 2)),
                  "text-anchor": "middle"})
@@ -325,6 +336,9 @@ def _panel_area_paradox(parent, ns, col_cx, anno_y, scale=1):
 def generate_poster(depth=7, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_MM,
                     designed_by=None, designed_for=None, theme=None):
     """Build and return the full poster as an ElementTree SVG root."""
+    t = get_theme(theme)
+    tri_color = t["content_primary"]
+
     sc = build_poster_scaffold(
         title="The Sierpi\u0144ski Triangle",
         subtitle="A fractal of infinite complexity from a simple rule",
@@ -357,7 +371,7 @@ def generate_poster(depth=7, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_MM,
     fractal_group = _group(svg, ns, id="fractal")
     for tri in sierpinski_triangles(vertices, depth):
         _polygon(fractal_group, ns, tri,
-                 fill=TRIANGLE_COLOR, stroke="none", opacity="0.92")
+                 fill=tri_color, stroke="none", opacity="0.92")
 
     # --- Annotations ---
     anno_group = _group(svg, ns, id="annotations")
@@ -389,7 +403,8 @@ def generate_poster(depth=7, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_MM,
         [col1_cx, col2_cx, col3_cx],
         [
             (_annotation_self_similarity, ss_target_x, ss_target_y),
-            (_annotation_recursion, rec_target_x, rec_target_y),
+            (partial(_annotation_recursion, tri_color=tri_color),
+             rec_target_x, rec_target_y),
             (_annotation_dimension, dim_target_x, dim_target_y),
         ],
         w_scale,
@@ -405,9 +420,11 @@ def generate_poster(depth=7, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_MM,
 
     row2_y = row2_sep_y + 12 * w_scale
 
-    _panel_pascal(edu_group, ns, col1_cx, row2_y, w_scale)
-    _panel_chaos_game(edu_group, ns, col2_cx, row2_y, w_scale)
-    _panel_area_paradox(edu_group, ns, col3_cx, row2_y, w_scale)
+    _panel_pascal(edu_group, ns, col1_cx, row2_y, w_scale, tri_color=tri_color)
+    _panel_chaos_game(edu_group, ns, col2_cx, row2_y, w_scale,
+                      tri_color=tri_color)
+    _panel_area_paradox(edu_group, ns, col3_cx, row2_y, w_scale,
+                        tri_color=tri_color)
 
     finalize_poster(
         svg, ns, width_mm, height_mm, w_scale, h_scale,

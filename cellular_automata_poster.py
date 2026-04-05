@@ -46,6 +46,7 @@ from poster_utils import (
     draw_annotation_row,
     draw_row_separator,
     finalize_poster,
+    get_theme,
     run_poster_main,
     write_poster,
     write_svg,
@@ -293,6 +294,13 @@ def generate_poster(cell_size=2, generations=150,
     xml.etree.ElementTree.Element
         The root ``<svg>`` element.
     """
+    t = get_theme(theme)
+    cell_colors = {
+        30: t["content_primary"],
+        90: t["accent_color"],
+        110: t["content_secondary"],
+    }
+
     sc = build_poster_scaffold(
         title="Elementary Cellular Automata",
         subtitle="Simple rules, complex worlds",
@@ -336,7 +344,7 @@ def generate_poster(cell_size=2, generations=150,
 
     for rule_num, col_cx in zip(rules, col_centers):
         grid = generate_automaton(rule_num, grid_width, generations)
-        color = CELL_COLORS.get(rule_num, "#1C1C1C")
+        color = cell_colors.get(rule_num, t["content_primary"])
 
         # Top-left corner of this automaton's grid
         gx = col_cx - grid_px_w / 2

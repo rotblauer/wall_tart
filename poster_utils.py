@@ -26,6 +26,8 @@ THEMES = {
         "footer_secondary": "#777777",   # footer secondary text
         "text_color": "#1C1C1C",         # general body text
         "border_color": "#1C1C1C",       # border strokes
+        "content_primary": "#1C1C1C",    # primary visualization ink
+        "content_secondary": "#2E5090",  # secondary visualization ink
     },
     "blueprint": {
         "bg_color": "#0A1628",           # deep cobalt blue
@@ -35,6 +37,8 @@ THEMES = {
         "footer_secondary": "#5B7DB1",   # muted blue footer
         "text_color": "#E0E8F0",         # off-white text
         "border_color": "#FFFFFF",       # white border
+        "content_primary": "#E0E8F0",    # light lines on dark bg
+        "content_secondary": "#5BC0EB",  # lighter blue
     },
     "chalkboard": {
         "bg_color": "#2B2B2B",           # charcoal gray
@@ -44,6 +48,8 @@ THEMES = {
         "footer_secondary": "#8B8B78",   # muted olive footer
         "text_color": "#F5F5DC",         # off-white text
         "border_color": "#F5F5DC",       # off-white border
+        "content_primary": "#F5F5DC",    # chalk-white lines
+        "content_secondary": "#A8D8EA",  # soft blue chalk
     },
 }
 

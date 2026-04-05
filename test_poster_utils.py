@@ -7,9 +7,12 @@ import pytest
 
 from poster_utils import (
     ANNO_START_FRAC,
+    AVAILABLE_THEMES,
     BASE_HEIGHT_MM,
     BASE_WIDTH_MM,
     CONTENT_TOP_MARGIN_FRAC,
+    DEFAULT_THEME,
+    THEMES,
     assign_annotations_no_crossing,
     build_poster_scaffold,
     content_area,
@@ -18,6 +21,7 @@ from poster_utils import (
     draw_poster_border,
     draw_poster_header,
     finalize_poster,
+    get_theme,
     _svg_root,
 )
 
@@ -340,3 +344,126 @@ class TestDrawAnnotationBody:
         xml_str = ET.tostring(g, encoding="unicode")
         assert "Line 1" in xml_str
         assert "Line 2" in xml_str
+
+
+# ---------------------------------------------------------------------------
+# Theme system
+# ---------------------------------------------------------------------------
+
+class TestThemeSystem:
+    def test_available_themes_not_empty(self):
+        assert len(AVAILABLE_THEMES) >= 3
+
+    def test_classic_is_default(self):
+        assert DEFAULT_THEME == "classic"
+
+    def test_get_theme_returns_dict(self):
+        t = get_theme("classic")
+        assert isinstance(t, dict)
+        for key in ("bg_color", "accent_color", "title_color",
+                     "footer_primary", "footer_secondary",
+                     "text_color", "border_color"):
+            assert key in t
+
+    def test_get_theme_none_returns_default(self):
+        assert get_theme(None) == get_theme(DEFAULT_THEME)
+
+    def test_get_theme_unknown_returns_default(self):
+        assert get_theme("nonexistent") == get_theme(DEFAULT_THEME)
+
+    def test_blueprint_theme_has_blue_bg(self):
+        t = get_theme("blueprint")
+        # Blueprint should have a dark blue background
+        assert t["bg_color"].startswith("#0")
+
+    def test_chalkboard_theme_has_dark_bg(self):
+        t = get_theme("chalkboard")
+        assert t["bg_color"].startswith("#2")
+
+    def test_all_themes_have_same_keys(self):
+        keys = set(THEMES["classic"].keys())
+        for name, theme in THEMES.items():
+            assert set(theme.keys()) == keys, f"Theme '{name}' has different keys"
+
+
+# ---------------------------------------------------------------------------
+# Font embedding
+# ---------------------------------------------------------------------------
+
+class TestFontEmbedding:
+    def test_scaffold_embeds_font_style(self):
+        sc = build_poster_scaffold("T", "S")
+        ns = sc["ns"]
+        style = sc["svg"].find(f"{{{ns}}}style")
+        assert style is not None
+        assert "Playfair" in style.text
+        assert "Inter" in style.text
+
+    def test_scaffold_with_theme_embeds_fonts(self):
+        sc = build_poster_scaffold("T", "S", theme="blueprint")
+        ns = sc["ns"]
+        style = sc["svg"].find(f"{{{ns}}}style")
+        assert style is not None
+
+
+# ---------------------------------------------------------------------------
+# Callout markers
+# ---------------------------------------------------------------------------
+
+class TestCalloutMarker:
+    def test_marker_uses_circle_not_polygon(self):
+        sc = build_poster_scaffold("T", "S")
+        ns = sc["ns"]
+        defs = sc["svg"].find(f"{{{ns}}}defs")
+        marker = defs.find(f"{{{ns}}}marker[@id='arrowhead']")
+        assert marker is not None
+        # Should contain a circle, not a polygon
+        assert marker.find(f"{{{ns}}}circle") is not None
+        assert marker.find(f"{{{ns}}}polygon") is None
+
+    def test_marker_uses_theme_accent_color(self):
+        t_bp = get_theme("blueprint")
+        sc = build_poster_scaffold("T", "S", theme="blueprint")
+        ns = sc["ns"]
+        defs = sc["svg"].find(f"{{{ns}}}defs")
+        marker = defs.find(f"{{{ns}}}marker[@id='arrowhead']")
+        circle = marker.find(f"{{{ns}}}circle")
+        assert circle.get("fill") == t_bp["accent_color"]
+
+
+# ---------------------------------------------------------------------------
+# Theme integration in scaffold
+# ---------------------------------------------------------------------------
+
+class TestScaffoldTheme:
+    def test_scaffold_returns_theme_key(self):
+        sc = build_poster_scaffold("T", "S", theme="blueprint")
+        assert sc["theme"] == "blueprint"
+
+    def test_scaffold_default_theme(self):
+        sc = build_poster_scaffold("T", "S")
+        assert sc["theme"] is None  # defaults to None, get_theme resolves
+
+    def test_scaffold_blueprint_uses_blue_bg(self):
+        t = get_theme("blueprint")
+        sc = build_poster_scaffold("T", "S", theme="blueprint")
+        ns = sc["ns"]
+        rects = sc["svg"].findall(f"{{{ns}}}rect")
+        bg_rect = rects[0]
+        assert bg_rect.get("fill") == t["bg_color"]
+
+    def test_scaffold_chalkboard_uses_dark_bg(self):
+        t = get_theme("chalkboard")
+        sc = build_poster_scaffold("T", "S", theme="chalkboard")
+        ns = sc["ns"]
+        rects = sc["svg"].findall(f"{{{ns}}}rect")
+        bg_rect = rects[0]
+        assert bg_rect.get("fill") == t["bg_color"]
+
+    def test_annotation_header_uses_theme_colors(self):
+        t = get_theme("blueprint")
+        svg, ns = _svg_root(420, 594)
+        g = draw_annotation_header(svg, ns, 210, 400, 100, 200,
+                                   "Test", scale=1, theme="blueprint")
+        xml_str = ET.tostring(g, encoding="unicode")
+        assert t["accent_color"] in xml_str
