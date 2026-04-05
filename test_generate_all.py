@@ -78,6 +78,31 @@ class TestBuildArgParser:
         args = parser.parse_args([])
         assert args.automata_generations == 150
 
+    def test_fourier_num_circles_default(self):
+        parser = build_arg_parser()
+        args = parser.parse_args([])
+        assert args.fourier_num_circles == 32
+
+    def test_turing_grid_size_default(self):
+        parser = build_arg_parser()
+        args = parser.parse_args([])
+        assert args.turing_grid_size == 60
+
+    def test_turing_steps_default(self):
+        parser = build_arg_parser()
+        args = parser.parse_args([])
+        assert args.turing_steps == 3000
+
+    def test_penrose_subdivisions_default(self):
+        parser = build_arg_parser()
+        args = parser.parse_args([])
+        assert args.penrose_subdivisions == 5
+
+    def test_harmonograph_steps_default(self):
+        parser = build_arg_parser()
+        args = parser.parse_args([])
+        assert args.harmonograph_steps == 10000
+
     def test_custom_output_dir(self):
         parser = build_arg_parser()
         args = parser.parse_args(["--output-dir", "/tmp/out"])
@@ -96,6 +121,11 @@ class TestMain:
                 "--mandelbrot-max-iter", "10",
                 "--pendulum-steps", "500",
                 "--automata-generations", "10",
+                "--fourier-num-circles", "5",
+                "--turing-grid-size", "8",
+                "--turing-steps", "10",
+                "--penrose-subdivisions", "2",
+                "--harmonograph-steps", "500",
             ])
             assert os.path.exists(os.path.join(tmpdir, "sierpinski_poster.svg"))
             assert os.path.exists(os.path.join(tmpdir, "lorenz_poster.svg"))
@@ -103,6 +133,10 @@ class TestMain:
             assert os.path.exists(os.path.join(tmpdir, "mandelbrot_poster.svg"))
             assert os.path.exists(os.path.join(tmpdir, "double_pendulum_poster.svg"))
             assert os.path.exists(os.path.join(tmpdir, "cellular_automata_poster.svg"))
+            assert os.path.exists(os.path.join(tmpdir, "fourier_epicycles_poster.svg"))
+            assert os.path.exists(os.path.join(tmpdir, "turing_patterns_poster.svg"))
+            assert os.path.exists(os.path.join(tmpdir, "penrose_tiling_poster.svg"))
+            assert os.path.exists(os.path.join(tmpdir, "harmonograph_poster.svg"))
 
     def test_generates_single_poster(self):
         with tempfile.TemporaryDirectory() as tmpdir:
