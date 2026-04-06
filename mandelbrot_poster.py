@@ -624,7 +624,7 @@ def generate_poster(resolution=80, max_iter=100,
     ]
 
     julia_res = max(10, resolution // 3)
-    julia_h_res = max(8, int(julia_res * 1.0))
+    julia_h_res = max(8, julia_res)
 
     # Panel size: ~24 % of rendered fractal width, square
     panel_side = min(render_w * 0.24, render_h * 0.32)
@@ -717,7 +717,7 @@ def generate_poster(resolution=80, max_iter=100,
         secondary_line=(
             f"Generated with {resolution}\u00d7{grid_h} grid  "
             f"\u00b7  max {max_iter} iterations  "
-            f"\u00b7  3 Julia set insets at {julia_res}\u00d7{julia_h_res}"
+            f"\u00b7  {len(julia_cs)} Julia set insets at {julia_res}\u00d7{julia_h_res}"
         ),
         designed_by=designed_by,
         designed_for=designed_for,
