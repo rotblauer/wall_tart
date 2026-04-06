@@ -33,12 +33,14 @@ class ProgressReporter:
     total : int
         Total number of steps.
     label : str
-        Short description shown to the left of the bar (≤ 22 chars looks best).
+        Short description shown to the left of the bar (≤ LABEL_WIDTH chars
+        looks best).
     file : file-like or None
         Output stream.  Defaults to *sys.stderr*.
     """
 
     BAR_WIDTH = 28
+    LABEL_WIDTH = 22
 
     def __init__(self, total, label="", file=None):
         self._total = max(total, 1)
@@ -74,7 +76,7 @@ class ProgressReporter:
         arrow = ">" if filled < self.BAR_WIDTH else ""
         spaces = " " * (self.BAR_WIDTH - filled - len(arrow))
         bar = "=" * filled + arrow + spaces
-        line = f"\r  {self._label:<22} [{bar}] {pct:3d}%"
+        line = f"\r  {self._label:<{self.LABEL_WIDTH}} [{bar}] {pct:3d}%"
         print(line, end="", file=self._file, flush=True)
 
 
