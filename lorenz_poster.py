@@ -301,7 +301,7 @@ def _find_best_zoom_center(scaled_main, origin_x, origin_y, w_scale):
 def _draw_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
                      center_x, center_y, avail_w, avail_h, min_top,
                      width_mm, attractor_color, origin_poster=None,
-                     theme=None):
+                     theme=None, scaled_extra=None):
     """Draw a zoom-inset panel highlighting the saddle / transition region.
 
     The saddle region near the 3-D origin (0, 0, 0) is where the two lobes
@@ -352,10 +352,20 @@ def _draw_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
     src_x2, src_y2 = src_cx + src_hw, src_cy + src_hh
 
     # --- Zoom panel in the upper-right free area ---
-    zoom_w = 58.0 * w_scale
-    zoom_h = 58.0 * w_scale
-    zoom_x = width_mm * 0.85 - zoom_w   # flush with right text margin
-    zoom_y = min_top + 4.0 * h_scale    # just below the header-rule gap
+    right_margin = (width_mm - avail_w) / 2  # horizontal margin (left = right)
+    max_bot = min_top + avail_h
+
+    zoom_w = min(70.0 * w_scale, avail_w * 0.4)
+    zoom_h = min(70.0 * w_scale, avail_h * 0.4)
+    zoom_x = width_mm - right_margin - zoom_w  # flush with right margin
+    zoom_y = min_top + 4.0 * h_scale           # just below the header-rule gap
+
+    # Clamp so the panel stays within poster bounds.
+    if zoom_x + zoom_w > width_mm - right_margin:
+        zoom_x = width_mm - right_margin - zoom_w
+    if zoom_y + zoom_h > max_bot:
+        zoom_h = max_bot - zoom_y
+
     zoom_cx = zoom_x + zoom_w / 2
     zoom_cy = zoom_y + zoom_h / 2
 
@@ -437,6 +447,27 @@ def _draw_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
                      "stroke-linejoin": "round",
                      "stroke-linecap": "round"})
 
+    # --- Extra-detail trajectory (only in zoom) ---
+    if scaled_extra:
+        segment = []
+        for px, py in scaled_extra:
+            if abs(px - src_cx) <= sample_hw and abs(py - src_cy) <= sample_hh:
+                segment.append(_to_zoom(px, py))
+            else:
+                if len(segment) >= 2:
+                    _polyline(zoom_lines_g, ns, segment,
+                              stroke=attractor_color, opacity="0.75",
+                              **{"stroke-width": thin_sw,
+                                 "stroke-linejoin": "round",
+                                 "stroke-linecap": "round"})
+                segment = []
+        if len(segment) >= 2:
+            _polyline(zoom_lines_g, ns, segment,
+                      stroke=attractor_color, opacity="0.75",
+                      **{"stroke-width": thin_sw,
+                         "stroke-linejoin": "round",
+                         "stroke-linecap": "round"})
+
     # --- Zoom panel border ---
     _rect(zoom_group, ns, zoom_x, zoom_y, zoom_w, zoom_h,
           fill="none", stroke=border_color,
@@ -473,12 +504,14 @@ def _draw_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
         "zoom_cx": zoom_cx,
         "zoom_cy": zoom_cy,
         "magnify": magnify,
+        "max_bot": max_bot,
+        "right_margin": right_margin,
     }
 
 
 def _draw_ultra_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
                            zoom_info, width_mm, attractor_color,
-                           theme=None):
+                           theme=None, scaled_extra=None):
     """Draw a second-level ultra-zoom panel for deeper fractal structure.
 
     Zooms further into the *same* outer-turnaround-edge region targeted by
@@ -509,10 +542,21 @@ def _draw_ultra_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
     uz_src_hh = 2.0 * w_scale           # half-height → 4 mm total
 
     # --- Ultra-zoom panel: placed below the first zoom panel ---
-    uz_w = 36.0 * w_scale               # ~62 % of the first zoom panel
-    uz_h = 36.0 * w_scale
+    uz_w = min(46.0 * w_scale, z1_zoom_w * 0.85)
+    uz_h = min(46.0 * w_scale, z1_zoom_h * 0.85)
     uz_x = z1_zoom_x + z1_zoom_w - uz_w  # right-aligned with first zoom
     uz_y = z1_zoom_y + z1_zoom_h + 6.0 * w_scale  # gap below first zoom
+
+    # Clamp so the panel stays within poster bounds.
+    max_bot = zoom_info.get("max_bot", uz_y + uz_h + 20)
+    right_margin = zoom_info.get("right_margin", width_mm * 0.10)
+    if uz_x + uz_w > width_mm - right_margin:
+        uz_x = width_mm - right_margin - uz_w
+    if uz_x < z1_zoom_x:
+        uz_x = z1_zoom_x
+    if uz_y + uz_h > max_bot:
+        uz_h = max(10.0 * w_scale, max_bot - uz_y)
+
     uz_cx = uz_x + uz_w / 2
     uz_cy = uz_y + uz_h / 2
 
@@ -599,6 +643,27 @@ def _draw_ultra_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
                   **{"stroke-width": ultra_thin_sw,
                      "stroke-linejoin": "round",
                      "stroke-linecap": "round"})
+
+    # --- Extra-detail trajectory (only in ultra-zoom) ---
+    if scaled_extra:
+        segment = []
+        for px, py in scaled_extra:
+            if abs(px - src_cx) <= sample_hw and abs(py - src_cy) <= sample_hh:
+                segment.append(_to_uz(px, py))
+            else:
+                if len(segment) >= 2:
+                    _polyline(uz_lines_g, ns, segment,
+                              stroke=attractor_color, opacity="0.75",
+                              **{"stroke-width": ultra_thin_sw,
+                                 "stroke-linejoin": "round",
+                                 "stroke-linecap": "round"})
+                segment = []
+        if len(segment) >= 2:
+            _polyline(uz_lines_g, ns, segment,
+                      stroke=attractor_color, opacity="0.75",
+                      **{"stroke-width": ultra_thin_sw,
+                         "stroke-linejoin": "round",
+                         "stroke-linecap": "round"})
 
     # --- Ultra-zoom panel border ---
     _rect(uz_group, ns, uz_x, uz_y, uz_w, uz_h,
@@ -777,7 +842,7 @@ def _panel_weather_model(parent, ns, col_cx, anno_y, scale=1):
 # Poster composition
 # ---------------------------------------------------------------------------
 
-def generate_poster(steps=200000, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_MM,
+def generate_poster(steps=200000, zoom_multiplier=2, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_MM,
                     designed_by=None, designed_for=None, theme=None, verbose=True):
     """Build and return the full poster as an ElementTree SVG root."""
     t = get_theme(theme)
@@ -806,6 +871,17 @@ def generate_poster(steps=200000, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_
     traj_div = integrate_lorenz(initial_div, steps=steps, progress=_p2)
     if _p2:
         _p2.done()
+
+    # --- Compute extra trajectory for high-res zoom panels ---
+    extra_steps = steps * zoom_multiplier
+    if extra_steps > 0:
+        last_pt = traj_main[-1]
+        _p3 = ProgressReporter(extra_steps, "Lorenz: zoom detail") if verbose else None
+        traj_extra = integrate_lorenz(last_pt, steps=extra_steps, progress=_p3)
+        if _p3:
+            _p3.done()
+    else:
+        traj_extra = []
 
     proj_main = project_3d_to_2d(traj_main)
     proj_div = project_3d_to_2d(traj_div)
@@ -836,6 +912,12 @@ def generate_poster(steps=200000, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_
 
     scaled_main = [_transform(px, py) for px, py in proj_main]
     scaled_div = [_transform(px, py) for px, py in proj_div]
+
+    if traj_extra:
+        proj_extra = project_3d_to_2d(traj_extra)
+        scaled_extra = [_transform(px, py) for px, py in proj_extra]
+    else:
+        scaled_extra = []
 
     # --- Main attractor visualisation ---
     attractor_group = _group(svg, ns, id="attractor")
@@ -877,6 +959,7 @@ def generate_poster(steps=200000, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_
         svg, ns, scaled_main, w_scale, h_scale,
         center_x, center_y, avail_w, avail_h, min_top,
         width_mm, attractor_color, origin_poster=origin_poster, theme=theme,
+        scaled_extra=scaled_extra,
     )
     zoom_target_x, zoom_target_y = zoom_info["anno_target"]
 
@@ -884,6 +967,7 @@ def generate_poster(steps=200000, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_
     _draw_ultra_zoom_inset(
         svg, ns, scaled_main, w_scale, h_scale,
         zoom_info, width_mm, attractor_color, theme=theme,
+        scaled_extra=scaled_extra,
     )
 
     # --- Annotations ---
@@ -975,6 +1059,10 @@ def build_arg_parser():
         "--steps", type=int, default=200000,
         help="Integration steps (default: 200000). Higher = more detail.",
     )
+    parser.add_argument(
+        "--zoom-multiplier", type=int, default=2, dest="zoom_multiplier",
+        help="Extra integration multiplier for zoom panels (default: 2).",
+    )
     add_common_poster_args(parser)
     return parser
 
@@ -983,6 +1071,7 @@ def _generate_from_args(args):
     """Adapter: call generate_poster with parsed CLI arguments."""
     return generate_poster(
         steps=args.steps,
+        zoom_multiplier=args.zoom_multiplier,
         width_mm=args.width,
         height_mm=args.height,
         designed_by=args.designed_by,
