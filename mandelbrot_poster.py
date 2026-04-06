@@ -35,6 +35,7 @@ from poster_utils import (
     SERIF,
     _circle,
     _group,
+    _line,
     _multiline_text,
     _rect,
     _text,
@@ -412,6 +413,115 @@ def _draw_grid(parent, ns, grid, max_iter, gx, gy, cell_w, cell_h,
                   fill=color)
 
 
+def _draw_julia_inset(parent, ns, panel_x, panel_y, panel_w, panel_h,
+                      c_real, c_imag, label, marker_px, marker_py,
+                      j_grid, max_iter, set_color, w_scale, h_scale, theme=None):
+    """Draw a floating Julia set inset panel on the Mandelbrot poster.
+
+    Renders the Julia grid inside a styled panel box, places a small circular
+    marker at the corresponding *c* point on the main fractal, and connects the
+    two with a dashed line.
+
+    Parameters
+    ----------
+    parent : Element
+        SVG group to draw into.
+    ns : str
+        SVG namespace URI.
+    panel_x, panel_y, panel_w, panel_h : float
+        Position and size of the floating panel (poster coordinates, mm).
+    c_real, c_imag : float
+        Julia parameter *c*.
+    label : str
+        Caption text shown below the panel.
+    marker_px, marker_py : float
+        Poster-coordinate location of *c* on the main Mandelbrot grid.
+    j_grid : list[list[int]]
+        Precomputed Julia escape grid.
+    max_iter : int
+        Maximum escape iterations (used for colour mapping).
+    set_color : str
+        Hex colour for in-set pixels.
+    w_scale, h_scale : float
+        Poster scaling factors.
+    theme : str or None
+        Poster theme name.
+    """
+    t = get_theme(theme)
+    border_color = t["border_color"]
+    bg_color = t["bg_color"]
+
+    inset_group = _group(parent, ns)
+
+    # --- Panel background (slightly opaque to prevent clashing) ---
+    _rect(inset_group, ns, panel_x, panel_y, panel_w, panel_h,
+          fill=bg_color, stroke="none",
+          **{"fill-opacity": "0.90"})
+
+    # --- Render Julia grid inside the panel ---
+    j_rows = len(j_grid)
+    j_cols = len(j_grid[0]) if j_rows > 0 else 1
+    j_cell_w = panel_w / j_cols
+    j_cell_h = panel_h / j_rows
+    _draw_grid(inset_group, ns, j_grid, max_iter,
+               panel_x, panel_y, j_cell_w, j_cell_h,
+               set_color=set_color)
+
+    # --- Panel border ---
+    _rect(inset_group, ns, panel_x, panel_y, panel_w, panel_h,
+          fill="none", stroke=border_color,
+          **{"stroke-width": str(round(0.45 * w_scale, 3))})
+
+    # --- Caption label below the panel ---
+    label_style = {
+        "font-family": SERIF,
+        "font-size": str(round(3.0 * w_scale, 2)),
+        "fill": FOOTER_PRIMARY_COLOR,
+        "text-anchor": "middle",
+        "font-style": "italic",
+    }
+    _text(inset_group, ns,
+          round(panel_x + panel_w / 2, 2),
+          round(panel_y + panel_h + 4.5 * h_scale, 2),
+          label, **label_style)
+
+    # --- Circular marker at c on the main fractal ---
+    marker_r = round(1.8 * w_scale, 2)
+    _circle(inset_group, ns,
+            round(marker_px, 2), round(marker_py, 2), marker_r,
+            fill="none", stroke=border_color,
+            **{"stroke-width": str(round(0.5 * w_scale, 3)),
+               "opacity": "0.85"})
+    # Centre dot
+    _circle(inset_group, ns,
+            round(marker_px, 2), round(marker_py, 2),
+            round(0.6 * w_scale, 2),
+            fill=border_color,
+            **{"opacity": "0.85"})
+
+    # --- Dashed connector line: marker → nearest panel corner ---
+    corners = [
+        (panel_x,           panel_y),
+        (panel_x + panel_w, panel_y),
+        (panel_x + panel_w, panel_y + panel_h),
+        (panel_x,           panel_y + panel_h),
+    ]
+    nearest = min(corners,
+                  key=lambda p: (p[0] - marker_px) ** 2 + (p[1] - marker_py) ** 2)
+    conn_style = {
+        "stroke": border_color,
+        "stroke-width": str(round(0.3 * w_scale, 3)),
+        "stroke-dasharray": "1.5,1.5",
+        "opacity": "0.40",
+    }
+    _line(inset_group, ns,
+          round(marker_px, 2), round(marker_py, 2),
+          round(nearest[0], 2), round(nearest[1], 2),
+          **conn_style)
+
+    return inset_group
+
+
 def generate_poster(resolution=80, max_iter=100,
                     width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_MM,
                     designed_by=None, designed_for=None, theme=None, verbose=True):
@@ -451,9 +561,8 @@ def generate_poster(resolution=80, max_iter=100,
     min_top, max_bot = ca["min_top"], ca["max_bot"]
     margin, avail_w, avail_h = ca["margin"], ca["avail_w"], ca["avail_h"]
 
-    # Reserve bottom portion for Julia thumbnails
-    julia_section_h = avail_h * 0.22
-    fractal_h = avail_h - julia_section_h
+    # Main fractal expands to use the full available content height
+    fractal_h = avail_h
 
     # --- Compute Mandelbrot grid ---
     mb_x_min, mb_x_max = -2.5, 1.0
@@ -500,44 +609,59 @@ def generate_poster(resolution=80, max_iter=100,
     y_label.set("transform",
                 f"rotate(-90, {margin - 8 * w_scale}, {min_top + fractal_h / 2})")
 
-    # --- Julia set thumbnails ---
+    # Helper: map Mandelbrot complex coords to poster pixel coordinates
+    def _mb_to_poster(cr, ci):
+        px = fractal_x + (cr - mb_x_min) / (mb_x_max - mb_x_min) * render_w
+        py = fractal_y + (ci - mb_y_min) / (mb_y_max - mb_y_min) * render_h
+        return (px, py)
+
+    # --- Julia set floating inset panels ---
     julia_group = _group(svg, ns, id="julia_sets")
     julia_cs = [
-        (-0.7, 0.27015, "c = \u22120.70 + 0.27i"),
-        (0.355, 0.355, "c = 0.355 + 0.355i"),
-        (-0.8, 0.156, "c = \u22120.80 + 0.16i"),
+        (-0.7,   0.27015, "c = \u22120.70 + 0.27i"),
+        (0.355,  0.355,   "c = 0.355 + 0.355i"),
+        (-0.8,   0.156,   "c = \u22120.80 + 0.16i"),
     ]
 
-    col1_cx, col2_cx, col3_cx = [width_mm * f for f in COLUMN_CENTERS]
-    julia_top = min_top + fractal_h + 10 * h_scale
-    thumb_w_mm = width_mm * 0.15
-    thumb_h_mm = thumb_w_mm * 0.8
     julia_res = max(10, resolution // 3)
-    julia_h_res = max(8, int(julia_res * 0.8))
+    julia_h_res = max(8, int(julia_res * 1.0))
 
-    label_style = {
-        "font-family": SERIF,
-        "font-size": str(round(3.5 * w_scale, 2)),
-        "fill": FOOTER_PRIMARY_COLOR,
-        "text-anchor": "middle",
-        "font-style": "italic",
-    }
+    # Panel size: ~24 % of rendered fractal width, square
+    panel_side = min(render_w * 0.24, render_h * 0.32)
+    panel_pad = panel_side * 0.10   # inward padding from the fractal edge
 
-    for (cr, ci, label), col_cx in zip(julia_cs, [col1_cx, col2_cx, col3_cx]):
-        jx = col_cx - thumb_w_mm / 2
-        jy = julia_top
+    # Panel positions: top-left, top-right, bottom-left corners of fractal bbox
+    panel_positions = [
+        # Top-left
+        (fractal_x + panel_pad,
+         fractal_y + panel_pad),
+        # Top-right
+        (fractal_x + render_w - panel_side - panel_pad,
+         fractal_y + panel_pad),
+        # Bottom-left
+        (fractal_x + panel_pad,
+         fractal_y + render_h - panel_side - panel_pad),
+    ]
+
+    for (cr, ci, label), (px, py) in zip(julia_cs, panel_positions):
         _pj = ProgressReporter(julia_h_res, f"Julia: {label[:16]}") if verbose else None
         j_grid = compute_julia_grid(cr, ci, -1.5, 1.5, -1.2, 1.2,
                                     julia_res, julia_h_res, max_iter, progress=_pj)
         if _pj:
             _pj.done()
-        j_cell_w = thumb_w_mm / julia_res
-        j_cell_h = thumb_h_mm / julia_h_res
-        _draw_grid(julia_group, ns, j_grid, max_iter,
-                   jx, jy, j_cell_w, j_cell_h,
-                   set_color=set_color)
-        _text(julia_group, ns, col_cx, jy + thumb_h_mm + 5 * h_scale,
-              label, **label_style)
+        marker_px, marker_py = _mb_to_poster(cr, ci)
+        _draw_julia_inset(
+            julia_group, ns,
+            panel_x=px, panel_y=py, panel_w=panel_side, panel_h=panel_side,
+            c_real=cr, c_imag=ci,
+            label=label,
+            marker_px=marker_px, marker_py=marker_py,
+            j_grid=j_grid,
+            max_iter=max_iter,
+            set_color=set_color,
+            w_scale=w_scale, h_scale=h_scale,
+            theme=theme,
+        )
 
     # --- Annotations ---
     anno_group = _group(svg, ns, id="annotations")
@@ -548,18 +672,16 @@ def generate_poster(resolution=80, max_iter=100,
 
     anno_y = anno_sep_y + 18 * h_scale
 
-    # Arrow targets on the fractal (mapped to poster coordinates)
-    def _mb_to_poster(cr, ci):
-        px = fractal_x + (cr - mb_x_min) / (mb_x_max - mb_x_min) * render_w
-        py = fractal_y + (ci - mb_y_min) / (mb_y_max - mb_y_min) * render_h
-        return (px, py)
+    col1_cx, col2_cx, col3_cx = [width_mm * f for f in COLUMN_CENTERS]
 
     # Self-similarity: point near a mini-brot on the real axis
     ss_target = _mb_to_poster(-1.76, 0.0)
     # Escape-time: point on the boundary
     et_target = _mb_to_poster(-0.16, 1.04)
-    # Julia connection: point in the main cardioid
-    jc_target = _mb_to_poster(-0.5, 0.0)
+    # Julia connection: point to the top-left inset panel (first Julia panel)
+    tl_panel_x = panel_positions[0][0]
+    tl_panel_y = panel_positions[0][1]
+    jc_target = (tl_panel_x + panel_side / 2, tl_panel_y + panel_side / 2)
 
     draw_annotation_row(
         anno_group, ns, anno_y,
@@ -595,7 +717,7 @@ def generate_poster(resolution=80, max_iter=100,
         secondary_line=(
             f"Generated with {resolution}\u00d7{grid_h} grid  "
             f"\u00b7  max {max_iter} iterations  "
-            f"\u00b7  3 Julia set thumbnails at {julia_res}\u00d7{julia_h_res}"
+            f"\u00b7  3 Julia set insets at {julia_res}\u00d7{julia_h_res}"
         ),
         designed_by=designed_by,
         designed_for=designed_for,
