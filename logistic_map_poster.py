@@ -46,6 +46,7 @@ from poster_utils import (
     draw_row_separator,
     finalize_poster,
     get_theme,
+    ProgressReporter,
     run_poster_main,
     write_poster,
     write_svg,
@@ -82,7 +83,7 @@ def logistic_iterate(x0, r, n_iterations):
 
 
 def bifurcation_data(r_min=2.5, r_max=4.0, n_r=2000,
-                     n_settle=300, n_plot=200):
+                     n_settle=300, n_plot=200, progress=None):
     """Compute the bifurcation diagram of the logistic map.
 
     For each of *n_r* evenly spaced values of *r* in [r_min, r_max],
@@ -99,6 +100,8 @@ def bifurcation_data(r_min=2.5, r_max=4.0, n_r=2000,
         Transient iterations to discard before collecting.
     n_plot : int
         Number of steady-state values to record per r.
+    progress : ProgressReporter or None
+        Optional progress reporter updated once per r-value.
 
     Returns
     -------
@@ -114,6 +117,8 @@ def bifurcation_data(r_min=2.5, r_max=4.0, n_r=2000,
         for _ in range(n_plot):
             x = r * x * (1.0 - x)
             points.append((r, x))
+        if progress is not None:
+            progress.update()
     return points
 
 
@@ -326,7 +331,7 @@ def _panel_population_biology(parent, ns, col_cx, anno_y, scale=1):
 # ---------------------------------------------------------------------------
 
 def generate_poster(r_count=2000, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_MM,
-                    designed_by=None, designed_for=None, theme=None):
+                    designed_by=None, designed_for=None, theme=None, verbose=True):
     """Build and return the full poster as an ElementTree SVG root.
 
     Parameters
@@ -360,8 +365,11 @@ def generate_poster(r_count=2000, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_
     r_min, r_max = 2.5, 4.0
     n_settle = 300
     n_plot = 200
+    _p = ProgressReporter(r_count, "Logistic: bifurcation") if verbose else None
     data = bifurcation_data(r_min, r_max, n_r=r_count,
-                            n_settle=n_settle, n_plot=n_plot)
+                            n_settle=n_settle, n_plot=n_plot, progress=_p)
+    if _p:
+        _p.done()
 
     # --- Fit the diagram into the poster space ---
     ca = content_area(rule_y, width_mm, height_mm, margin_frac=0.10)

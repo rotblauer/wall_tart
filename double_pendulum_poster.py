@@ -48,6 +48,7 @@ from poster_utils import (
     draw_row_separator,
     finalize_poster,
     get_theme,
+    ProgressReporter,
     run_poster_main,
     write_poster,
     write_svg,
@@ -105,7 +106,8 @@ def double_pendulum_derivatives(state, L1=1.0, L2=1.0, m1=1.0, m2=1.0,
 
 
 def integrate_double_pendulum(initial_state, steps=10000, dt=0.001,
-                              L1=1.0, L2=1.0, m1=1.0, m2=1.0, g=9.81):
+                              L1=1.0, L2=1.0, m1=1.0, m2=1.0, g=9.81,
+                              progress=None):
     """Integrate the double pendulum ODEs using 4th-order Runge-Kutta.
 
     Parameters
@@ -122,6 +124,8 @@ def integrate_double_pendulum(initial_state, steps=10000, dt=0.001,
         Bob masses.
     g : float
         Gravitational acceleration.
+    progress : ProgressReporter or None
+        Optional progress reporter updated once per step.
 
     Returns
     -------
@@ -150,6 +154,8 @@ def integrate_double_pendulum(initial_state, steps=10000, dt=0.001,
             for i in range(4)
         )
         trajectory.append(state)
+        if progress is not None:
+            progress.update()
     return trajectory
 
 
@@ -348,7 +354,8 @@ def _panel_physical_systems(parent, ns, col_cx, anno_y, scale=1):
 
 def generate_poster(steps=10000, width_mm=BASE_WIDTH_MM,
                     height_mm=BASE_HEIGHT_MM,
-                    designed_by=None, designed_for=None, theme=None):
+                    designed_by=None, designed_for=None, theme=None,
+                    verbose=True):
     """Build and return the full poster as an ElementTree SVG root.
 
     Parameters
@@ -389,10 +396,13 @@ def generate_poster(steps=10000, width_mm=BASE_WIDTH_MM,
         (theta1_base + 2e-5, 0.0, theta1_base, 0.0),
     ]
 
-    trajectories = [
-        integrate_double_pendulum(s, steps=steps, dt=dt)
-        for s in initial_states
-    ]
+    trajectories = []
+    for idx, s in enumerate(initial_states, start=1):
+        _p = ProgressReporter(steps, f"Pendulum: traj {idx}/3") if verbose else None
+        traj = integrate_double_pendulum(s, steps=steps, dt=dt, progress=_p)
+        if _p:
+            _p.done()
+        trajectories.append(traj)
     tip_sets = [pendulum_tip_positions(t) for t in trajectories]
 
     # --- Fit the trajectories into the poster content area ---

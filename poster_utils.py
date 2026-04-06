@@ -14,6 +14,73 @@ import xml.etree.ElementTree as ET
 
 
 # ---------------------------------------------------------------------------
+# Progress reporting
+# ---------------------------------------------------------------------------
+
+class ProgressReporter:
+    """Lightweight terminal progress-bar that writes to *sys.stderr*.
+
+    Usage::
+
+        progress = ProgressReporter(total=steps, label="Lorenz: main")
+        for _ in range(steps):
+            # … do work …
+            progress.update()
+        progress.done()
+
+    Parameters
+    ----------
+    total : int
+        Total number of steps.
+    label : str
+        Short description shown to the left of the bar (≤ LABEL_WIDTH chars
+        looks best).
+    file : file-like or None
+        Output stream.  Defaults to *sys.stderr*.
+    """
+
+    BAR_WIDTH = 28
+    LABEL_WIDTH = 22
+
+    def __init__(self, total, label="", file=None):
+        self._total = max(total, 1)
+        self._label = label
+        self._file = file or sys.stderr
+        self._current = 0
+        self._last_pct = -1
+
+    def update(self, current=None):
+        """Advance the progress indicator.
+
+        Call with an explicit *current* position (0-based count of completed
+        steps) or with no arguments to increment by one step.
+        """
+        if current is not None:
+            self._current = current
+        else:
+            self._current += 1
+        pct = int(100 * self._current / self._total)
+        if pct == self._last_pct:
+            return
+        self._last_pct = pct
+        self._render(pct)
+
+    def done(self):
+        """Force display to 100 % and emit a trailing newline."""
+        self._last_pct = -1
+        self._render(100)
+        print(file=self._file, flush=True)
+
+    def _render(self, pct):
+        filled = self.BAR_WIDTH * pct // 100
+        arrow = ">" if filled < self.BAR_WIDTH else ""
+        spaces = " " * (self.BAR_WIDTH - filled - len(arrow))
+        bar = "=" * filled + arrow + spaces
+        line = f"\r  {self._label:<{self.LABEL_WIDTH}} [{bar}] {pct:3d}%"
+        print(line, end="", file=self._file, flush=True)
+
+
+# ---------------------------------------------------------------------------
 # Theming system
 # ---------------------------------------------------------------------------
 

@@ -49,6 +49,7 @@ from poster_utils import (
     draw_row_separator,
     finalize_poster,
     get_theme,
+    ProgressReporter,
     run_poster_main,
     write_poster,
     write_svg,
@@ -59,7 +60,7 @@ from poster_utils import (
 # Harmonograph / Lissajous simulation helpers
 # ---------------------------------------------------------------------------
 
-def harmonograph(steps, dt, params):
+def harmonograph(steps, dt, params, progress=None):
     """Simulate a harmonograph curve from damped sinusoidal oscillators.
 
     The curve is defined by:
@@ -75,6 +76,8 @@ def harmonograph(steps, dt, params):
     params : list of tuple
         Four (amplitude, frequency, phase, decay) tuples — the first two
         control x(t) and the second two control y(t).
+    progress : ProgressReporter or None
+        Optional progress reporter updated once per step.
 
     Returns
     -------
@@ -92,10 +95,12 @@ def harmonograph(steps, dt, params):
         y = (a3 * math.sin(f3 * t + p3) * math.exp(-d3 * t)
              + a4 * math.sin(f4 * t + p4) * math.exp(-d4 * t))
         points.append((x, y))
+        if progress is not None:
+            progress.update()
     return points
 
 
-def lissajous(steps, dt, a, b, delta):
+def lissajous(steps, dt, a, b, delta, progress=None):
     """Generate an undamped Lissajous curve.
 
     The curve is defined by:
@@ -112,6 +117,8 @@ def lissajous(steps, dt, a, b, delta):
         Frequency parameters for x and y axes.
     delta : float
         Phase offset for x.
+    progress : ProgressReporter or None
+        Optional progress reporter updated once per step.
 
     Returns
     -------
@@ -124,6 +131,8 @@ def lissajous(steps, dt, a, b, delta):
         x = math.sin(a * t + delta)
         y = math.sin(b * t)
         points.append((x, y))
+        if progress is not None:
+            progress.update()
     return points
 
 
@@ -341,7 +350,7 @@ DEFAULT_HARMONOGRAPH_PARAMS = [
 
 def generate_poster(steps=10000, width_mm=BASE_WIDTH_MM,
                     height_mm=BASE_HEIGHT_MM, designed_by=None,
-                    designed_for=None, theme=None):
+                    designed_for=None, theme=None, verbose=True):
     """Build and return the full poster as an ElementTree SVG root.
 
     Parameters
@@ -402,7 +411,10 @@ def generate_poster(steps=10000, width_mm=BASE_WIDTH_MM,
         cx = cols_3[col_idx]
         cy = top_row_cy if row_idx == 0 else bot_row_cy
 
-        pts = lissajous(liss_steps, liss_dt, a, b, delta)
+        _pl = ProgressReporter(liss_steps, f"Lissajous {a}:{b}") if verbose else None
+        pts = lissajous(liss_steps, liss_dt, a, b, delta, progress=_pl)
+        if _pl:
+            _pl.done()
         scaled = _scale_points(pts, cx, cy, cell_half, cell_half)
 
         _polyline(content_group, ns, scaled,
@@ -422,7 +434,10 @@ def generate_poster(steps=10000, width_mm=BASE_WIDTH_MM,
     # Foreground: large elaborate harmonograph curve
     # ------------------------------------------------------------------
     dt = 0.01
-    harm_pts = harmonograph(steps, dt, DEFAULT_HARMONOGRAPH_PARAMS)
+    _ph = ProgressReporter(steps, "Harmonograph: main") if verbose else None
+    harm_pts = harmonograph(steps, dt, DEFAULT_HARMONOGRAPH_PARAMS, progress=_ph)
+    if _ph:
+        _ph.done()
 
     centre_cx = width_mm / 2.0
     centre_cy = min_top + avail_h / 2.0

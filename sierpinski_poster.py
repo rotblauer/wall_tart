@@ -50,6 +50,7 @@ from poster_utils import (
     draw_row_separator,
     finalize_poster,
     get_theme,
+    ProgressReporter,
     run_poster_main,
     write_poster,
     write_svg,
@@ -78,17 +79,28 @@ def midpoint(p1, p2):
 # Sierpiński triangle – iterative filled-triangle collector
 # ---------------------------------------------------------------------------
 
-def sierpinski_triangles(vertices, depth):
+def sierpinski_triangles(vertices, depth, progress=None):
     """Yield filled triangle vertex-lists for the Sierpiński fractal.
 
     Uses an iterative stack instead of call-stack recursion so that deep
     depths do not hit Python's recursion limit.
+
+    Parameters
+    ----------
+    vertices : list
+        Three (x, y) vertices of the outer triangle.
+    depth : int
+        Recursion depth (number of subdivision levels).
+    progress : ProgressReporter or None
+        Optional progress reporter updated once per yielded leaf triangle.
     """
     stack = [(vertices, depth)]
     while stack:
         tri, d = stack.pop()
         if d == 0:
             yield tri
+            if progress is not None:
+                progress.update()
         else:
             a, b, c = tri
             ab = midpoint(a, b)
@@ -334,7 +346,8 @@ def _panel_area_paradox(parent, ns, col_cx, anno_y, scale=1, tri_color=None):
 # ---------------------------------------------------------------------------
 
 def generate_poster(depth=7, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_MM,
-                    designed_by=None, designed_for=None, theme=None):
+                    designed_by=None, designed_for=None, theme=None,
+                    verbose=True):
     """Build and return the full poster as an ElementTree SVG root."""
     t = get_theme(theme)
     tri_color = t["content_primary"]
@@ -369,9 +382,12 @@ def generate_poster(depth=7, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_MM,
     vertices = equilateral_triangle_vertices(tri_cx, tri_cy, tri_side)
 
     fractal_group = _group(svg, ns, id="fractal")
-    for tri in sierpinski_triangles(vertices, depth):
+    _ps = ProgressReporter(3 ** depth, "Sierpiński: triangles") if verbose else None
+    for tri in sierpinski_triangles(vertices, depth, progress=_ps):
         _polygon(fractal_group, ns, tri,
                  fill=tri_color, stroke="none", opacity="0.92")
+    if _ps:
+        _ps.done()
 
     # --- Annotations ---
     anno_group = _group(svg, ns, id="annotations")
