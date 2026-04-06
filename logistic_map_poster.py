@@ -34,6 +34,7 @@ from poster_utils import (
     SERIF,
     _circle,
     _group,
+    _line,
     _multiline_text,
     _rect,
     _text,
@@ -341,6 +342,157 @@ def _panel_population_biology(parent, ns, col_cx, anno_y, scale=1):
     )
 
     return g
+
+
+# ---------------------------------------------------------------------------
+# Zoom inset panel for logistic map
+# ---------------------------------------------------------------------------
+
+def _draw_zoom_inset(svg, ns, panel_x, panel_y, panel_w, panel_h,
+                     src_r_min, src_r_max, src_x_min, src_x_max,
+                     data_r_min, data_r_max, data_x_min, data_x_max,
+                     margin, avail_w, avail_h, min_top,
+                     diagram_color, label, clip_id, w_scale, h_scale,
+                     progress=None, theme=None):
+    """Draw a zoom inset panel on the logistic map poster.
+
+    Computes high-resolution bifurcation data for the source region and
+    draws it inside a clipped panel, with connector lines from the main
+    diagram and a label.
+
+    Parameters
+    ----------
+    svg : Element
+        Root SVG element.
+    panel_x, panel_y, panel_w, panel_h : float
+        Position and size of the zoom panel (poster coordinates).
+    src_r_min, src_r_max : float
+        Source r-parameter range to zoom into.
+    src_x_min, src_x_max : float
+        Source x-value range to zoom into.
+    data_r_min, data_r_max : float
+        Full r-parameter range of the main diagram.
+    data_x_min, data_x_max : float
+        Full x-value range of the main diagram.
+    margin, avail_w, avail_h, min_top : float
+        Layout parameters from the main diagram.
+    diagram_color : str
+        Colour for the bifurcation dots.
+    label : str
+        Text label for the zoom panel.
+    clip_id : str
+        Unique id for the SVG clipPath element.
+    w_scale, h_scale : float
+        Poster scaling factors.
+    progress : ProgressReporter or None
+        Optional progress reporter.
+    theme : str or None
+        Poster theme name.
+
+    Returns
+    -------
+    Element
+        The zoom group element.
+    """
+    t = get_theme(theme)
+    border_color = t["border_color"]
+    bg_color = t["bg_color"]
+
+    data_r_range = data_r_max - data_r_min if data_r_max != data_r_min else 1.0
+    data_x_range = data_x_max - data_x_min if data_x_max != data_x_min else 1.0
+
+    # --- Map source bounds to main diagram coordinates ---
+    def _main_transform(r_val, x_val):
+        px = margin + (r_val - data_r_min) / data_r_range * avail_w
+        py = min_top + avail_h - (x_val - data_x_min) / data_x_range * avail_h
+        return (px, py)
+
+    tgt_x1, tgt_y1 = _main_transform(src_r_min, src_x_max)  # top-left
+    tgt_x2, tgt_y2 = _main_transform(src_r_max, src_x_min)  # bottom-right
+    tgt_w = tgt_x2 - tgt_x1
+    tgt_h = tgt_y2 - tgt_y1
+
+    # --- Add clipPath to <defs> ---
+    defs_el = svg.find(f"{{{ns}}}defs")
+    if defs_el is None:
+        defs_el = ET.SubElement(svg, f"{{{ns}}}defs")
+    clip_path_el = ET.SubElement(defs_el, f"{{{ns}}}clipPath",
+                                  attrib={"id": clip_id})
+    ET.SubElement(clip_path_el, f"{{{ns}}}rect", attrib={
+        "x": str(round(panel_x, 4)),
+        "y": str(round(panel_y, 4)),
+        "width": str(round(panel_w, 4)),
+        "height": str(round(panel_h, 4)),
+    })
+
+    # --- Group for all zoom elements ---
+    zoom_group = _group(svg, ns, id=clip_id.replace("_clip", ""))
+
+    # --- Target bounding box on the main diagram ---
+    _rect(zoom_group, ns, tgt_x1, tgt_y1, tgt_w, tgt_h,
+          fill=border_color,
+          **{"fill-opacity": "0.07",
+             "stroke": border_color,
+             "stroke-width": str(round(0.35 * w_scale, 3))})
+
+    # --- Connector lines: target box corners → zoom panel corners ---
+    conn_style = {
+        "stroke": border_color,
+        "stroke-width": str(round(0.25 * w_scale, 3)),
+        "stroke-dasharray": "1.5,1.5",
+        "opacity": "0.35",
+    }
+    src_corners = [
+        (tgt_x1, tgt_y1), (tgt_x2, tgt_y1),
+        (tgt_x2, tgt_y2), (tgt_x1, tgt_y2),
+    ]
+    panel_corners = [
+        (panel_x, panel_y), (panel_x + panel_w, panel_y),
+        (panel_x + panel_w, panel_y + panel_h), (panel_x, panel_y + panel_h),
+    ]
+    for (sx, sy), (zx, zy) in zip(src_corners, panel_corners):
+        _line(zoom_group, ns, sx, sy, zx, zy, **conn_style)
+
+    # --- Panel background ---
+    _rect(zoom_group, ns, panel_x, panel_y, panel_w, panel_h,
+          fill=bg_color, stroke="none", opacity="0.92")
+
+    # --- Compute high-res bifurcation data for the zoom region ---
+    zoom_data = bifurcation_data(
+        r_min=src_r_min, r_max=src_r_max,
+        n_r=800, n_settle=500, n_plot=200,
+        progress=progress,
+    )
+
+    # --- Draw zoom data inside the clipped panel ---
+    zoom_lines_g = _group(zoom_group, ns, **{"clip-path": f"url(#{clip_id})"})
+
+    zoom_r_range = src_r_max - src_r_min if src_r_max != src_r_min else 1.0
+    zoom_x_range = src_x_max - src_x_min if src_x_max != src_x_min else 1.0
+
+    dot_r = round(0.12 * w_scale, 3)
+    for r_val, x_val in zoom_data:
+        px = panel_x + (r_val - src_r_min) / zoom_r_range * panel_w
+        py = panel_y + panel_h - (x_val - src_x_min) / zoom_x_range * panel_h
+        _circle(zoom_lines_g, ns, round(px, 2), round(py, 2), dot_r,
+                fill=diagram_color, opacity="0.20")
+
+    # --- Panel border ---
+    _rect(zoom_group, ns, panel_x, panel_y, panel_w, panel_h,
+          fill="none", stroke=border_color,
+          **{"stroke-width": str(round(0.5 * w_scale, 3))})
+
+    # --- Label at bottom of zoom panel ---
+    _text(zoom_group, ns, panel_x + panel_w / 2,
+          panel_y + panel_h - 2.5 * h_scale,
+          label,
+          **{**ANNOTATION_STYLE,
+             "fill": border_color,
+             "font-size": str(round(2.8 * w_scale, 2)),
+             "text-anchor": "middle",
+             "opacity": "0.55"})
+
+    return zoom_group
 
 
 # ---------------------------------------------------------------------------
