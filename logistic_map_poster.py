@@ -646,10 +646,12 @@ def generate_poster(r_count=2000, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_
     if _pz2:
         _pz2.done()
 
-    # Arrow targets: left column → main diagram; middle/right → bottom of side panels
+    # All annotation arrows point upward to their r-value on the main diagram.
+    # The zoom panels are already visually connected to the diagram via the
+    # source-region highlight box, so no extra cross-text arrow is needed.
     pd_target = _transform(3.2, 0.8)
-    ec_target = (panel_cx_ec, panel_cy + panel_h / 2)
-    wo_target = (panel_cx_wo, panel_cy + panel_h / 2)
+    ec_target = _transform(3.5699, 0.5)   # Feigenbaum point (onset of chaos)
+    wo_target = _transform(3.83, 0.5)     # Period-3 window
 
     draw_annotation_row(
         anno_group, ns, anno_y,
