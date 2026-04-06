@@ -352,13 +352,16 @@ def _draw_inline_zoom(svg, ns, panel_cx, panel_cy, panel_w, panel_h,
                       src_r_min, src_r_max, src_x_min, src_x_max,
                       main_transform_fn, diagram_color, label,
                       clip_id, w_scale, h_scale,
+                      line_stop_y=None,
                       progress=None, theme=None):
-    """Draw an inline zoom panel positioned above its annotation column.
+    """Draw an inline zoom panel in the inter-column gap beside annotation text.
 
     The panel is centred at (*panel_cx*, *panel_cy*).  A small bounding
     box is drawn on the main diagram at the source region, and a single
-    delicate dashed line connects the bottom-centre of that box to the
-    top-centre of the zoom panel.
+    delicate dashed line descends from the bottom-centre of that box.  If
+    *line_stop_y* is supplied the line terminates there (e.g. at the
+    annotation separator) so that it never overlaps the annotation text
+    below.  A small filled circle marks the terminus of the line.
 
     Parameters
     ----------
@@ -384,6 +387,10 @@ def _draw_inline_zoom(svg, ns, panel_cx, panel_cy, panel_w, panel_h,
         Unique id for the SVG ``<clipPath>`` element.
     w_scale, h_scale : float
         Poster scaling factors.
+    line_stop_y : float or None
+        If given, the dashed leader line ends at this y-coordinate instead
+        of continuing all the way to the zoom panel top.  Pass
+        ``anno_sep_y`` to keep the line entirely within the diagram area.
     progress : ProgressReporter or None
         Optional progress reporter.
     theme : str or None
@@ -432,14 +439,24 @@ def _draw_inline_zoom(svg, ns, panel_cx, panel_cy, panel_w, panel_h,
              "stroke": border_color,
              "stroke-width": str(round(0.35 * w_scale, 3))})
 
-    # --- Single dashed leader line: bottom-centre of source box → top-centre of panel ---
+    # --- Dashed leader line: bottom-centre of source box → stop point ---
+    # When line_stop_y is provided the line terminates there (at the
+    # annotation separator) so it never runs through the annotation text.
+    line_end_y = line_stop_y if line_stop_y is not None else panel_y
+    line_end_x = panel_cx
     _line(zoom_group, ns,
           src_cx, src_br_y,
-          panel_cx, panel_y,
+          line_end_x, line_end_y,
           **{"stroke": border_color,
              "stroke-width": str(round(0.25 * w_scale, 3)),
              "stroke-dasharray": "1.5,1.5",
              "opacity": "0.5"})
+    # Small filled circle at the terminus so the viewer can follow the chain
+    # from the diagram down to the zoom panel sitting just below.
+    _circle(zoom_group, ns,
+            round(line_end_x, 2), round(line_end_y, 2),
+            round(0.8 * w_scale, 3),
+            fill=border_color, opacity="0.45")
 
     # --- Panel background ---
     _rect(zoom_group, ns, panel_x, panel_y, panel_w, panel_h,
@@ -604,6 +621,7 @@ def generate_poster(r_count=2000, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_
         label="Onset of Chaos",
         clip_id="zoom1_clip",
         w_scale=w_scale, h_scale=h_scale,
+        line_stop_y=anno_sep_y,
         progress=_pz1, theme=theme,
     )
     if _pz1:
@@ -622,6 +640,7 @@ def generate_poster(r_count=2000, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_
         label="Period-3 Window",
         clip_id="zoom2_clip",
         w_scale=w_scale, h_scale=h_scale,
+        line_stop_y=anno_sep_y,
         progress=_pz2, theme=theme,
     )
     if _pz2:
