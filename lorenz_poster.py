@@ -238,13 +238,83 @@ def _annotation_infinite_complexity(parent, ns, target_x, target_y,
 # Zoom inset panel
 # ---------------------------------------------------------------------------
 
+def _find_best_zoom_center(scaled_main, origin_x, origin_y, w_scale):
+    """Find the best zoom centre near the saddle / origin region.
+
+    Searches a neighbourhood around *origin_x*, *origin_y* (the poster-space
+    projection of the 3-D origin) using a combined density × parallelism
+    metric.  The result is the point that best reveals the fractal sheet
+    structure — many trajectory passes flowing in nearly the same direction
+    at slightly different offsets, creating visible layers.
+    """
+    search_radius = 25.0 * w_scale
+    bin_size = 4.0 * w_scale
+
+    bins_count: dict[tuple[int, int], int] = {}
+    bins_sin2: dict[tuple[int, int], float] = {}
+    bins_cos2: dict[tuple[int, int], float] = {}
+
+    prev = None
+    for px, py in scaled_main:
+        if (abs(px - origin_x) > search_radius
+                or abs(py - origin_y) > search_radius):
+            prev = (px, py)
+            continue
+
+        bx = int((px - origin_x) / bin_size)
+        by = int((py - origin_y) / bin_size)
+        key = (bx, by)
+        bins_count[key] = bins_count.get(key, 0) + 1
+
+        if prev is not None:
+            dx = px - prev[0]
+            dy = py - prev[1]
+            if abs(dx) > 1e-10 or abs(dy) > 1e-10:
+                angle = math.atan2(dy, dx)
+                bins_sin2[key] = bins_sin2.get(key, 0) + math.sin(2 * angle)
+                bins_cos2[key] = bins_cos2.get(key, 0) + math.cos(2 * angle)
+        prev = (px, py)
+
+    if not bins_count:
+        return origin_x, origin_y
+
+    best_score = -1.0
+    best_key = None
+    for key, count in bins_count.items():
+        if count < 20:
+            continue
+        s2 = bins_sin2.get(key, 0.0)
+        c2 = bins_cos2.get(key, 0.0)
+        parallelism = math.hypot(s2, c2) / count   # ∈ [0, 1]
+        score = math.log(count + 1) * parallelism
+        if score > best_score:
+            best_score = score
+            best_key = key
+
+    if best_key is None:
+        return origin_x, origin_y
+
+    return (origin_x + (best_key[0] + 0.5) * bin_size,
+            origin_y + (best_key[1] + 0.5) * bin_size)
+
+
 def _draw_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
                      center_x, center_y, avail_w, avail_h, min_top,
-                     width_mm, attractor_color, theme=None):
-    """Draw a zoom-inset panel highlighting a dense region of the attractor.
+                     width_mm, attractor_color, origin_poster=None,
+                     theme=None):
+    """Draw a zoom-inset panel highlighting the saddle / transition region.
+
+    The saddle region near the 3-D origin (0, 0, 0) is where the two lobes
+    of the Lorenz attractor meet and trajectories switch between wings.
+    At sufficient magnification the trajectory sheets separate into visible
+    fractal layers — locally parallel, closely spaced, and never
+    self-intersecting.
+
+    A density × parallelism search around the projected origin finds the
+    exact sub-region with the richest visible lamination.
 
     Adds:
-      - a small target bounding box on the main attractor in a dense region,
+      - a small target bounding box on the main attractor,
       - faint dashed connector lines from the target box corners to the zoom
         panel corners,
       - a background-filled zoom panel in the upper-right free area,
@@ -253,38 +323,30 @@ def _draw_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
 
     Returns
     -------
-    tuple[float, float]
-        ``(cx, cy)`` of the zoom panel centre — use this as the pointer
-        target for the 'Infinite Complexity' annotation.
+    dict
+        Zoom-info dict used by :func:`_draw_ultra_zoom_inset` and by the
+        caller to place the 'Infinite Complexity' annotation.  Keys:
+        ``anno_target``, ``src_cx``, ``src_cy``, ``src_hw``, ``src_hh``,
+        ``zoom_x``, ``zoom_y``, ``zoom_w``, ``zoom_h``, ``zoom_cx``,
+        ``zoom_cy``, ``magnify``.
     """
     t = get_theme(theme)
     border_color = t["border_color"]
     bg_color = t["bg_color"]
 
-    # --- Source (target) box in poster space ---
-    # Dynamically find the densest region of the right wing via 2-D spatial
-    # binning.  This guarantees the 12×12 mm zoom box captures the most
-    # heavily layered, complex region regardless of integration step count.
+    # --- Source (target) box near the saddle / transition region ---
     src_hw = 6.0 * w_scale               # half-width  → 12 mm total
     src_hh = 6.0 * w_scale               # half-height → 12 mm total
 
-    bin_size = 2.0 * w_scale             # grid resolution
-    density_bins: dict[tuple[int, int], int] = {}
-    for px, py in scaled_main:
-        if px <= center_x:              # skip left hemisphere
-            continue
-        bx = int((px - center_x) / bin_size)
-        by = int((py - center_y) / bin_size)
-        density_bins[(bx, by)] = density_bins.get((bx, by), 0) + 1
-
-    if density_bins:
-        best_bin = max(density_bins, key=lambda k: density_bins[k])
-        src_cx = center_x + (best_bin[0] + 0.5) * bin_size
-        src_cy = center_y + (best_bin[1] + 0.5) * bin_size
+    if origin_poster is not None:
+        origin_x, origin_y = origin_poster
     else:
-        # Fallback: centre of the right wing (should never happen in practice)
-        src_cx = center_x + avail_w * 0.13
-        src_cy = center_y + avail_h * 0.12
+        # Fallback: attractor centre (less ideal, but safe)
+        origin_x, origin_y = center_x, center_y
+
+    src_cx, src_cy = _find_best_zoom_center(
+        scaled_main, origin_x, origin_y, w_scale,
+    )
 
     src_x1, src_y1 = src_cx - src_hw, src_cy - src_hh
     src_x2, src_y2 = src_cx + src_hw, src_cy + src_hh
@@ -349,7 +411,7 @@ def _draw_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
     sample_hh = src_hh * 2.0
     zoom_lines_g = _group(zoom_group, ns, **{"clip-path": f"url(#{clip_id})"})
 
-    thin_sw = str(round(0.10 * w_scale, 3))
+    thin_sw = str(round(0.05 * w_scale, 3))
 
     def _to_zoom(px, py):
         return (zoom_cx + (px - src_cx) * magnify,
@@ -395,11 +457,161 @@ def _draw_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
              "stroke": border_color,
              "stroke-width": str(round(0.35 * w_scale, 3))})
 
-    # Return the bottom-centre of the zoom panel so that the 'Infinite
-    # Complexity' annotation leader line approaches from below and cannot
-    # cross the dashed connector lines that link the source box to the
-    # upper corners of the panel.
-    return zoom_cx, zoom_y + zoom_h
+    # Return zoom info for the 'Infinite Complexity' annotation and for
+    # the ultra-zoom panel.
+    return {
+        "anno_target": (zoom_cx, zoom_y + zoom_h),
+        "src_cx": src_cx,
+        "src_cy": src_cy,
+        "src_hw": src_hw,
+        "src_hh": src_hh,
+        "zoom_x": zoom_x,
+        "zoom_y": zoom_y,
+        "zoom_w": zoom_w,
+        "zoom_h": zoom_h,
+        "zoom_cx": zoom_cx,
+        "zoom_cy": zoom_cy,
+        "magnify": magnify,
+    }
+
+
+def _draw_ultra_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
+                           zoom_info, width_mm, attractor_color,
+                           theme=None):
+    """Draw a second-level ultra-zoom panel for deeper fractal structure.
+
+    Zooms further into the *same* outer-turnaround-edge region targeted by
+    the first zoom, revealing even finer fractal lamination.  The panel is
+    placed directly below the first zoom panel.
+
+    A small sub-box is drawn on the first zoom panel to indicate the area
+    magnified by this second-level zoom, and faint dashed connector lines
+    link the sub-box to the ultra-zoom panel corners.
+    """
+    t = get_theme(theme)
+    border_color = t["border_color"]
+    bg_color = t["bg_color"]
+
+    # --- Unpack first-zoom info ---
+    src_cx = zoom_info["src_cx"]
+    src_cy = zoom_info["src_cy"]
+    z1_zoom_cx = zoom_info["zoom_cx"]
+    z1_zoom_cy = zoom_info["zoom_cy"]
+    z1_zoom_x = zoom_info["zoom_x"]
+    z1_zoom_y = zoom_info["zoom_y"]
+    z1_zoom_w = zoom_info["zoom_w"]
+    z1_zoom_h = zoom_info["zoom_h"]
+    z1_magnify = zoom_info["magnify"]
+
+    # --- Ultra-zoom source box (same centre, tighter window) ---
+    uz_src_hw = 2.0 * w_scale           # half-width  → 4 mm total
+    uz_src_hh = 2.0 * w_scale           # half-height → 4 mm total
+
+    # --- Ultra-zoom panel: placed below the first zoom panel ---
+    uz_w = 36.0 * w_scale               # ~62 % of the first zoom panel
+    uz_h = 36.0 * w_scale
+    uz_x = z1_zoom_x + z1_zoom_w - uz_w  # right-aligned with first zoom
+    uz_y = z1_zoom_y + z1_zoom_h + 6.0 * w_scale  # gap below first zoom
+    uz_cx = uz_x + uz_w / 2
+    uz_cy = uz_y + uz_h / 2
+
+    uz_magnify = uz_w / (2 * uz_src_hw)  # 36 / 4 = 9 ×
+    uz_magnify_label = f"{uz_magnify:.0f}\u00d7 into outer layer"
+
+    # --- clipPath for ultra-zoom panel ---
+    defs_el = svg.find(f"{{{ns}}}defs")
+    if defs_el is None:
+        defs_el = ET.SubElement(svg, f"{{{ns}}}defs")
+    uz_clip_id = "ultra_zoom_clip"
+    uz_clip_el = ET.SubElement(defs_el, f"{{{ns}}}clipPath",
+                               attrib={"id": uz_clip_id})
+    ET.SubElement(uz_clip_el, f"{{{ns}}}rect", attrib={
+        "x": str(round(uz_x, 4)),
+        "y": str(round(uz_y, 4)),
+        "width": str(round(uz_w, 4)),
+        "height": str(round(uz_h, 4)),
+    })
+
+    # --- Group for all ultra-zoom elements ---
+    uz_group = _group(svg, ns, id="ultra_zoom_inset")
+
+    # --- Sub-box on the first zoom panel (showing ultra-zoom region) ---
+    sub_on_z1_hw = uz_src_hw * z1_magnify
+    sub_on_z1_hh = uz_src_hh * z1_magnify
+    sub_on_z1_x = z1_zoom_cx - sub_on_z1_hw
+    sub_on_z1_y = z1_zoom_cy - sub_on_z1_hh
+    _rect(uz_group, ns, sub_on_z1_x, sub_on_z1_y,
+          2 * sub_on_z1_hw, 2 * sub_on_z1_hh,
+          fill=border_color,
+          **{"fill-opacity": "0.07",
+             "stroke": border_color,
+             "stroke-width": str(round(0.3 * w_scale, 3))})
+
+    # --- Connector lines: sub-box on first zoom → ultra-zoom panel ---
+    conn_style = {
+        "stroke": border_color,
+        "stroke-width": str(round(0.25 * w_scale, 3)),
+        "stroke-dasharray": "1.5,1.5",
+        "opacity": "0.35",
+    }
+    sub_corners = [
+        (sub_on_z1_x, sub_on_z1_y + 2 * sub_on_z1_hh),              # bottom-left
+        (sub_on_z1_x + 2 * sub_on_z1_hw, sub_on_z1_y + 2 * sub_on_z1_hh),  # bottom-right
+    ]
+    uz_top_corners = [
+        (uz_x, uz_y),              # top-left
+        (uz_x + uz_w, uz_y),       # top-right
+    ]
+    for (sx, sy), (zx, zy) in zip(sub_corners, uz_top_corners):
+        _line(uz_group, ns, sx, sy, zx, zy, **conn_style)
+
+    # --- Ultra-zoom panel background ---
+    _rect(uz_group, ns, uz_x, uz_y, uz_w, uz_h,
+          fill=bg_color, stroke="none", opacity="0.92")
+
+    # --- Zoomed attractor lines (clipped to panel) ---
+    sample_hw = uz_src_hw * 2.0
+    sample_hh = uz_src_hh * 2.0
+    uz_lines_g = _group(uz_group, ns, **{"clip-path": f"url(#{uz_clip_id})"})
+
+    ultra_thin_sw = str(round(0.03 * w_scale, 3))
+
+    def _to_uz(px, py):
+        return (uz_cx + (px - src_cx) * uz_magnify,
+                uz_cy + (py - src_cy) * uz_magnify)
+
+    segment = []
+    for px, py in scaled_main:
+        if abs(px - src_cx) <= sample_hw and abs(py - src_cy) <= sample_hh:
+            segment.append(_to_uz(px, py))
+        else:
+            if len(segment) >= 2:
+                _polyline(uz_lines_g, ns, segment,
+                          stroke=attractor_color, opacity="0.75",
+                          **{"stroke-width": ultra_thin_sw,
+                             "stroke-linejoin": "round",
+                             "stroke-linecap": "round"})
+            segment = []
+    if len(segment) >= 2:
+        _polyline(uz_lines_g, ns, segment,
+                  stroke=attractor_color, opacity="0.75",
+                  **{"stroke-width": ultra_thin_sw,
+                     "stroke-linejoin": "round",
+                     "stroke-linecap": "round"})
+
+    # --- Ultra-zoom panel border ---
+    _rect(uz_group, ns, uz_x, uz_y, uz_w, uz_h,
+          fill="none", stroke=border_color,
+          **{"stroke-width": str(round(0.5 * w_scale, 3))})
+
+    # --- Label at bottom of ultra-zoom panel ---
+    _text(uz_group, ns, uz_cx, uz_y + uz_h - 3.0 * h_scale,
+          uz_magnify_label,
+          **{**ANNOTATION_STYLE,
+             "fill": border_color,
+             "font-size": str(round(2.4 * w_scale, 2)),
+             "text-anchor": "middle",
+             "opacity": "0.55"})
 
 
 # ---------------------------------------------------------------------------
@@ -657,10 +869,20 @@ def generate_poster(steps=200000, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_
                      "stroke-linecap": "round"})
 
     # --- Zoom inset panel (drawn before annotations so it sits in the right layer) ---
-    zoom_target_x, zoom_target_y = _draw_zoom_inset(
+    # The 3-D origin (0,0,0) projects to the saddle region where the two
+    # lobes meet — the ideal region for revealing fractal sheet structure.
+    origin_poster = _transform(0, 0)
+    zoom_info = _draw_zoom_inset(
         svg, ns, scaled_main, w_scale, h_scale,
         center_x, center_y, avail_w, avail_h, min_top,
-        width_mm, attractor_color, theme=theme,
+        width_mm, attractor_color, origin_poster=origin_poster, theme=theme,
+    )
+    zoom_target_x, zoom_target_y = zoom_info["anno_target"]
+
+    # --- Ultra-zoom panel (second-level zoom for deeper fractal structure) ---
+    _draw_ultra_zoom_inset(
+        svg, ns, scaled_main, w_scale, h_scale,
+        zoom_info, width_mm, attractor_color, theme=theme,
     )
 
     # --- Annotations ---
