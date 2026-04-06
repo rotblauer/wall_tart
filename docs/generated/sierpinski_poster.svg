@@ -578,7 +578,7 @@
         <tspan x="357.0" dy="5.0">yet the boundary length grows</tspan>
         <tspan x="357.0" dy="5.0">without limit!</tspan>
       </text>
-      <text x="357.0" y="485.0913088879928" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#1C1C1C" font-size="4.2" font-style="italic" text-anchor="middle">Area(n) = (¾)ⁿ → 0</text>
+      <text x="357.0" y="485.0913088879928" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#1C1C1C" font-size="4.2" font-style="italic" text-anchor="middle">Area(n) = (3/4)^n → 0</text>
       <text x="357.0" y="492.0913088879928" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#1C1C1C" font-size="4.2" font-style="italic" text-anchor="middle">Perimeter(n) → ∞</text>
       <polygon points="339.0000,496.1631 333.0000,506.5554 345.0000,506.5554" fill="#1C1C1C" opacity="0.8" />
       <text x="339.0" y="515.0913088879928" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#1C1C1C" font-size="2.8" text-anchor="middle">n=0</text>

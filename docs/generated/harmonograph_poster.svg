@@ -72,7 +72,7 @@
     <g>
       <text x="63.0" y="514.8" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#8B0000" font-size="5.0" text-anchor="middle">The Equations</text>
       <text x="63.0" y="521.8" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
-        <tspan x="63.0" dy="0">x(t) = ∑ Aᵢ sin(fᵢt + φᵢ) e^(−dᵢt)</tspan>
+        <tspan x="63.0" dy="0">x(t) = ∑ A_i sin(f_i t + φ_i) e^(−d_i t)</tspan>
         <tspan x="63.0" dy="5.0">y(t) follows the same form. Each</tspan>
         <tspan x="63.0" dy="5.0">term is a damped sinusoid: amplitude</tspan>
         <tspan x="63.0" dy="5.0">A, frequency f, phase φ, and decay d.</tspan>

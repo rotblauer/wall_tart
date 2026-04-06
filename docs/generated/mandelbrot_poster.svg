@@ -1459,9 +1459,15 @@
         <tspan x="63.0" dy="0">The Mandelbrot set is defined by</tspan>
         <tspan x="63.0" dy="5.0">iterating a single recurrence:</tspan>
       </text>
-      <text x="39.0" y="536.8" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#1C1C1C" font-size="4.5" font-style="italic">zₙ₊₁ = zₙ² + c</text>
+      <text x="39.0" y="536.8" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#1C1C1C" font-size="4.5" font-style="italic">
+        <tspan>z</tspan>
+        <tspan dy="1.8" font-size="3.4">n+1</tspan>
+        <tspan dy="-1.8" font-size="4.5"> = z</tspan>
+        <tspan dy="1.8" font-size="3.4">n</tspan>
+        <tspan dy="-1.8" font-size="4.5">² + c</tspan>
+      </text>
       <text x="39.0" y="546.8" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#1C1C1C" font-size="3.8">
-        <tspan x="39.0" dy="0">z₀ = 0,   c ∈ ℂ</tspan>
+        <tspan x="39.0" dy="0">z₀ = 0,   c ∈ C</tspan>
         <tspan x="39.0" dy="5.0">In set if |z| stays ≤ 2 forever</tspan>
       </text>
     </g>

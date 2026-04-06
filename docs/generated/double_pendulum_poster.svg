@@ -100,7 +100,7 @@
     </g>
   </g>
   <text x="210.0" y="576.0" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" font-size="4.0" fill="#555555" text-anchor="middle">The double pendulum: one of the simplest systems to exhibit deterministic chaos.</text>
-  <text x="210.0" y="582.0" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" font-size="3.5" fill="#777777" text-anchor="middle">Generated with 5,000 integration steps  ·  dt = 0.005  ·  θ1₀ ≈ π/2  ·  Δθ = 10⁻⁵</text>
+  <text x="210.0" y="582.0" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" font-size="3.5" fill="#777777" text-anchor="middle">Generated with 5,000 integration steps  ·  dt = 0.005  ·  θ1₀ ≈ π/2  ·  Δθ = 1e-5</text>
   <rect x="4" y="4" width="412" height="586" fill="none" stroke="#1C1C1C" stroke-width="0.8" />
   <rect x="7" y="7" width="406" height="580" fill="none" stroke="#1C1C1C" stroke-width="0.2" />
 </svg>

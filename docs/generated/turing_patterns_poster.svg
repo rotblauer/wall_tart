@@ -2768,11 +2768,11 @@
     <g>
       <text x="63.0" y="514.8" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#8B0000" font-size="5.0" text-anchor="middle">The Gray–Scott Model</text>
       <text x="63.0" y="521.8" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
-        <tspan x="63.0" dy="0">∂u/∂t = Dᵤ∇²u − uv² + f(1−u)</tspan>
-        <tspan x="63.0" dy="5.0">∂v/∂t = Dᵥ∇²v + uv² − (f+k)v</tspan>
+        <tspan x="63.0" dy="0">∂u/∂t = D_u ∇²u − uv² + f(1−u)</tspan>
+        <tspan x="63.0" dy="5.0">∂v/∂t = D_v ∇²v + uv² − (f+k)v</tspan>
         <tspan x="63.0" dy="5.0" />
         <tspan x="63.0" dy="5.0">Two coupled PDEs govern species u and</tspan>
-        <tspan x="63.0" dy="5.0">v.  Dᵤ and Dᵥ set diffusion rates; f is</tspan>
+        <tspan x="63.0" dy="5.0">v.  D_u and D_v set diffusion rates; f is</tspan>
         <tspan x="63.0" dy="5.0">the feed rate replenishing u; k is the</tspan>
         <tspan x="63.0" dy="5.0">kill rate removing v.  Varying f and k</tspan>
         <tspan x="63.0" dy="5.0">selects spots, stripes, or mazes.</tspan>
