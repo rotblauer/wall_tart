@@ -47,6 +47,7 @@ from poster_utils import (
     draw_row_separator,
     finalize_poster,
     get_theme,
+    ProgressReporter,
     run_poster_main,
     write_poster,
     write_svg,
@@ -79,7 +80,7 @@ def apply_rule(rule_number, left, center, right):
     return (rule_number >> index) & 1
 
 
-def generate_automaton(rule_number, width, steps):
+def generate_automaton(rule_number, width, steps, progress=None):
     """Generate a 2-D grid for an elementary cellular automaton.
 
     Starts from a single 1 in the centre of the first row and applies
@@ -93,6 +94,8 @@ def generate_automaton(rule_number, width, steps):
         Number of cells per row.
     steps : int
         Number of generations (rows) to produce after the initial row.
+    progress : ProgressReporter or None
+        Optional progress reporter updated once per generation.
 
     Returns
     -------
@@ -112,6 +115,8 @@ def generate_automaton(rule_number, width, steps):
             right = prev[j + 1] if j < width - 1 else 0
             new_row[j] = apply_rule(rule_number, left, center, right)
         grid.append(new_row)
+        if progress is not None:
+            progress.update()
     return grid
 
 
@@ -275,7 +280,8 @@ def _panel_computation(parent, ns, col_cx, anno_y, scale=1):
 
 def generate_poster(cell_size=2, generations=150,
                     width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_MM,
-                    designed_by=None, designed_for=None, theme=None):
+                    designed_by=None, designed_for=None, theme=None,
+                    verbose=True):
     """Build and return the full poster as an ElementTree SVG root.
 
     Parameters
@@ -343,7 +349,10 @@ def generate_poster(cell_size=2, generations=150,
     grid_px_h = (generations + 1) * fit_cell
 
     for rule_num, col_cx in zip(rules, col_centers):
-        grid = generate_automaton(rule_num, grid_width, generations)
+        _p = ProgressReporter(generations, f"Automata: rule {rule_num}") if verbose else None
+        grid = generate_automaton(rule_num, grid_width, generations, progress=_p)
+        if _p:
+            _p.done()
         color = cell_colors.get(rule_num, t["content_primary"])
 
         # Top-left corner of this automaton's grid

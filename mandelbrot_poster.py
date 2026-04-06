@@ -47,6 +47,7 @@ from poster_utils import (
     draw_row_separator,
     finalize_poster,
     get_theme,
+    ProgressReporter,
     run_poster_main,
     write_poster,
     write_svg,
@@ -120,7 +121,7 @@ def julia_escape(z_real, z_imag, c_real, c_imag, max_iter=100):
 
 
 def compute_mandelbrot_grid(x_min, x_max, y_min, y_max,
-                            width, height, max_iter=100):
+                            width, height, max_iter=100, progress=None):
     """Compute a 2-D grid of Mandelbrot escape values.
 
     Parameters
@@ -133,6 +134,8 @@ def compute_mandelbrot_grid(x_min, x_max, y_min, y_max,
         Grid dimensions (columns × rows).
     max_iter : int
         Maximum escape iterations.
+    progress : ProgressReporter or None
+        Optional progress reporter updated once per row.
 
     Returns
     -------
@@ -147,11 +150,13 @@ def compute_mandelbrot_grid(x_min, x_max, y_min, y_max,
             cr = x_min + (x_max - x_min) * col / max(width - 1, 1)
             row_data.append(mandelbrot_escape(cr, ci, max_iter))
         grid.append(row_data)
+        if progress is not None:
+            progress.update()
     return grid
 
 
 def compute_julia_grid(c_real, c_imag, x_min, x_max, y_min, y_max,
-                       width, height, max_iter=100):
+                       width, height, max_iter=100, progress=None):
     """Compute a 2-D grid of Julia set escape values.
 
     Parameters
@@ -166,6 +171,8 @@ def compute_julia_grid(c_real, c_imag, x_min, x_max, y_min, y_max,
         Grid dimensions (columns × rows).
     max_iter : int
         Maximum escape iterations.
+    progress : ProgressReporter or None
+        Optional progress reporter updated once per row.
 
     Returns
     -------
@@ -180,6 +187,8 @@ def compute_julia_grid(c_real, c_imag, x_min, x_max, y_min, y_max,
             zr = x_min + (x_max - x_min) * col / max(width - 1, 1)
             row_data.append(julia_escape(zr, zi, c_real, c_imag, max_iter))
         grid.append(row_data)
+        if progress is not None:
+            progress.update()
     return grid
 
 
@@ -388,7 +397,7 @@ def _draw_grid(parent, ns, grid, max_iter, gx, gy, cell_w, cell_h,
 
 def generate_poster(resolution=80, max_iter=100,
                     width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_MM,
-                    designed_by=None, designed_for=None, theme=None):
+                    designed_by=None, designed_for=None, theme=None, verbose=True):
     """Build and return the full poster as an ElementTree SVG root.
 
     Parameters
@@ -436,8 +445,11 @@ def generate_poster(resolution=80, max_iter=100,
     grid_w = resolution
     grid_h = max(1, int(resolution / mb_aspect))
 
+    _pm = ProgressReporter(grid_h, "Mandelbrot: grid") if verbose else None
     grid = compute_mandelbrot_grid(mb_x_min, mb_x_max, mb_y_min, mb_y_max,
-                                   grid_w, grid_h, max_iter)
+                                   grid_w, grid_h, max_iter, progress=_pm)
+    if _pm:
+        _pm.done()
 
     # Fit grid into fractal area, centred
     cell_w = avail_w / grid_w
@@ -497,8 +509,11 @@ def generate_poster(resolution=80, max_iter=100,
     for (cr, ci, label), col_cx in zip(julia_cs, [col1_cx, col2_cx, col3_cx]):
         jx = col_cx - thumb_w_mm / 2
         jy = julia_top
+        _pj = ProgressReporter(julia_h_res, f"Julia: {label[:16]}") if verbose else None
         j_grid = compute_julia_grid(cr, ci, -1.5, 1.5, -1.2, 1.2,
-                                    julia_res, julia_h_res, max_iter)
+                                    julia_res, julia_h_res, max_iter, progress=_pj)
+        if _pj:
+            _pj.done()
         j_cell_w = thumb_w_mm / julia_res
         j_cell_h = thumb_h_mm / julia_h_res
         _draw_grid(julia_group, ns, j_grid, max_iter,

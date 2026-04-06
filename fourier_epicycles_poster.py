@@ -50,6 +50,7 @@ from poster_utils import (
     draw_row_separator,
     finalize_poster,
     get_theme,
+    ProgressReporter,
     run_poster_main,
     write_poster,
     write_svg,
@@ -91,7 +92,7 @@ def sample_target_curve(n_samples=N_SAMPLES):
     return x_vals, y_vals
 
 
-def dft(x_vals, y_vals):
+def dft(x_vals, y_vals, progress=None):
     """Compute the Discrete Fourier Transform (pure Python).
 
     Parameters
@@ -99,6 +100,8 @@ def dft(x_vals, y_vals):
     x_vals, y_vals : list[float]
         Real-valued signal samples (treated as real + imaginary parts of a
         complex signal z_n = x_n + i·y_n).
+    progress : ProgressReporter or None
+        Optional progress reporter updated once per frequency bin.
 
     Returns
     -------
@@ -119,6 +122,8 @@ def dft(x_vals, y_vals):
         amp = math.sqrt(re_sum ** 2 + im_sum ** 2)
         phase = math.atan2(im_sum, re_sum)
         result.append((k, amp, phase))
+        if progress is not None:
+            progress.update()
     return result
 
 
@@ -333,7 +338,7 @@ def _panel_modern_applications(parent, ns, col_cx, anno_y, scale=1):
 
 def generate_poster(num_circles=32, width_mm=BASE_WIDTH_MM,
                     height_mm=BASE_HEIGHT_MM, designed_by=None,
-                    designed_for=None, theme=None):
+                    designed_for=None, theme=None, verbose=True):
     """Build and return the full poster as an ElementTree SVG root.
 
     Parameters
@@ -380,7 +385,10 @@ def generate_poster(num_circles=32, width_mm=BASE_WIDTH_MM,
 
     # --- Compute Fourier data ---
     x_vals, y_vals = sample_target_curve(N_SAMPLES)
-    coefficients = dft(x_vals, y_vals)
+    _p = ProgressReporter(N_SAMPLES, "Fourier: DFT") if verbose else None
+    coefficients = dft(x_vals, y_vals, progress=_p)
+    if _p:
+        _p.done()
 
     # Sort by amplitude descending and take top num_circles
     sorted_coeffs = sorted(coefficients, key=lambda c: c[1], reverse=True)

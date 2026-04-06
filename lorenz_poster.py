@@ -47,6 +47,7 @@ from poster_utils import (
     draw_row_separator,
     finalize_poster,
     get_theme,
+    ProgressReporter,
     run_poster_main,
     write_poster,
     write_svg,
@@ -97,7 +98,7 @@ def rk4_step(state, dt, sigma=10.0, rho=28.0, beta=8.0 / 3.0):
 
 
 def integrate_lorenz(initial=(1.0, 1.0, 1.0), steps=200000, dt=0.005,
-                     sigma=10.0, rho=28.0, beta=8.0 / 3.0):
+                     sigma=10.0, rho=28.0, beta=8.0 / 3.0, progress=None):
     """Integrate the Lorenz system and return a list of (x, y, z) tuples.
 
     Parameters
@@ -110,6 +111,8 @@ def integrate_lorenz(initial=(1.0, 1.0, 1.0), steps=200000, dt=0.005,
         Time-step size.
     sigma, rho, beta : float
         Lorenz system parameters (defaults: σ=10, ρ=28, β=8/3).
+    progress : ProgressReporter or None
+        Optional progress reporter updated once per step.
 
     Returns
     -------
@@ -121,6 +124,8 @@ def integrate_lorenz(initial=(1.0, 1.0, 1.0), steps=200000, dt=0.005,
     for _ in range(steps):
         state = rk4_step(state, dt, sigma, rho, beta)
         trajectory.append(state)
+        if progress is not None:
+            progress.update()
     return trajectory
 
 
@@ -560,7 +565,7 @@ def _panel_weather_model(parent, ns, col_cx, anno_y, scale=1):
 # ---------------------------------------------------------------------------
 
 def generate_poster(steps=200000, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_MM,
-                    designed_by=None, designed_for=None, theme=None):
+                    designed_by=None, designed_for=None, theme=None, verbose=True):
     """Build and return the full poster as an ElementTree SVG root."""
     t = get_theme(theme)
     attractor_color = t["content_primary"]
@@ -578,10 +583,16 @@ def generate_poster(steps=200000, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_
 
     # --- Compute Lorenz trajectory ---
     initial_main = (1.0, 1.0, 1.0)
-    traj_main = integrate_lorenz(initial_main, steps=steps)
+    _p1 = ProgressReporter(steps, "Lorenz: main traj") if verbose else None
+    traj_main = integrate_lorenz(initial_main, steps=steps, progress=_p1)
+    if _p1:
+        _p1.done()
 
     initial_div = (1.0 + 1e-10, 1.0, 1.0)
-    traj_div = integrate_lorenz(initial_div, steps=steps)
+    _p2 = ProgressReporter(steps, "Lorenz: chaos diverge") if verbose else None
+    traj_div = integrate_lorenz(initial_div, steps=steps, progress=_p2)
+    if _p2:
+        _p2.done()
 
     proj_main = project_3d_to_2d(traj_main)
     proj_div = project_3d_to_2d(traj_div)

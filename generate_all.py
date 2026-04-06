@@ -328,7 +328,7 @@ def main(argv=None):
             label = info["label"]
             if len(themes) > 1:
                 label = f"{label} [{theme}]"
-            print(f"Generating {label} \u2026")
+            print(f"Generating {label} \u2026", flush=True)
             svg = info["generate"](
                 **info["kwargs"], **common_kwargs, theme=theme,
             )

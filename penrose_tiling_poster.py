@@ -49,6 +49,7 @@ from poster_utils import (
     draw_row_separator,
     finalize_poster,
     get_theme,
+    ProgressReporter,
     run_poster_main,
     write_poster,
     write_svg,
@@ -137,7 +138,7 @@ def subdivide_triangles(triangles):
     return result
 
 
-def generate_penrose_tiling(cx, cy, radius, subdivisions):
+def generate_penrose_tiling(cx, cy, radius, subdivisions, progress=None):
     """Generate a Penrose tiling as a list of Robinson triangles.
 
     Starts with a wheel of 10 golden triangles centred at *(cx, cy)* and
@@ -151,6 +152,8 @@ def generate_penrose_tiling(cx, cy, radius, subdivisions):
         Outer radius of the initial decagonal wheel.
     subdivisions : int
         Number of subdivision iterations to perform.
+    progress : ProgressReporter or None
+        Optional progress reporter updated once per subdivision level.
 
     Returns
     -------
@@ -159,8 +162,10 @@ def generate_penrose_tiling(cx, cy, radius, subdivisions):
         vertex coordinates as ``(x, y)`` tuples.
     """
     triangles = create_initial_wheel(cx, cy, radius)
-    for _ in range(subdivisions):
+    for level in range(subdivisions):
         triangles = subdivide_triangles(triangles)
+        if progress is not None:
+            progress.update(level + 1)
     return triangles
 
 
@@ -313,7 +318,8 @@ def _panel_einstein(parent, ns, col_cx, anno_y, scale=1):
 
 def generate_poster(subdivisions=5, width_mm=BASE_WIDTH_MM,
                     height_mm=BASE_HEIGHT_MM,
-                    designed_by=None, designed_for=None, theme=None):
+                    designed_by=None, designed_for=None, theme=None,
+                    verbose=True):
     """Build and return the full poster as an ElementTree SVG root.
 
     Parameters
@@ -357,8 +363,11 @@ def generate_poster(subdivisions=5, width_mm=BASE_WIDTH_MM,
     center_y = min_top + avail_h / 2
     radius = min(avail_w, avail_h) / 2 * 0.95
 
+    _pp = ProgressReporter(subdivisions, "Penrose: subdivisions") if verbose else None
     triangles = generate_penrose_tiling(center_x, center_y, radius,
-                                        subdivisions)
+                                        subdivisions, progress=_pp)
+    if _pp:
+        _pp.done()
 
     # --- Render triangles ---
     tiling_group = _group(svg, ns, id="penrose-tiling")

@@ -50,6 +50,7 @@ from poster_utils import (
     draw_row_separator,
     finalize_poster,
     get_theme,
+    ProgressReporter,
     run_poster_main,
     write_poster,
     write_svg,
@@ -90,7 +91,7 @@ def _laplacian(grid, i, j, n):
     )
 
 
-def gray_scott(n, steps, f, k):
+def gray_scott(n, steps, f, k, progress=None):
     """Run a Gray-Scott reaction-diffusion simulation.
 
     Parameters
@@ -103,6 +104,8 @@ def gray_scott(n, steps, f, k):
         Feed rate.
     k : float
         Kill rate.
+    progress : ProgressReporter or None
+        Optional progress reporter updated once per time-step.
 
     Returns
     -------
@@ -134,6 +137,8 @@ def gray_scott(n, steps, f, k):
                 v_new[i][j] = v_val + DT * (DV * lap_v + uvv - (f + k) * v_val)
         u = u_new
         v = v_new
+        if progress is not None:
+            progress.update()
 
     return v
 
@@ -312,7 +317,8 @@ def _panel_chemistry_to_ecology(parent, ns, col_cx, anno_y, scale=1):
 
 def generate_poster(grid_size=60, steps=3000,
                     width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_MM,
-                    designed_by=None, designed_for=None, theme=None):
+                    designed_by=None, designed_for=None, theme=None,
+                    verbose=True):
     """Build and return the full poster as an ElementTree SVG root.
 
     Parameters
@@ -374,7 +380,10 @@ def generate_poster(grid_size=60, steps=3000,
     col_centers = [col1_cx, col2_cx, col3_cx]
 
     for idx, (label, f_rate, k_rate) in enumerate(REGIMES):
-        v_grid = gray_scott(grid_size, steps, f_rate, k_rate)
+        _p = ProgressReporter(steps, f"Turing: {label[:18]}") if verbose else None
+        v_grid = gray_scott(grid_size, steps, f_rate, k_rate, progress=_p)
+        if _p:
+            _p.done()
         ink = ink_colors[idx]
         col_cx = col_centers[idx]
 
