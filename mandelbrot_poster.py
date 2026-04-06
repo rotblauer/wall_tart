@@ -286,7 +286,7 @@ def _panel_equation(parent, ns, col_cx, anno_y, scale=1):
            "text-anchor": "middle"},
     )
 
-    # Equation in italic
+    # Equation in italic — tspan dy used for subscripts (avoids Unicode subscript letters)
     eq_style = {
         **ANNOTATION_STYLE,
         "font-size": str(round(4.5 * scale, 2)),
@@ -295,11 +295,28 @@ def _panel_equation(parent, ns, col_cx, anno_y, scale=1):
     eq_y = anno_y + 24 * scale
     eq_x = col_cx - 24 * scale
 
+    base_size = round(4.5 * scale, 2)
+    sub_size = round(3.4 * scale, 2)
+    sub_dy = round(1.8 * scale, 2)
+
     attrib = {"x": str(eq_x), "y": str(eq_y)}
     attrib.update(eq_style)
     eq_el = ET.SubElement(g, f"{{{ns}}}text", attrib=attrib)
-    # z_{n+1} = z_n^2 + c  using Unicode subscript/superscript characters
-    eq_el.text = "z\u2099\u208a\u2081 = z\u2099\u00b2 + c"
+    # z_{n+1} = z_n^2 + c  rendered with tspan dy offsets so subscripts
+    # display correctly in all fonts and renderers (no Unicode subscript letters)
+    for txt, dy, fs in [
+        ("z",         None,     None),
+        ("n+1",       sub_dy,   str(sub_size)),
+        (" = z",     -sub_dy,   str(base_size)),
+        ("n",         sub_dy,   str(sub_size)),
+        ("\u00b2 + c", -sub_dy, str(base_size)),
+    ]:
+        ta = {}
+        if dy is not None:
+            ta["dy"] = str(dy)
+        if fs is not None:
+            ta["font-size"] = fs
+        ET.SubElement(eq_el, f"{{{ns}}}tspan", attrib=ta).text = txt
 
     param_y = eq_y + 10 * scale
     param_style = {
@@ -309,7 +326,7 @@ def _panel_equation(parent, ns, col_cx, anno_y, scale=1):
     _multiline_text(
         g, ns, eq_x, param_y,
         [
-            "z\u2080 = 0,   c \u2208 \u2102",
+            "z\u2080 = 0,   c \u2208 C",
             "In set if |z| stays \u2264 2 forever",
         ],
         line_height=5 * scale,

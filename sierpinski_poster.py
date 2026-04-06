@@ -319,7 +319,7 @@ def _panel_area_paradox(parent, ns, col_cx, anno_y, scale=1, tri_color=None):
 
     formula_y = anno_y + 40 * scale
     _text(g, ns, col_cx, formula_y,
-          "Area(n) = (\u00BE)\u207F \u2192 0",
+          "Area(n) = (3/4)^n \u2192 0",
           **{**ANNOTATION_STYLE, "font-size": str(round(4.2 * scale, 2)),
              "font-style": "italic", "text-anchor": "middle"})
     _text(g, ns, col_cx, formula_y + 7 * scale,

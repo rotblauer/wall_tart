@@ -177,11 +177,11 @@ class TestGeneratePoster:
         assert "Wings" in xml_str
         assert "Infinite Complexity" in xml_str
 
-    def test_butterfly_exponent_uses_unicode_superscript(self):
-        """Butterfly annotation should keep the Unicode literal 10⁻¹⁰."""
+    def test_butterfly_exponent_uses_ascii_notation(self):
+        """Butterfly annotation should use ASCII exponent notation 1e-10."""
         svg = generate_poster(steps=1000, width_mm=200, height_mm=300)
         xml_str = ET.tostring(svg, encoding="unicode")
-        assert "10⁻¹⁰" in xml_str
+        assert "1e-10" in xml_str
 
     def test_credit_designed_by(self):
         """Credit line appears when --designed-by is supplied."""

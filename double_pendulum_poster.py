@@ -505,7 +505,7 @@ def generate_poster(steps=10000, width_mm=BASE_WIDTH_MM,
             f"Generated with {steps:,} integration steps  "
             f"\u00b7  dt = {dt}  "
             f"\u00b7  \u03b81\u2080 \u2248 \u03c0/2  "
-            f"\u00b7  \u0394\u03b8 = 10\u207b\u2075"
+            f"\u00b7  \u0394\u03b8 = 1e-5"
         ),
         designed_by=designed_by,
         designed_for=designed_for,

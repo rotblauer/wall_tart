@@ -243,7 +243,7 @@ def _panel_equations(parent, ns, col_cx, anno_y, scale=1):
              "fill": ACCENT_COLOR, "text-anchor": "middle"})
 
     lines = [
-        "x(t) = \u2211 A\u1d62 sin(f\u1d62t + \u03c6\u1d62) e^(\u2212d\u1d62t)",
+        "x(t) = \u2211 A_i sin(f_i t + \u03c6_i) e^(\u2212d_i t)",
         "y(t) follows the same form. Each",
         "term is a damped sinusoid: amplitude",
         "A, frequency f, phase \u03c6, and decay d.",
