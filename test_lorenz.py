@@ -479,6 +479,7 @@ class TestGeneratePoster:
             assert rx >= 0, f"Ultra zoom left edge {rx} < 0 for {w}x{h}"
             assert rx + rw <= w, f"Ultra zoom right edge {rx+rw} > {w} for {w}x{h}"
             assert ry >= 0, f"Ultra zoom top edge {ry} < 0 for {w}x{h}"
+            assert ry + rh <= h, f"Ultra zoom bottom edge {ry+rh} > {h} for {w}x{h}"
 
 
 # ---------------------------------------------------------------------------

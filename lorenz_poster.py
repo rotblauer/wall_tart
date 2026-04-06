@@ -352,7 +352,7 @@ def _draw_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
     src_x2, src_y2 = src_cx + src_hw, src_cy + src_hh
 
     # --- Zoom panel in the upper-right free area ---
-    right_margin = (width_mm - avail_w) / 2  # poster margin on the right
+    right_margin = (width_mm - avail_w) / 2  # horizontal margin (left = right)
     max_bot = min_top + avail_h
 
     zoom_w = min(70.0 * w_scale, avail_w * 0.4)

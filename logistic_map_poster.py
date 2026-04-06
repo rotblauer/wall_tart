@@ -458,6 +458,9 @@ def _draw_zoom_inset(svg, ns, panel_x, panel_y, panel_w, panel_h,
           fill=bg_color, stroke="none", opacity="0.92")
 
     # --- Compute high-res bifurcation data for the zoom region ---
+    # Higher resolution than the main diagram to reveal fractal detail:
+    # 800 r-samples, 500 settle iterations (ensures convergence in narrow
+    # windows), 200 plot values per sample.
     zoom_data = bifurcation_data(
         r_min=src_r_min, r_max=src_r_max,
         n_r=800, n_settle=500, n_plot=200,
@@ -590,6 +593,7 @@ def generate_poster(r_count=2000, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_
     _pz1 = ProgressReporter(800, "Logistic: zoom 1") if verbose else None
     _draw_zoom_inset(
         svg, ns, zoom1_x, zoom1_y, zoom_panel_w, zoom_panel_h,
+        # Period-3 window: famous stable 3-cycle visible near r ≈ 3.83
         src_r_min=3.828, src_r_max=3.856,
         src_x_min=0.4, src_x_max=0.55,
         data_r_min=r_min, data_r_max=r_max,
@@ -610,6 +614,7 @@ def generate_poster(r_count=2000, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_
     _pz2 = ProgressReporter(800, "Logistic: zoom 2") if verbose else None
     _draw_zoom_inset(
         svg, ns, zoom2_x, zoom2_y, zoom_panel_w, zoom_panel_h,
+        # Onset of chaos: the Feigenbaum accumulation point region
         src_r_min=3.54, src_r_max=3.59,
         src_x_min=0.8, src_x_max=0.9,
         data_r_min=r_min, data_r_max=r_max,
