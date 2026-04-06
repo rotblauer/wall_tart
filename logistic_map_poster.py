@@ -579,6 +579,57 @@ def generate_poster(r_count=2000, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_
     y_label.set("transform",
                 f"rotate(-90, {margin - 8 * w_scale}, {min_top + avail_h / 2})")
 
+    # --- Zoom inset panels (placed in upper-left where the diagram is sparse) ---
+    zoom_panel_w = min(55.0 * w_scale, avail_w * 0.35)
+    zoom_panel_h = min(42.0 * w_scale, avail_h * 0.25)
+    zoom_gap = 6.0 * w_scale
+
+    zoom1_x = margin + 4.0 * w_scale
+    zoom1_y = min_top + 4.0 * h_scale
+
+    _pz1 = ProgressReporter(800, "Logistic: zoom 1") if verbose else None
+    _draw_zoom_inset(
+        svg, ns, zoom1_x, zoom1_y, zoom_panel_w, zoom_panel_h,
+        src_r_min=3.828, src_r_max=3.856,
+        src_x_min=0.4, src_x_max=0.55,
+        data_r_min=r_min, data_r_max=r_max,
+        data_x_min=data_x_min, data_x_max=data_x_max,
+        margin=margin, avail_w=avail_w, avail_h=avail_h, min_top=min_top,
+        diagram_color=diagram_color,
+        label="Period-3 Window",
+        clip_id="zoom1_clip",
+        w_scale=w_scale, h_scale=h_scale,
+        progress=_pz1, theme=theme,
+    )
+    if _pz1:
+        _pz1.done()
+
+    zoom2_x = zoom1_x
+    zoom2_y = zoom1_y + zoom_panel_h + zoom_gap
+
+    _pz2 = ProgressReporter(800, "Logistic: zoom 2") if verbose else None
+    _draw_zoom_inset(
+        svg, ns, zoom2_x, zoom2_y, zoom_panel_w, zoom_panel_h,
+        src_r_min=3.54, src_r_max=3.59,
+        src_x_min=0.8, src_x_max=0.9,
+        data_r_min=r_min, data_r_max=r_max,
+        data_x_min=data_x_min, data_x_max=data_x_max,
+        margin=margin, avail_w=avail_w, avail_h=avail_h, min_top=min_top,
+        diagram_color=diagram_color,
+        label="Onset of Chaos",
+        clip_id="zoom2_clip",
+        w_scale=w_scale, h_scale=h_scale,
+        progress=_pz2, theme=theme,
+    )
+    if _pz2:
+        _pz2.done()
+
+    # Zoom panel centres for annotation arrow targets
+    zoom1_cx = zoom1_x + zoom_panel_w / 2
+    zoom1_cy = zoom1_y + zoom_panel_h / 2
+    zoom2_cx = zoom2_x + zoom_panel_w / 2
+    zoom2_cy = zoom2_y + zoom_panel_h / 2
+
     # --- Annotations ---
     anno_group = _group(svg, ns, id="annotations")
 
@@ -590,10 +641,10 @@ def generate_poster(r_count=2000, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_
 
     col1_cx, col2_cx, col3_cx = [width_mm * f for f in COLUMN_CENTERS]
 
-    # Arrow targets on the diagram
+    # Arrow targets: point annotations to zoom panels where applicable
     pd_target = _transform(3.2, 0.8)
-    ec_target = _transform(3.57, 0.5)
-    wo_target = _transform(3.83, 0.5)
+    ec_target = (zoom2_cx, zoom2_y + zoom_panel_h)
+    wo_target = (zoom1_cx, zoom1_y + zoom_panel_h)
 
     draw_annotation_row(
         anno_group, ns, anno_y,

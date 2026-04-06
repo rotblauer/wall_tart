@@ -190,10 +190,78 @@ class TestGeneratePoster:
         xml_str = ET.tostring(svg, encoding="unicode")
         assert "Robert May" in xml_str
 
+    # --- Zoom inset tests ---
 
-# ---------------------------------------------------------------------------
-# SVG file output
-# ---------------------------------------------------------------------------
+    def test_zoom1_group_present(self):
+        """A 'zoom1' group (Period-3 Window) exists in the SVG."""
+        svg = generate_poster(r_count=50, width_mm=200, height_mm=300)
+        ns = "http://www.w3.org/2000/svg"
+        zoom1 = svg.find(f".//{{{ns}}}g[@id='zoom1']")
+        assert zoom1 is not None
+
+    def test_zoom2_group_present(self):
+        """A 'zoom2' group (Onset of Chaos) exists in the SVG."""
+        svg = generate_poster(r_count=50, width_mm=200, height_mm=300)
+        ns = "http://www.w3.org/2000/svg"
+        zoom2 = svg.find(f".//{{{ns}}}g[@id='zoom2']")
+        assert zoom2 is not None
+
+    def test_zoom1_clip_path_present(self):
+        """A clipPath with id 'zoom1_clip' exists in <defs>."""
+        svg = generate_poster(r_count=50, width_mm=200, height_mm=300)
+        ns = "http://www.w3.org/2000/svg"
+        clip = svg.find(f".//{{{ns}}}clipPath[@id='zoom1_clip']")
+        assert clip is not None
+        rect = clip.find(f"{{{ns}}}rect")
+        assert rect is not None
+        assert float(rect.get("width")) > 0
+        assert float(rect.get("height")) > 0
+
+    def test_zoom2_clip_path_present(self):
+        """A clipPath with id 'zoom2_clip' exists in <defs>."""
+        svg = generate_poster(r_count=50, width_mm=200, height_mm=300)
+        ns = "http://www.w3.org/2000/svg"
+        clip = svg.find(f".//{{{ns}}}clipPath[@id='zoom2_clip']")
+        assert clip is not None
+        rect = clip.find(f"{{{ns}}}rect")
+        assert rect is not None
+        assert float(rect.get("width")) > 0
+        assert float(rect.get("height")) > 0
+
+    def test_zoom1_connector_lines_present(self):
+        """The zoom1 group contains 4 dashed connector lines."""
+        svg = generate_poster(r_count=50, width_mm=200, height_mm=300)
+        ns = "http://www.w3.org/2000/svg"
+        zoom1 = svg.find(f".//{{{ns}}}g[@id='zoom1']")
+        lines = zoom1.findall(f"{{{ns}}}line")
+        assert len(lines) == 4
+
+    def test_zoom1_has_circles(self):
+        """Zoom 1 panel contains high-res bifurcation circles."""
+        svg = generate_poster(r_count=50, width_mm=200, height_mm=300)
+        ns = "http://www.w3.org/2000/svg"
+        zoom1 = svg.find(f".//{{{ns}}}g[@id='zoom1']")
+        circles = zoom1.findall(f".//{{{ns}}}circle")
+        assert len(circles) >= 1
+
+    def test_zoom_labels_present(self):
+        """Zoom panel labels appear in the SVG."""
+        svg = generate_poster(r_count=50, width_mm=200, height_mm=300)
+        xml_str = ET.tostring(svg, encoding="unicode")
+        assert "Period-3 Window" in xml_str
+        assert "Onset of Chaos" in xml_str
+
+    def test_zoom_inset_all_themes(self):
+        """Zoom insets render without error for all built-in themes."""
+        from poster_utils import AVAILABLE_THEMES
+        for theme_name in AVAILABLE_THEMES:
+            svg = generate_poster(r_count=50, width_mm=200, height_mm=300,
+                                  theme=theme_name)
+            ns = "http://www.w3.org/2000/svg"
+            zoom1 = svg.find(f".//{{{ns}}}g[@id='zoom1']")
+            assert zoom1 is not None, f"zoom1 missing for theme '{theme_name}'"
+            zoom2 = svg.find(f".//{{{ns}}}g[@id='zoom2']")
+            assert zoom2 is not None, f"zoom2 missing for theme '{theme_name}'"
 
 class TestWriteSvg:
     def test_writes_valid_svg_file(self):

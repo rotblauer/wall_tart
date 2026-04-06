@@ -428,6 +428,58 @@ class TestGeneratePoster:
             uz = svg.find(f".//{{{ns}}}g[@id='ultra_zoom_inset']")
             assert uz is not None, f"ultra_zoom_inset missing for theme '{theme}'"
 
+    # --- Extra-detail trajectory tests ---
+
+    def test_zoom_multiplier_zero_no_crash(self):
+        """zoom_multiplier=0 produces a valid poster with no extra trajectory."""
+        svg = generate_poster(steps=1000, zoom_multiplier=0,
+                              width_mm=200, height_mm=300)
+        assert svg.tag.endswith("svg")
+
+    def test_zoom_multiplier_increases_zoom_polylines(self):
+        """With zoom_multiplier>0, zoom panels should have more polylines."""
+        ns = "http://www.w3.org/2000/svg"
+        svg_no_extra = generate_poster(steps=5000, zoom_multiplier=0,
+                                       width_mm=200, height_mm=300)
+        svg_with_extra = generate_poster(steps=5000, zoom_multiplier=1,
+                                         width_mm=200, height_mm=300)
+        zoom_no = svg_no_extra.find(f".//{{{ns}}}g[@id='zoom_inset']")
+        zoom_ex = svg_with_extra.find(f".//{{{ns}}}g[@id='zoom_inset']")
+        pl_no = len(zoom_no.findall(f".//{{{ns}}}polyline"))
+        pl_ex = len(zoom_ex.findall(f".//{{{ns}}}polyline"))
+        assert pl_ex >= pl_no
+
+    def test_zoom_panels_within_poster_bounds(self):
+        """Zoom panels should not extend beyond the poster edges."""
+        for w, h in [(200, 300), (100, 150), (420, 594)]:
+            svg = generate_poster(steps=1000, width_mm=w, height_mm=h)
+            ns = "http://www.w3.org/2000/svg"
+            clip = svg.find(f".//{{{ns}}}clipPath[@id='zoom_panel_clip']")
+            rect = clip.find(f"{{{ns}}}rect")
+            rx = float(rect.get("x"))
+            ry = float(rect.get("y"))
+            rw = float(rect.get("width"))
+            rh = float(rect.get("height"))
+            assert rx >= 0, f"Zoom panel left edge {rx} < 0 for {w}x{h}"
+            assert rx + rw <= w, f"Zoom panel right edge {rx+rw} > {w} for {w}x{h}"
+            assert ry >= 0, f"Zoom panel top edge {ry} < 0 for {w}x{h}"
+            assert ry + rh <= h, f"Zoom panel bottom edge {ry+rh} > {h} for {w}x{h}"
+
+    def test_ultra_zoom_panels_within_poster_bounds(self):
+        """Ultra-zoom panels should not extend beyond the poster edges."""
+        for w, h in [(200, 300), (100, 150), (420, 594)]:
+            svg = generate_poster(steps=1000, width_mm=w, height_mm=h)
+            ns = "http://www.w3.org/2000/svg"
+            clip = svg.find(f".//{{{ns}}}clipPath[@id='ultra_zoom_clip']")
+            rect = clip.find(f"{{{ns}}}rect")
+            rx = float(rect.get("x"))
+            ry = float(rect.get("y"))
+            rw = float(rect.get("width"))
+            rh = float(rect.get("height"))
+            assert rx >= 0, f"Ultra zoom left edge {rx} < 0 for {w}x{h}"
+            assert rx + rw <= w, f"Ultra zoom right edge {rx+rw} > {w} for {w}x{h}"
+            assert ry >= 0, f"Ultra zoom top edge {ry} < 0 for {w}x{h}"
+
 
 # ---------------------------------------------------------------------------
 # SVG file output

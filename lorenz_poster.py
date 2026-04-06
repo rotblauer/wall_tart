@@ -352,10 +352,20 @@ def _draw_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
     src_x2, src_y2 = src_cx + src_hw, src_cy + src_hh
 
     # --- Zoom panel in the upper-right free area ---
-    zoom_w = 58.0 * w_scale
-    zoom_h = 58.0 * w_scale
-    zoom_x = width_mm * 0.85 - zoom_w   # flush with right text margin
-    zoom_y = min_top + 4.0 * h_scale    # just below the header-rule gap
+    right_margin = (width_mm - avail_w) / 2  # poster margin on the right
+    max_bot = min_top + avail_h
+
+    zoom_w = min(70.0 * w_scale, avail_w * 0.4)
+    zoom_h = min(70.0 * w_scale, avail_h * 0.4)
+    zoom_x = width_mm - right_margin - zoom_w  # flush with right margin
+    zoom_y = min_top + 4.0 * h_scale           # just below the header-rule gap
+
+    # Clamp so the panel stays within poster bounds.
+    if zoom_x + zoom_w > width_mm - right_margin:
+        zoom_x = width_mm - right_margin - zoom_w
+    if zoom_y + zoom_h > max_bot:
+        zoom_h = max_bot - zoom_y
+
     zoom_cx = zoom_x + zoom_w / 2
     zoom_cy = zoom_y + zoom_h / 2
 
@@ -494,6 +504,8 @@ def _draw_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
         "zoom_cx": zoom_cx,
         "zoom_cy": zoom_cy,
         "magnify": magnify,
+        "max_bot": max_bot,
+        "right_margin": right_margin,
     }
 
 
@@ -530,10 +542,21 @@ def _draw_ultra_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
     uz_src_hh = 2.0 * w_scale           # half-height → 4 mm total
 
     # --- Ultra-zoom panel: placed below the first zoom panel ---
-    uz_w = 36.0 * w_scale               # ~62 % of the first zoom panel
-    uz_h = 36.0 * w_scale
+    uz_w = min(46.0 * w_scale, z1_zoom_w * 0.85)
+    uz_h = min(46.0 * w_scale, z1_zoom_h * 0.85)
     uz_x = z1_zoom_x + z1_zoom_w - uz_w  # right-aligned with first zoom
     uz_y = z1_zoom_y + z1_zoom_h + 6.0 * w_scale  # gap below first zoom
+
+    # Clamp so the panel stays within poster bounds.
+    max_bot = zoom_info.get("max_bot", uz_y + uz_h + 20)
+    right_margin = zoom_info.get("right_margin", width_mm * 0.10)
+    if uz_x + uz_w > width_mm - right_margin:
+        uz_x = width_mm - right_margin - uz_w
+    if uz_x < z1_zoom_x:
+        uz_x = z1_zoom_x
+    if uz_y + uz_h > max_bot:
+        uz_h = max(10.0 * w_scale, max_bot - uz_y)
+
     uz_cx = uz_x + uz_w / 2
     uz_cy = uz_y + uz_h / 2
 
