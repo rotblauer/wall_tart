@@ -225,12 +225,29 @@ def _panel_equation(parent, ns, col_cx, anno_y, scale=1):
     eq_y = anno_y + 24 * scale
     eq_x = col_cx - 24 * scale
 
-    # Build equation using Unicode subscript characters to avoid tspan cursor bugs
+    # Build equation using tspan dy offsets for subscripts
+    # x_{n+1} = r · x_n (1 − x_n)
+    base_size = round(4.5 * scale, 2)
+    sub_size = round(3.4 * scale, 2)
+    sub_dy = round(1.8 * scale, 2)
     attrib = {"x": str(eq_x), "y": str(eq_y)}
     attrib.update(eq_style)
     eq_el = ET.SubElement(g, f"{{{ns}}}text", attrib=attrib)
-    # x_{n+1} = r · x_n (1 − x_n)  using Unicode subscript n/+/1
-    eq_el.text = "x\u2099\u208a\u2081 = r \u00b7 x\u2099(1 \u2212 x\u2099)"
+    for txt, dy, fs in [
+        ("x",              None,     None),
+        ("n+1",            sub_dy,   str(sub_size)),
+        (" = r \u00b7 x", -sub_dy,   str(base_size)),
+        ("n",              sub_dy,   str(sub_size)),
+        ("(1 \u2212 x",   -sub_dy,   str(base_size)),
+        ("n",              sub_dy,   str(sub_size)),
+        (")",             -sub_dy,   str(base_size)),
+    ]:
+        ta = {}
+        if dy is not None:
+            ta["dy"] = str(dy)
+        if fs is not None:
+            ta["font-size"] = fs
+        ET.SubElement(eq_el, f"{{{ns}}}tspan", attrib=ta).text = txt
 
     param_y = eq_y + 10 * scale
     param_style = {

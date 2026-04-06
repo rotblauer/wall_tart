@@ -234,11 +234,11 @@ def _panel_gray_scott_model(parent, ns, col_cx, anno_y, scale=1):
              "fill": ACCENT_COLOR, "text-anchor": "middle"})
 
     lines = [
-        "\u2202u/\u2202t = D\u1d64\u2207\u00b2u \u2212 uv\u00b2 + f(1\u2212u)",
-        "\u2202v/\u2202t = D\u1d65\u2207\u00b2v + uv\u00b2 \u2212 (f+k)v",
+        "\u2202u/\u2202t = D_u \u2207\u00b2u \u2212 uv\u00b2 + f(1\u2212u)",
+        "\u2202v/\u2202t = D_v \u2207\u00b2v + uv\u00b2 \u2212 (f+k)v",
         "",
         "Two coupled PDEs govern species u and",
-        "v.  D\u1d64 and D\u1d65 set diffusion rates; f is",
+        "v.  D_u and D_v set diffusion rates; f is",
         "the feed rate replenishing u; k is the",
         "kill rate removing v.  Varying f and k",
         "selects spots, stripes, or mazes.",
