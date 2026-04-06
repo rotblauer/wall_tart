@@ -574,21 +574,28 @@ def generate_poster(r_count=2000, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_
     draw_row_separator(anno_group, ns, width_mm, anno_sep_y, w_scale, opacity="0.5",
                        theme=theme)
 
-    # Extra vertical space to accommodate inline zoom panels above text
-    anno_y = anno_sep_y + 50 * h_scale
+    anno_y = anno_sep_y + 18 * h_scale
 
     col1_cx, col2_cx, col3_cx = [width_mm * f for f in COLUMN_CENTERS]
 
-    # --- Inline zoom panels (placed above annotation text in columns) ---
+    # --- Inline zoom panels: placed in the inter-column gaps beside annotation text ---
+    # Each panel sits in the horizontal space between adjacent columns so the
+    # annotation text is not displaced vertically and fits on the poster.
     panel_w = 45 * w_scale
     panel_h = 30 * h_scale
-    panel_cy = (anno_sep_y + anno_y) / 2   # halfway between separator and text
+    # Panels are vertically centred within the annotation text area
+    panel_cy = anno_y + panel_h / 2 + 3 * h_scale
 
-    # Zoom 1: Edge of Chaos (middle column)
+    # Edge of Chaos: centred in the gap between col1 and col2 (~136mm at A2)
+    panel_cx_ec = (col1_cx + col2_cx) / 2
+    # Period-3 Window: centred in the gap between col2 and col3 (~284mm at A2)
+    panel_cx_wo = (col2_cx + col3_cx) / 2
+
+    # Zoom 1: Edge of Chaos (left of col2 text)
     _pz1 = ProgressReporter(600, "Logistic: zoom 1") if verbose else None
     _draw_inline_zoom(
         svg, ns,
-        panel_cx=col2_cx, panel_cy=panel_cy,
+        panel_cx=panel_cx_ec, panel_cy=panel_cy,
         panel_w=panel_w, panel_h=panel_h,
         src_r_min=3.54, src_r_max=3.59,
         src_x_min=0.8, src_x_max=0.9,
@@ -602,11 +609,11 @@ def generate_poster(r_count=2000, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_
     if _pz1:
         _pz1.done()
 
-    # Zoom 2: Period-3 Window (right column)
+    # Zoom 2: Period-3 Window (left of col3 text)
     _pz2 = ProgressReporter(600, "Logistic: zoom 2") if verbose else None
     _draw_inline_zoom(
         svg, ns,
-        panel_cx=col3_cx, panel_cy=panel_cy,
+        panel_cx=panel_cx_wo, panel_cy=panel_cy,
         panel_w=panel_w, panel_h=panel_h,
         src_r_min=3.828, src_r_max=3.856,
         src_x_min=0.4, src_x_max=0.55,
@@ -620,10 +627,10 @@ def generate_poster(r_count=2000, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_
     if _pz2:
         _pz2.done()
 
-    # Arrow targets: left column → main diagram; middle/right → bottom of zoom panels
+    # Arrow targets: left column → main diagram; middle/right → bottom of side panels
     pd_target = _transform(3.2, 0.8)
-    ec_target = (col2_cx, panel_cy + panel_h / 2)
-    wo_target = (col3_cx, panel_cy + panel_h / 2)
+    ec_target = (panel_cx_ec, panel_cy + panel_h / 2)
+    wo_target = (panel_cx_wo, panel_cy + panel_h / 2)
 
     draw_annotation_row(
         anno_group, ns, anno_y,
