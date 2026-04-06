@@ -409,7 +409,8 @@ class TestGeneratePoster:
         z1_bottom = float(z1_bg.get("y")) + float(z1_bg.get("height"))
 
         uz = svg.find(f".//{{{ns}}}g[@id='ultra_zoom_inset']")
-        uz_bg = uz.findall(f"{{{ns}}}rect")[1]  # 2nd rect is background
+        # Rects in ultra_zoom_inset: [0] sub-box on zoom1, [1] background, [2] border.
+        uz_bg = uz.findall(f"{{{ns}}}rect")[1]
         uz_top = float(uz_bg.get("y"))
 
         assert uz_top > z1_bottom, (

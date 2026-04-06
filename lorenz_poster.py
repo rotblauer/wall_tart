@@ -285,7 +285,7 @@ def _find_best_zoom_center(scaled_main, origin_x, origin_y, w_scale):
             continue
         s2 = bins_sin2.get(key, 0.0)
         c2 = bins_cos2.get(key, 0.0)
-        parallelism = math.hypot(s2, c2) / count   # ∈ [0, 1]
+        parallelism = math.hypot(s2, c2) / count   # mean resultant length ∈ [0, 1]
         score = math.log(count + 1) * parallelism
         if score > best_score:
             best_score = score
@@ -411,6 +411,7 @@ def _draw_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
     sample_hh = src_hh * 2.0
     zoom_lines_g = _group(zoom_group, ns, **{"clip-path": f"url(#{clip_id})"})
 
+    # Ultra-thin stroke to reveal individual fractal sheets at this zoom level.
     thin_sw = str(round(0.05 * w_scale, 3))
 
     def _to_zoom(px, py):
