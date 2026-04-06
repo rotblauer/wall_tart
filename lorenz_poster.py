@@ -183,7 +183,7 @@ def _annotation_butterfly_effect(parent, ns, target_x, target_y,
     _multiline_text(
         g, ns, col_cx, body_y,
         [
-            "Two trajectories start just 10\u207b\u00b9\u2070",
+            "Two trajectories start just 10⁻¹⁰",
             "apart \u2014 an unimaginably tiny gap.",
             "Yet they diverge wildly: sensitive",
             "dependence on initial conditions",
@@ -257,14 +257,29 @@ def _draw_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
     bg_color = t["bg_color"]
 
     # --- Source (target) box in poster space ---
-    # Centre on a dense spiral band of the right wing of the projected attractor.
-    # The right-wing fixed-point projects to roughly (+13 % avail_w, +12 % avail_h)
-    # relative to the attractor centre, so this lands in a dense layered region.
-    src_cx = center_x + avail_w * 0.13    # right of attractor centre
-    src_cy = center_y + avail_h * 0.12    # SVG y increases downward; positive
-                                           # offset → below attractor centre
+    # Dynamically find the densest region of the right wing via 2-D spatial
+    # binning.  This guarantees the 12×12 mm zoom box captures the most
+    # heavily layered, complex region regardless of integration step count.
     src_hw = 6.0 * w_scale               # half-width  → 12 mm total
     src_hh = 6.0 * w_scale               # half-height → 12 mm total
+
+    bin_size = 2.0 * w_scale             # grid resolution
+    density_bins: dict[tuple[int, int], int] = {}
+    for px, py in scaled_main:
+        if px <= center_x:              # skip left hemisphere
+            continue
+        bx = int((px - center_x) / bin_size)
+        by = int((py - center_y) / bin_size)
+        density_bins[(bx, by)] = density_bins.get((bx, by), 0) + 1
+
+    if density_bins:
+        best_bin = max(density_bins, key=lambda k: density_bins[k])
+        src_cx = center_x + (best_bin[0] + 0.5) * bin_size
+        src_cy = center_y + (best_bin[1] + 0.5) * bin_size
+    else:
+        # Fallback: centre of the right wing (should never happen in practice)
+        src_cx = center_x + avail_w * 0.13
+        src_cy = center_y + avail_h * 0.12
 
     src_x1, src_y1 = src_cx - src_hw, src_cy - src_hh
     src_x2, src_y2 = src_cx + src_hw, src_cy + src_hh
@@ -375,7 +390,11 @@ def _draw_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
              "stroke": border_color,
              "stroke-width": str(round(0.35 * w_scale, 3))})
 
-    return zoom_cx, zoom_cy
+    # Return the bottom-centre of the zoom panel so that the 'Infinite
+    # Complexity' annotation leader line approaches from below and cannot
+    # cross the dashed connector lines that link the source box to the
+    # upper corners of the panel.
+    return zoom_cx, zoom_y + zoom_h
 
 
 # ---------------------------------------------------------------------------

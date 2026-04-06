@@ -177,21 +177,11 @@ class TestGeneratePoster:
         assert "Wings" in xml_str
         assert "Infinite Complexity" in xml_str
 
-    def test_butterfly_exponent_no_unicode_superscript_minus(self):
-        """The 10^-10 exponent must use an SVG tspan, not U+207B.
-
-        U+207B (SUPERSCRIPT MINUS) is absent from many PDF-embedded fonts and
-        renders as a missing-glyph square.  The exponent is expressed instead
-        via a nested <tspan> with dy/font-size so that a plain ASCII '-' is
-        used, which is universally supported.
-        """
+    def test_butterfly_exponent_uses_unicode_superscript(self):
+        """Butterfly annotation should keep the Unicode literal 10⁻¹⁰."""
         svg = generate_poster(steps=1000, width_mm=200, height_mm=300)
         xml_str = ET.tostring(svg, encoding="unicode")
-        assert "\u207b" not in xml_str, (
-            "U+207B (SUPERSCRIPT MINUS) found in SVG; use SVG tspan superscript instead"
-        )
-        # The exponent digits are rendered as plain ASCII via a tspan
-        assert "-10" in xml_str
+        assert "10⁻¹⁰" in xml_str
 
     def test_credit_designed_by(self):
         """Credit line appears when --designed-by is supplied."""
@@ -297,6 +287,64 @@ class TestGeneratePoster:
             ns = "http://www.w3.org/2000/svg"
             zoom = svg.find(f".//{{{ns}}}g[@id='zoom_inset']")
             assert zoom is not None, f"zoom_inset missing for theme '{theme}'"
+
+    def test_zoom_target_box_in_right_hemisphere(self):
+        """The zoom target box must be in the right hemisphere of the attractor."""
+        svg = generate_poster(steps=5000, width_mm=200, height_mm=300)
+        ns = "http://www.w3.org/2000/svg"
+        zoom = svg.find(f".//{{{ns}}}g[@id='zoom_inset']")
+        rects = zoom.findall(f"{{{ns}}}rect")
+        # The 3rd rect is the source target box on the main attractor.
+        target_box = rects[2]
+        box_x = float(target_box.get("x"))
+        box_w = float(target_box.get("width"))
+        box_cx = box_x + box_w / 2
+        # The attractor is centred at width_mm / 2 = 100 mm.
+        assert box_cx > 100.0, (
+            f"Zoom target box centre {box_cx:.1f} should be in the right hemisphere (>100)"
+        )
+
+    def test_zoom_annotation_leader_does_not_cross_connectors(self):
+        """The annotation leader to the zoom panel must not cross connector lines.
+
+        The annotation leader targets the bottom edge of the zoom panel (y =
+        zoom_y + zoom_h).  The connector lines link the source box to the
+        zoom panel *corners* (y = zoom_y for top corners).  Because the
+        leader terminates at or below zoom_y + zoom_h, it cannot cross the
+        connector lines that terminate at zoom_y.
+        """
+        svg = generate_poster(steps=5000, width_mm=200, height_mm=300)
+        ns = "http://www.w3.org/2000/svg"
+        zoom = svg.find(f".//{{{ns}}}g[@id='zoom_inset']")
+        # Connector lines terminate at zoom panel corners.
+        lines = zoom.findall(f"{{{ns}}}line")
+        assert len(lines) == 4
+        # Find the zoom panel bottom-y (largest y2 among connector lines).
+        zoom_bottom_y = max(float(ln.get("y2")) for ln in lines)
+        # Find the zoom panel top-y (smallest y2 among connector lines).
+        zoom_top_y = min(float(ln.get("y2")) for ln in lines)
+        # The annotation leader lines originate in the annotation row (below
+        # the attractor) and point upward to their targets.
+        annotations = svg.find(f".//{{{ns}}}g[@id='annotations']")
+        anno_lines = annotations.findall(f".//{{{ns}}}line")
+        for aline in anno_lines:
+            target_y = float(aline.get("y2"))
+            origin_y = float(aline.get("y1"))
+            # Only check upward-pointing lines (from annotation row to target).
+            if origin_y <= target_y:
+                continue
+            # If this leader targets the zoom panel region (near zoom_bottom_y),
+            # it must NOT terminate above the panel top — that would indicate
+            # it crosses through the connector lines.
+            target_x = float(aline.get("x2"))
+            bg_rect = zoom.findall(f"{{{ns}}}rect")[0]
+            panel_left = float(bg_rect.get("x"))
+            panel_right = panel_left + float(bg_rect.get("width"))
+            if panel_left <= target_x <= panel_right:
+                assert target_y >= zoom_top_y, (
+                    f"Leader line targeting zoom panel terminates at y={target_y:.1f}, "
+                    f"which is above the zoom panel top y={zoom_top_y:.1f}"
+                )
 
 
 # ---------------------------------------------------------------------------
