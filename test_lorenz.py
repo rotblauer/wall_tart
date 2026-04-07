@@ -522,24 +522,16 @@ class TestComputePoincareSection:
 
 
 class TestPoincareInsetPoster:
-    def test_poincare_section_flag_no_crash(self):
-        """poincare_section=True produces a valid SVG."""
-        svg = generate_poster(steps=5000, width_mm=200, height_mm=300,
-                              poincare_section=True)
-        assert svg.tag.endswith("svg")
-
     def test_poincare_inset_group_present(self):
-        """A 'poincare_inset' group exists when poincare_section=True."""
-        svg = generate_poster(steps=5000, width_mm=200, height_mm=300,
-                              poincare_section=True)
+        """A 'poincare_inset' group exists by default."""
+        svg = generate_poster(steps=5000, width_mm=200, height_mm=300)
         ns = "http://www.w3.org/2000/svg"
         ps = svg.find(f".//{{{ns}}}g[@id='poincare_inset']")
         assert ps is not None
 
     def test_poincare_clip_path_present(self):
-        """A clipPath with id 'poincare_clip' exists when enabled."""
-        svg = generate_poster(steps=5000, width_mm=200, height_mm=300,
-                              poincare_section=True)
+        """A clipPath with id 'poincare_clip' exists."""
+        svg = generate_poster(steps=5000, width_mm=200, height_mm=300)
         ns = "http://www.w3.org/2000/svg"
         clip = svg.find(f".//{{{ns}}}clipPath[@id='poincare_clip']")
         assert clip is not None
@@ -550,26 +542,46 @@ class TestPoincareInsetPoster:
 
     def test_poincare_label_present(self):
         """The Poincaré section label text is in the SVG."""
-        svg = generate_poster(steps=5000, width_mm=200, height_mm=300,
-                              poincare_section=True)
+        svg = generate_poster(steps=5000, width_mm=200, height_mm=300)
         xml_str = ET.tostring(svg, encoding="unicode")
         assert "Poincar" in xml_str
         assert "section" in xml_str
 
-    def test_no_ultra_zoom_when_poincare_enabled(self):
-        """When poincare_section=True, ultra_zoom_inset group is absent."""
-        svg = generate_poster(steps=5000, width_mm=200, height_mm=300,
-                              poincare_section=True)
+    def test_ultra_zoom_still_present_with_poincare(self):
+        """Both ultra_zoom_inset and poincare_inset groups exist."""
+        svg = generate_poster(steps=5000, width_mm=200, height_mm=300)
         ns = "http://www.w3.org/2000/svg"
         uz = svg.find(f".//{{{ns}}}g[@id='ultra_zoom_inset']")
-        assert uz is None
+        ps = svg.find(f".//{{{ns}}}g[@id='poincare_inset']")
+        assert uz is not None
+        assert ps is not None
+
+    def test_poincare_panel_on_left_side(self):
+        """The Poincaré panel is positioned on the left side of the poster."""
+        svg = generate_poster(steps=5000, width_mm=200, height_mm=300)
+        ns = "http://www.w3.org/2000/svg"
+        clip = svg.find(f".//{{{ns}}}clipPath[@id='poincare_clip']")
+        rect = clip.find(f"{{{ns}}}rect")
+        ps_x = float(rect.get("x"))
+        ps_w = float(rect.get("width"))
+        # The panel should be on the left half of the poster
+        assert ps_x + ps_w < 200 / 2, (
+            f"Poincaré panel right edge ({ps_x + ps_w:.1f}) should be "
+            f"on the left half of the poster (< {200 / 2})"
+        )
+
+    def test_poincare_caption_present(self):
+        """The Poincaré panel has a rotated caption."""
+        svg = generate_poster(steps=5000, width_mm=200, height_mm=300)
+        xml_str = ET.tostring(svg, encoding="unicode")
+        assert "Cross-section" in xml_str
 
     def test_poincare_all_themes(self):
         """Poincaré section renders without error for all themes."""
         from poster_utils import AVAILABLE_THEMES
         for theme in AVAILABLE_THEMES:
             svg = generate_poster(steps=5000, width_mm=200, height_mm=300,
-                                  poincare_section=True, theme=theme)
+                                  theme=theme)
             ns = "http://www.w3.org/2000/svg"
             ps = svg.find(f".//{{{ns}}}g[@id='poincare_inset']")
             assert ps is not None, f"poincare_inset missing for theme '{theme}'"

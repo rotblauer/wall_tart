@@ -735,39 +735,29 @@ def compute_poincare_section(trajectory, z0=27.0, tol=0.5):
 
 def _draw_poincare_inset(svg, ns, poincare_pts, w_scale, h_scale,
                          zoom_info, width_mm, attractor_color,
-                         theme=None):
-    """Draw a Poincaré section inset panel below the first zoom panel.
+                         avail_w, min_top, theme=None):
+    """Draw a Poincaré section inset panel on the upper-left of the poster.
 
-    This replaces the ultra-zoom panel with a cross-section scatter plot
-    of the attractor at a fixed z-plane, revealing fractal structure in
-    a scientifically standard way.
+    The panel is positioned on the left side, at a similar y-value as
+    the first zoom panel (upper-right), so the poster has three
+    informative panels: Poincaré section (left), zoom (right), and
+    ultra-zoom (right, below zoom).
 
-    The panel is positioned identically to where the ultra-zoom panel
-    would appear (below the first zoom panel, right-aligned).
+    A small caption is placed to the left of the panel.
     """
     t = get_theme(theme)
     border_color = t["border_color"]
     bg_color = t["bg_color"]
 
-    z1_zoom_x = zoom_info["zoom_x"]
     z1_zoom_y = zoom_info["zoom_y"]
-    z1_zoom_w = zoom_info["zoom_w"]
     z1_zoom_h = zoom_info["zoom_h"]
 
-    # --- Panel dimensions (same placement as ultra-zoom) ---
-    ps_w = min(46.0 * w_scale, z1_zoom_w * 0.85)
-    ps_h = min(46.0 * w_scale, z1_zoom_h * 0.85)
-    ps_x = z1_zoom_x + z1_zoom_w - ps_w
-    ps_y = z1_zoom_y + z1_zoom_h + 6.0 * w_scale
-
-    max_bot = zoom_info.get("max_bot", ps_y + ps_h + 20)
-    right_margin = zoom_info.get("right_margin", width_mm * 0.10)
-    if ps_x + ps_w > width_mm - right_margin:
-        ps_x = width_mm - right_margin - ps_w
-    if ps_x < z1_zoom_x:
-        ps_x = z1_zoom_x
-    if ps_y + ps_h > max_bot:
-        ps_h = max(10.0 * w_scale, max_bot - ps_y)
+    # --- Panel dimensions (similar size to the zoom panel) ---
+    left_margin = (width_mm - avail_w) / 2
+    ps_w = min(70.0 * w_scale, avail_w * 0.4)
+    ps_h = min(70.0 * w_scale, z1_zoom_h)
+    ps_x = left_margin                        # flush with left margin
+    ps_y = z1_zoom_y                          # same y as first zoom panel
 
     ps_cx = ps_x + ps_w / 2
     ps_cy = ps_y + ps_h / 2
@@ -788,20 +778,6 @@ def _draw_poincare_inset(svg, ns, poincare_pts, w_scale, h_scale,
 
     # --- Group ---
     ps_group = _group(svg, ns, id="poincare_inset")
-
-    # --- Connector lines from first zoom panel bottom → this panel top ---
-    conn_style = {
-        "stroke": border_color,
-        "stroke-width": str(round(0.25 * w_scale, 3)),
-        "stroke-dasharray": "1.5,1.5",
-        "opacity": "0.35",
-    }
-    _line(ps_group, ns,
-          z1_zoom_x, z1_zoom_y + z1_zoom_h,
-          ps_x, ps_y, **conn_style)
-    _line(ps_group, ns,
-          z1_zoom_x + z1_zoom_w, z1_zoom_y + z1_zoom_h,
-          ps_x + ps_w, ps_y, **conn_style)
 
     # --- Background ---
     _rect(ps_group, ns, ps_x, ps_y, ps_w, ps_h,
@@ -836,7 +812,7 @@ def _draw_poincare_inset(svg, ns, poincare_pts, w_scale, h_scale,
           fill="none", stroke=border_color,
           **{"stroke-width": str(round(0.5 * w_scale, 3))})
 
-    # --- Label ---
+    # --- Label inside panel bottom ---
     _text(ps_group, ns, ps_cx, ps_y + ps_h - 3.0 * h_scale,
           "Poincar\u00e9 section (z \u2248 27)",
           **{**ANNOTATION_STYLE,
@@ -844,6 +820,18 @@ def _draw_poincare_inset(svg, ns, poincare_pts, w_scale, h_scale,
              "font-size": str(round(2.4 * w_scale, 2)),
              "text-anchor": "middle",
              "opacity": "0.55"})
+
+    # --- Caption to the left of the panel (rotated vertically) ---
+    caption_x = ps_x - 3.0 * w_scale
+    caption_y = ps_cy
+    _text(ps_group, ns, caption_x, caption_y,
+          "Cross-section at z \u2248 27",
+          **{**ANNOTATION_STYLE,
+             "fill": border_color,
+             "font-size": str(round(2.8 * w_scale, 2)),
+             "text-anchor": "middle",
+             "opacity": "0.45",
+             "transform": f"rotate(-90, {round(caption_x, 2)}, {round(caption_y, 2)})"})
 
 
 # ---------------------------------------------------------------------------
@@ -1010,7 +998,7 @@ def _panel_weather_model(parent, ns, col_cx, anno_y, scale=1):
 
 def generate_poster(steps=200000, zoom_multiplier=2, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_MM,
                     designed_by=None, designed_for=None, theme=None, verbose=True,
-                    angle_x=None, angle_z=None, poincare_section=False):
+                    angle_x=None, angle_z=None):
     """Build and return the full poster as an ElementTree SVG root.
 
     Parameters
@@ -1033,10 +1021,6 @@ def generate_poster(steps=200000, zoom_multiplier=2, width_mm=BASE_WIDTH_MM, hei
     angle_z : float or None
         Rotation angle about the Z-axis for the 3-D → 2-D projection
         (radians).  Defaults to :data:`DEFAULT_ANGLE_Z` (0.85).
-    poincare_section : bool
-        If True, replace the ultra-zoom panel with a Poincaré section
-        scatter plot (z ≈ 27) that reveals fractal structure in a
-        scientifically standard way.
     """
     if angle_x is None:
         angle_x = DEFAULT_ANGLE_X
@@ -1161,22 +1145,23 @@ def generate_poster(steps=200000, zoom_multiplier=2, width_mm=BASE_WIDTH_MM, hei
     )
     zoom_target_x, zoom_target_y = zoom_info["anno_target"]
 
-    # --- Second panel: ultra-zoom or Poincaré section ---
-    if poincare_section:
-        # Compute Poincaré section from the combined trajectory (main + extra)
-        # for maximum density of crossing points.
-        combined_traj = traj_main + traj_extra
-        poincare_pts = compute_poincare_section(combined_traj, z0=27.0, tol=0.5)
-        _draw_poincare_inset(
-            svg, ns, poincare_pts, w_scale, h_scale,
-            zoom_info, width_mm, attractor_color, theme=theme,
-        )
-    else:
-        _draw_ultra_zoom_inset(
-            svg, ns, scaled_main, w_scale, h_scale,
-            zoom_info, width_mm, attractor_color, theme=theme,
-            scaled_extra=scaled_extra,
-        )
+    # --- Ultra-zoom panel (second-level zoom for deeper fractal structure) ---
+    _draw_ultra_zoom_inset(
+        svg, ns, scaled_main, w_scale, h_scale,
+        zoom_info, width_mm, attractor_color, theme=theme,
+        scaled_extra=scaled_extra,
+    )
+
+    # --- Poincaré section panel (upper-left, always shown) ---
+    # Compute Poincaré section from the combined trajectory (main + extra)
+    # for maximum density of crossing points.
+    combined_traj = traj_main + traj_extra
+    poincare_pts = compute_poincare_section(combined_traj, z0=27.0, tol=0.5)
+    _draw_poincare_inset(
+        svg, ns, poincare_pts, w_scale, h_scale,
+        zoom_info, width_mm, attractor_color,
+        avail_w=avail_w, min_top=min_top, theme=theme,
+    )
 
     # --- Annotations ---
     anno_group = _group(svg, ns, id="annotations")
@@ -1285,14 +1270,6 @@ def build_arg_parser():
             f"(default: {DEFAULT_ANGLE_Z})."
         ),
     )
-    parser.add_argument(
-        "--poincare-section", action="store_true", default=False,
-        dest="poincare_section",
-        help=(
-            "Replace the ultra-zoom panel with a Poincaré section "
-            "scatter plot (z ≈ 27)."
-        ),
-    )
     add_common_poster_args(parser)
     return parser
 
@@ -1309,7 +1286,6 @@ def _generate_from_args(args):
         theme=args.theme,
         angle_x=args.angle_x,
         angle_z=args.angle_z,
-        poincare_section=args.poincare_section,
     )
 
 
