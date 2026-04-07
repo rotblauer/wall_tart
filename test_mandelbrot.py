@@ -220,6 +220,57 @@ class TestWriteSvg:
             os.unlink(path)
 
 
+class TestJuliaInlinePlacement:
+    """Tests for Julia sets placed in inter-column gaps."""
+
+    def test_four_julia_sets(self):
+        """Poster should contain four Julia set insets."""
+        svg = generate_poster(resolution=10, max_iter=10, width_mm=200, height_mm=300)
+        xml_str = ET.tostring(svg, encoding="unicode")
+        # All four Julia parameter labels should be present
+        assert "\u22120.70 + 0.27i" in xml_str
+        assert "0.355 + 0.355i" in xml_str
+        assert "\u22120.80 + 0.16i" in xml_str
+        assert "0.285 + 0.01i" in xml_str
+
+    def test_footer_mentions_four_insets(self):
+        """Footer text should reflect four Julia insets."""
+        svg = generate_poster(resolution=10, max_iter=10, width_mm=200, height_mm=300)
+        xml_str = ET.tostring(svg, encoding="unicode")
+        assert "4 Julia set insets" in xml_str
+
+    def test_julia_panels_have_marker_circles(self):
+        """Each Julia panel should place a marker circle on the Mandelbrot."""
+        svg = generate_poster(resolution=10, max_iter=10, width_mm=200, height_mm=300)
+        ns = "http://www.w3.org/2000/svg"
+        julia_g = svg.find(f".//{{{ns}}}g[@id='julia_sets']")
+        # Each Julia inset draws 3 circles: marker ring, centre dot, terminal dot
+        circles = julia_g.findall(f".//{{{ns}}}circle")
+        assert len(circles) >= 12  # 3 circles × 4 insets
+
+
+class TestFadeEdges:
+    """Tests for edge-fading on the Mandelbrot and Julia grids."""
+
+    def test_julia_grids_have_faded_cells(self):
+        """Julia grids rendered with fade_edges should have cells with opacity."""
+        svg = generate_poster(resolution=10, max_iter=50, width_mm=100, height_mm=150)
+        ns = "http://www.w3.org/2000/svg"
+        julia_g = svg.find(f".//{{{ns}}}g[@id='julia_sets']")
+        rects = julia_g.findall(f".//{{{ns}}}rect")
+        has_opacity = any(r.get("fill-opacity") is not None for r in rects)
+        assert has_opacity
+
+    def test_some_rects_have_fill_opacity(self):
+        """Low-escape cells should have a fill-opacity attribute."""
+        svg = generate_poster(resolution=15, max_iter=50, width_mm=100, height_mm=150)
+        ns = "http://www.w3.org/2000/svg"
+        fractal = svg.find(f".//{{{ns}}}g[@id='fractal']")
+        rects = fractal.findall(f"{{{ns}}}rect")
+        has_opacity = any(r.get("fill-opacity") is not None for r in rects)
+        assert has_opacity
+
+
 class TestWritePng:
     pytest.importorskip("cairosvg", reason="cairosvg not installed")
 

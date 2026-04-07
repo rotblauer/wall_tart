@@ -400,27 +400,45 @@ def _panel_special_regions(parent, ns, col_cx, anno_y, scale=1):
 # ---------------------------------------------------------------------------
 
 def _draw_grid(parent, ns, grid, max_iter, gx, gy, cell_w, cell_h,
-               set_color="#1C1C1C"):
-    """Render a 2-D escape-time grid as coloured SVG rectangles."""
+               set_color="#1C1C1C", fade_edges=False):
+    """Render a 2-D escape-time grid as coloured SVG rectangles.
+
+    When *fade_edges* is True, cells with very low escape counts (far from
+    the fractal boundary) are rendered with reduced opacity so outer regions
+    blend smoothly into the poster background instead of forming abrupt dark
+    rectangles.
+    """
+    # ~1/12 of max_iter provides a smooth fade zone at the grid edges
+    fade_iters = max(1, max_iter // 12) if fade_edges else 0
     for row_idx, row_data in enumerate(grid):
         for col_idx, escape in enumerate(row_data):
+            if fade_edges and escape == 0:
+                continue
             color = _escape_to_color(escape, max_iter, set_color)
+            extra = {}
+            if fade_iters and 0 < escape < fade_iters and escape < max_iter:
+                op = escape / fade_iters
+                # Skip cells that would be nearly invisible (< 2 % opacity)
+                if op < 0.02:
+                    continue
+                extra["fill-opacity"] = str(round(op, 3))
             _rect(parent, ns,
                   round(gx + col_idx * cell_w, 2),
                   round(gy + row_idx * cell_h, 2),
                   round(cell_w + 0.5, 2),
                   round(cell_h + 0.5, 2),
-                  fill=color)
+                  fill=color, **extra)
 
 
 def _draw_julia_inset(parent, ns, panel_x, panel_y, panel_w, panel_h,
                       c_real, c_imag, label, marker_px, marker_py,
-                      j_grid, max_iter, set_color, w_scale, h_scale, theme=None):
-    """Draw a floating Julia set inset panel on the Mandelbrot poster.
+                      j_grid, max_iter, set_color, w_scale, h_scale,
+                      line_stop_y=None, fade_edges=False, theme=None):
+    """Draw a Julia set inset panel on the Mandelbrot poster.
 
-    Renders the Julia grid inside a styled panel box, places a small circular
-    marker at the corresponding *c* point on the main fractal, and connects the
-    two with a dashed line.
+    Renders the Julia grid inside a styled panel, places a small circular
+    marker at the corresponding *c* point on the main fractal, and connects
+    the two with a dashed line.
 
     Parameters
     ----------
@@ -429,7 +447,7 @@ def _draw_julia_inset(parent, ns, panel_x, panel_y, panel_w, panel_h,
     ns : str
         SVG namespace URI.
     panel_x, panel_y, panel_w, panel_h : float
-        Position and size of the floating panel (poster coordinates, mm).
+        Position and size of the panel (poster coordinates, mm).
     c_real, c_imag : float
         Julia parameter *c*.
     label : str
@@ -444,6 +462,15 @@ def _draw_julia_inset(parent, ns, panel_x, panel_y, panel_w, panel_h,
         Hex colour for in-set pixels.
     w_scale, h_scale : float
         Poster scaling factors.
+    line_stop_y : float or None
+        When set, the dashed connector line runs from the marker to
+        (*panel_cx*, *line_stop_y*) with a terminal circle, matching the
+        inline-zoom style used by the logistic-map poster.  When *None*,
+        the line connects to the nearest panel corner (overlay style).
+    fade_edges : bool
+        When True, cells with very low escape counts are rendered with
+        reduced opacity and no solid panel background / border is drawn,
+        so the Julia structure floats on the poster background.
     theme : str or None
         Poster theme name.
     """
@@ -453,10 +480,11 @@ def _draw_julia_inset(parent, ns, panel_x, panel_y, panel_w, panel_h,
 
     inset_group = _group(parent, ns)
 
-    # --- Panel background (slightly opaque to prevent clashing) ---
-    _rect(inset_group, ns, panel_x, panel_y, panel_w, panel_h,
-          fill=bg_color, stroke="none",
-          **{"fill-opacity": "0.90"})
+    # --- Panel background (only when not fading edges) ---
+    if not fade_edges:
+        _rect(inset_group, ns, panel_x, panel_y, panel_w, panel_h,
+              fill=bg_color, stroke="none",
+              **{"fill-opacity": "0.90"})
 
     # --- Render Julia grid inside the panel ---
     j_rows = len(j_grid)
@@ -465,12 +493,13 @@ def _draw_julia_inset(parent, ns, panel_x, panel_y, panel_w, panel_h,
     j_cell_h = panel_h / j_rows
     _draw_grid(inset_group, ns, j_grid, max_iter,
                panel_x, panel_y, j_cell_w, j_cell_h,
-               set_color=set_color)
+               set_color=set_color, fade_edges=fade_edges)
 
-    # --- Panel border ---
-    _rect(inset_group, ns, panel_x, panel_y, panel_w, panel_h,
-          fill="none", stroke=border_color,
-          **{"stroke-width": str(round(0.45 * w_scale, 3))})
+    # --- Panel border (only when not fading edges) ---
+    if not fade_edges:
+        _rect(inset_group, ns, panel_x, panel_y, panel_w, panel_h,
+              fill="none", stroke=border_color,
+              **{"stroke-width": str(round(0.45 * w_scale, 3))})
 
     # --- Caption label below the panel ---
     label_style = {
@@ -499,25 +528,39 @@ def _draw_julia_inset(parent, ns, panel_x, panel_y, panel_w, panel_h,
             fill=border_color,
             **{"opacity": "0.85"})
 
-    # --- Dashed connector line: marker → nearest panel corner ---
-    corners = [
-        (panel_x,           panel_y),
-        (panel_x + panel_w, panel_y),
-        (panel_x + panel_w, panel_y + panel_h),
-        (panel_x,           panel_y + panel_h),
-    ]
-    nearest = min(corners,
-                  key=lambda p: (p[0] - marker_px) ** 2 + (p[1] - marker_py) ** 2)
+    # --- Dashed connector line ---
     conn_style = {
         "stroke": border_color,
         "stroke-width": str(round(0.3 * w_scale, 3)),
         "stroke-dasharray": "1.5,1.5",
         "opacity": "0.40",
     }
-    _line(inset_group, ns,
-          round(marker_px, 2), round(marker_py, 2),
-          round(nearest[0], 2), round(nearest[1], 2),
-          **conn_style)
+    if line_stop_y is not None:
+        # Inline mode: straight line from marker to (panel centre x, stop y)
+        panel_cx = panel_x + panel_w / 2
+        _line(inset_group, ns,
+              round(marker_px, 2), round(marker_py, 2),
+              round(panel_cx, 2), round(line_stop_y, 2),
+              **conn_style)
+        # Terminal circle at the line endpoint
+        _circle(inset_group, ns,
+                round(panel_cx, 2), round(line_stop_y, 2),
+                round(0.8 * w_scale, 2),
+                fill=border_color, **{"opacity": "0.45"})
+    else:
+        # Original mode: to nearest panel corner
+        corners = [
+            (panel_x,           panel_y),
+            (panel_x + panel_w, panel_y),
+            (panel_x + panel_w, panel_y + panel_h),
+            (panel_x,           panel_y + panel_h),
+        ]
+        nearest = min(corners,
+                      key=lambda p: (p[0] - marker_px) ** 2 + (p[1] - marker_py) ** 2)
+        _line(inset_group, ns,
+              round(marker_px, 2), round(marker_py, 2),
+              round(nearest[0], 2), round(nearest[1], 2),
+              **conn_style)
 
     return inset_group
 
@@ -591,7 +634,7 @@ def generate_poster(resolution=80, max_iter=100,
     fractal_group = _group(svg, ns, id="fractal")
     _draw_grid(fractal_group, ns, grid, max_iter,
                fractal_x, fractal_y, cell_size, cell_size,
-               set_color=set_color)
+               set_color=set_color, fade_edges=True)
 
     # --- Axis labels ---
     axis_style = {
@@ -615,54 +658,6 @@ def generate_poster(resolution=80, max_iter=100,
         py = fractal_y + (ci - mb_y_min) / (mb_y_max - mb_y_min) * render_h
         return (px, py)
 
-    # --- Julia set floating inset panels ---
-    julia_group = _group(svg, ns, id="julia_sets")
-    julia_cs = [
-        (-0.7,   0.27015, "c = \u22120.70 + 0.27i"),
-        (0.355,  0.355,   "c = 0.355 + 0.355i"),
-        (-0.8,   0.156,   "c = \u22120.80 + 0.16i"),
-    ]
-
-    julia_res = max(10, resolution // 3)
-    julia_h_res = max(8, julia_res)
-
-    # Panel size: ~24 % of rendered fractal width, square
-    panel_side = min(render_w * 0.24, render_h * 0.32)
-    panel_pad = panel_side * 0.10   # inward padding from the fractal edge
-
-    # Panel positions: top-left, top-right, bottom-left corners of fractal bbox
-    panel_positions = [
-        # Top-left
-        (fractal_x + panel_pad,
-         fractal_y + panel_pad),
-        # Top-right
-        (fractal_x + render_w - panel_side - panel_pad,
-         fractal_y + panel_pad),
-        # Bottom-left
-        (fractal_x + panel_pad,
-         fractal_y + render_h - panel_side - panel_pad),
-    ]
-
-    for (cr, ci, label), (px, py) in zip(julia_cs, panel_positions):
-        _pj = ProgressReporter(julia_h_res, f"Julia: {label[:16]}") if verbose else None
-        j_grid = compute_julia_grid(cr, ci, -1.5, 1.5, -1.2, 1.2,
-                                    julia_res, julia_h_res, max_iter, progress=_pj)
-        if _pj:
-            _pj.done()
-        marker_px, marker_py = _mb_to_poster(cr, ci)
-        _draw_julia_inset(
-            julia_group, ns,
-            panel_x=px, panel_y=py, panel_w=panel_side, panel_h=panel_side,
-            c_real=cr, c_imag=ci,
-            label=label,
-            marker_px=marker_px, marker_py=marker_py,
-            j_grid=j_grid,
-            max_iter=max_iter,
-            set_color=set_color,
-            w_scale=w_scale, h_scale=h_scale,
-            theme=theme,
-        )
-
     # --- Annotations ---
     anno_group = _group(svg, ns, id="annotations")
 
@@ -678,10 +673,8 @@ def generate_poster(resolution=80, max_iter=100,
     ss_target = _mb_to_poster(-1.76, 0.0)
     # Escape-time: point on the boundary
     et_target = _mb_to_poster(-0.16, 1.04)
-    # Julia connection: point to the top-left inset panel (first Julia panel)
-    tl_panel_x = panel_positions[0][0]
-    tl_panel_y = panel_positions[0][1]
-    jc_target = (tl_panel_x + panel_side / 2, tl_panel_y + panel_side / 2)
+    # Julia connection: point to the c-value marker of the first Julia set
+    jc_target = _mb_to_poster(-0.7, 0.27015)
 
     draw_annotation_row(
         anno_group, ns, anno_y,
@@ -707,6 +700,65 @@ def generate_poster(resolution=80, max_iter=100,
     _panel_equation(edu_group, ns, col1_cx, row2_y, w_scale)
     _panel_complex_plane(edu_group, ns, col2_cx, row2_y, w_scale)
     _panel_special_regions(edu_group, ns, col3_cx, row2_y, w_scale)
+
+    # --- Julia set inline panels (placed in inter-column gaps) ---
+    # Following the same pattern as the logistic-map poster's zoom panels,
+    # each Julia inset sits in the horizontal gap between adjacent annotation
+    # columns.  Two panels per row × two annotation rows = four Julia sets.
+    julia_group = _group(svg, ns, id="julia_sets")
+    julia_cs = [
+        (-0.7,   0.27015, "c = \u22120.70 + 0.27i"),
+        (0.355,  0.355,   "c = 0.355 + 0.355i"),
+        (-0.8,   0.156,   "c = \u22120.80 + 0.16i"),
+        (0.285,  0.01,    "c = 0.285 + 0.01i"),
+    ]
+
+    julia_res = max(10, resolution // 3)
+    julia_h_res = max(8, julia_res)
+
+    # Dynamic sizing from the inter-column gap (works at any poster size)
+    col_gap = col2_cx - col1_cx
+    row1_avail_h = row2_sep_y - anno_sep_y
+    panel_side = min(col_gap * 0.40, row1_avail_h * 0.65)
+
+    # Horizontal centres: midpoints of each inter-column gap
+    panel_cx_left = (col1_cx + col2_cx) / 2
+    panel_cx_right = (col2_cx + col3_cx) / 2
+
+    # Vertical centres: aligned with annotation text in each row
+    panel_cy_r1 = anno_y + panel_side / 2 + 1 * h_scale
+    panel_cy_r2 = row2_y + panel_side / 2 + 1 * h_scale
+
+    julia_panel_specs = [
+        (julia_cs[0], panel_cx_left,  panel_cy_r1, anno_sep_y),
+        (julia_cs[1], panel_cx_right, panel_cy_r1, anno_sep_y),
+        (julia_cs[2], panel_cx_left,  panel_cy_r2, row2_sep_y),
+        (julia_cs[3], panel_cx_right, panel_cy_r2, row2_sep_y),
+    ]
+
+    for (cr, ci, label), pcx, pcy, stop_y in julia_panel_specs:
+        _pj = ProgressReporter(julia_h_res, f"Julia: {label[:16]}") if verbose else None
+        j_grid = compute_julia_grid(cr, ci, -1.5, 1.5, -1.2, 1.2,
+                                    julia_res, julia_h_res, max_iter, progress=_pj)
+        if _pj:
+            _pj.done()
+        marker_px, marker_py = _mb_to_poster(cr, ci)
+        _draw_julia_inset(
+            julia_group, ns,
+            panel_x=pcx - panel_side / 2,
+            panel_y=pcy - panel_side / 2,
+            panel_w=panel_side, panel_h=panel_side,
+            c_real=cr, c_imag=ci,
+            label=label,
+            marker_px=marker_px, marker_py=marker_py,
+            j_grid=j_grid,
+            max_iter=max_iter,
+            set_color=set_color,
+            w_scale=w_scale, h_scale=h_scale,
+            line_stop_y=stop_y,
+            fade_edges=True,
+            theme=theme,
+        )
 
     finalize_poster(
         svg, ns, width_mm, height_mm, w_scale, h_scale,
