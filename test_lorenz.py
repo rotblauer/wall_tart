@@ -9,6 +9,9 @@ import xml.etree.ElementTree as ET
 import pytest
 
 from lorenz_poster import (
+    DEFAULT_ANGLE_X,
+    DEFAULT_ANGLE_Z,
+    compute_poincare_section,
     generate_poster,
     integrate_lorenz,
     lorenz_derivatives,
@@ -480,6 +483,136 @@ class TestGeneratePoster:
             assert rx + rw <= w, f"Ultra zoom right edge {rx+rw} > {w} for {w}x{h}"
             assert ry >= 0, f"Ultra zoom top edge {ry} < 0 for {w}x{h}"
             assert ry + rh <= h, f"Ultra zoom bottom edge {ry+rh} > {h} for {w}x{h}"
+
+
+# ---------------------------------------------------------------------------
+# Poincaré section
+# ---------------------------------------------------------------------------
+
+class TestComputePoincareSection:
+    def test_returns_list(self):
+        traj = integrate_lorenz(steps=5000)
+        section = compute_poincare_section(traj, z0=27.0, tol=0.5)
+        assert isinstance(section, list)
+
+    def test_points_are_2d(self):
+        traj = integrate_lorenz(steps=5000)
+        section = compute_poincare_section(traj, z0=27.0, tol=0.5)
+        for pt in section:
+            assert len(pt) == 2
+
+    def test_nonempty_for_default_params(self):
+        """With enough steps near the attractor, the section should be nonempty."""
+        traj = integrate_lorenz(steps=20000)
+        section = compute_poincare_section(traj, z0=27.0, tol=0.5)
+        assert len(section) > 0
+
+    def test_empty_for_short_trajectory(self):
+        """A very short trajectory from (1,1,1) may never reach z ≈ 27."""
+        traj = integrate_lorenz(steps=10, dt=0.001)
+        section = compute_poincare_section(traj, z0=27.0, tol=0.01)
+        assert isinstance(section, list)
+
+    def test_tight_tolerance(self):
+        """Tighter tolerance should yield fewer or equal points."""
+        traj = integrate_lorenz(steps=10000)
+        wide = compute_poincare_section(traj, z0=27.0, tol=1.0)
+        tight = compute_poincare_section(traj, z0=27.0, tol=0.1)
+        assert len(tight) <= len(wide)
+
+
+class TestPoincareInsetPoster:
+    def test_poincare_section_flag_no_crash(self):
+        """poincare_section=True produces a valid SVG."""
+        svg = generate_poster(steps=5000, width_mm=200, height_mm=300,
+                              poincare_section=True)
+        assert svg.tag.endswith("svg")
+
+    def test_poincare_inset_group_present(self):
+        """A 'poincare_inset' group exists when poincare_section=True."""
+        svg = generate_poster(steps=5000, width_mm=200, height_mm=300,
+                              poincare_section=True)
+        ns = "http://www.w3.org/2000/svg"
+        ps = svg.find(f".//{{{ns}}}g[@id='poincare_inset']")
+        assert ps is not None
+
+    def test_poincare_clip_path_present(self):
+        """A clipPath with id 'poincare_clip' exists when enabled."""
+        svg = generate_poster(steps=5000, width_mm=200, height_mm=300,
+                              poincare_section=True)
+        ns = "http://www.w3.org/2000/svg"
+        clip = svg.find(f".//{{{ns}}}clipPath[@id='poincare_clip']")
+        assert clip is not None
+        rect = clip.find(f"{{{ns}}}rect")
+        assert rect is not None
+        assert float(rect.get("width")) > 0
+        assert float(rect.get("height")) > 0
+
+    def test_poincare_label_present(self):
+        """The Poincaré section label text is in the SVG."""
+        svg = generate_poster(steps=5000, width_mm=200, height_mm=300,
+                              poincare_section=True)
+        xml_str = ET.tostring(svg, encoding="unicode")
+        assert "Poincar" in xml_str
+        assert "section" in xml_str
+
+    def test_no_ultra_zoom_when_poincare_enabled(self):
+        """When poincare_section=True, ultra_zoom_inset group is absent."""
+        svg = generate_poster(steps=5000, width_mm=200, height_mm=300,
+                              poincare_section=True)
+        ns = "http://www.w3.org/2000/svg"
+        uz = svg.find(f".//{{{ns}}}g[@id='ultra_zoom_inset']")
+        assert uz is None
+
+    def test_poincare_all_themes(self):
+        """Poincaré section renders without error for all themes."""
+        from poster_utils import AVAILABLE_THEMES
+        for theme in AVAILABLE_THEMES:
+            svg = generate_poster(steps=5000, width_mm=200, height_mm=300,
+                                  poincare_section=True, theme=theme)
+            ns = "http://www.w3.org/2000/svg"
+            ps = svg.find(f".//{{{ns}}}g[@id='poincare_inset']")
+            assert ps is not None, f"poincare_inset missing for theme '{theme}'"
+
+
+# ---------------------------------------------------------------------------
+# Projection angle configuration
+# ---------------------------------------------------------------------------
+
+class TestProjectionAngles:
+    def test_default_angle_constants(self):
+        """Module-level angle constants have expected values."""
+        assert DEFAULT_ANGLE_X == -0.35
+        assert DEFAULT_ANGLE_Z == 0.85
+
+    def test_custom_angles_no_crash(self):
+        """Custom projection angles produce a valid poster."""
+        svg = generate_poster(steps=1000, width_mm=200, height_mm=300,
+                              angle_x=-0.5, angle_z=1.0)
+        assert svg.tag.endswith("svg")
+
+    def test_default_angles_match_original(self):
+        """Explicit default angles produce same result as None."""
+        svg1 = generate_poster(steps=1000, width_mm=100, height_mm=150,
+                               verbose=False)
+        svg2 = generate_poster(steps=1000, width_mm=100, height_mm=150,
+                               angle_x=DEFAULT_ANGLE_X, angle_z=DEFAULT_ANGLE_Z,
+                               verbose=False)
+        xml1 = ET.tostring(svg1, encoding="unicode")
+        xml2 = ET.tostring(svg2, encoding="unicode")
+        assert xml1 == xml2
+
+
+# ---------------------------------------------------------------------------
+# Extra trajectory visual distinction
+# ---------------------------------------------------------------------------
+
+class TestExtraTrajectoryDistinction:
+    def test_zoom_label_includes_saddle_region(self):
+        """The zoom panel label mentions 'saddle region'."""
+        svg = generate_poster(steps=1000, width_mm=200, height_mm=300)
+        xml_str = ET.tostring(svg, encoding="unicode")
+        assert "saddle region" in xml_str
 
 
 # ---------------------------------------------------------------------------
