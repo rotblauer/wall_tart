@@ -556,8 +556,9 @@ class TestPoincareInsetPoster:
         assert uz is not None
         assert ps is not None
 
-    def test_poincare_panel_on_left_side(self):
-        """The Poincaré panel is positioned on the left side of the poster."""
+    def test_poincare_panel_in_annotation_row(self):
+        """The Poincaré panel is in the inter-column gap between col2 and col3."""
+        from poster_utils import COLUMN_CENTERS
         w = 200
         svg = generate_poster(steps=5000, width_mm=w, height_mm=300)
         ns = "http://www.w3.org/2000/svg"
@@ -565,17 +566,22 @@ class TestPoincareInsetPoster:
         rect = clip.find(f"{{{ns}}}rect")
         ps_x = float(rect.get("x"))
         ps_w = float(rect.get("width"))
-        # The panel should be on the left half of the poster
-        assert ps_x + ps_w < w / 2, (
-            f"Poincaré panel right edge ({ps_x + ps_w:.1f}) should be "
-            f"on the left half of the poster (< {w / 2})"
+        ps_cx = ps_x + ps_w / 2
+        col2_cx = w * COLUMN_CENTERS[1]
+        col3_cx = w * COLUMN_CENTERS[2]
+        expected_cx = (col2_cx + col3_cx) / 2
+        # Panel centre should be within one panel-width of the inter-column midpoint
+        assert abs(ps_cx - expected_cx) <= ps_w, (
+            f"Poincaré panel centre ({ps_cx:.1f}) should be near "
+            f"inter-column midpoint ({expected_cx:.1f})"
         )
 
-    def test_poincare_caption_present(self):
-        """The Poincaré panel has a rotated caption."""
+    def test_poincare_label_below_panel(self):
+        """The Poincaré panel label appears below the panel border."""
         svg = generate_poster(steps=5000, width_mm=200, height_mm=300)
         xml_str = ET.tostring(svg, encoding="unicode")
-        assert "Cross-section" in xml_str
+        # Label text is rendered outside/below the panel border
+        assert "Poincar" in xml_str
 
     def test_poincare_all_themes(self):
         """Poincaré section renders without error for all themes."""

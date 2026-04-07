@@ -233,15 +233,18 @@ def _annotation_infinite_complexity(parent, ns, target_x, target_y,
 
     The callout line points to the zoom inset panel (target_x/target_y are
     set to the panel's centre so the arrow terminates there).
+    The Poincaré section panel (in the adjacent inter-column gap) is
+    referenced in the body text.
     """
     g = draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
                                "Infinite Complexity", scale, theme=theme)
     draw_annotation_body(g, ns, col_cx, anno_y, [
         "The line never intersects itself,",
         "despite being trapped in a bounded",
-        "region of space. A cross-section",
-        "reveals fractal structure \u2014 infinite",
-        "layers, like pages of a closed book.",
+        "region of space. A Poincar\u00e9 section",
+        "\u2014 all crossings through z = 27 \u2014",
+        "exposes fractal layers: infinite",
+        "sheets, like pages of a closed book.",
     ], scale, theme=theme)
     return g
 
@@ -734,41 +737,41 @@ def compute_poincare_section(trajectory, z0=27.0, tol=0.5):
 
 
 def _draw_poincare_inset(svg, ns, poincare_pts, w_scale, h_scale,
-                         zoom_info, width_mm, attractor_color,
-                         avail_w, min_top, theme=None):
-    """Draw a Poincaré section inset panel on the upper-left of the poster.
+                         anno_y, anno_sep_y, col2_cx, col3_cx,
+                         attractor_color, theme=None):
+    """Draw a Poincaré section inset panel in the annotation-row inter-column gap.
 
-    The panel is positioned on the left side, at a similar y-value as
-    the first zoom panel (upper-right), so the poster has three
-    informative panels: Poincaré section (left), zoom (right), and
-    ultra-zoom (right, below zoom).
+    The panel is centred in the horizontal gap between the col2 and col3
+    annotation columns (same pattern as the logistic-map inline zoom panels),
+    at the same vertical level as the annotation text.  A short dashed leader
+    line rises from the panel top to the annotation separator.
 
     Parameters
     ----------
-    avail_w : float
-        Available content width (mm) — used to compute the left margin.
-    min_top : float
-        Top of the content area (mm) — unused here but kept for symmetry
-        with the zoom-panel helpers.
-
-    A small caption is placed to the left of the panel.
+    anno_y : float
+        Y-coordinate of the top of the annotation text row (poster mm).
+    anno_sep_y : float
+        Y-coordinate of the annotation separator line (panel leader line
+        terminus).
+    col2_cx, col3_cx : float
+        Centre x-coordinates of the second and third annotation columns (mm).
+    attractor_color : str
+        Fill colour for the scatter dots.
+    theme : str or None
+        Poster theme name.
     """
     t = get_theme(theme)
     border_color = t["border_color"]
     bg_color = t["bg_color"]
 
-    z1_zoom_y = zoom_info["zoom_y"]
-    z1_zoom_h = zoom_info["zoom_h"]
-
-    # --- Panel dimensions (similar size to the zoom panel) ---
-    left_margin = (width_mm - avail_w) / 2
-    ps_w = min(70.0 * w_scale, avail_w * 0.4)
-    ps_h = min(70.0 * w_scale, z1_zoom_h)
-    ps_x = left_margin                        # flush with left margin
-    ps_y = z1_zoom_y                          # same y as first zoom panel
-
-    ps_cx = ps_x + ps_w / 2
-    ps_cy = ps_y + ps_h / 2
+    # --- Panel geometry: inter-column gap between col2 and col3 ---
+    col_gap = col3_cx - col2_cx
+    ps_w = col_gap * 0.40
+    ps_h = min(ps_w, 44.0 * w_scale)   # square or capped at 44 mm
+    ps_cx = (col2_cx + col3_cx) / 2
+    ps_cy = anno_y + 1.0 * h_scale + ps_h / 2
+    ps_x = ps_cx - ps_w / 2
+    ps_y = ps_cy - ps_h / 2
 
     # --- clipPath ---
     defs_el = svg.find(f"{{{ns}}}defs")
@@ -787,6 +790,20 @@ def _draw_poincare_inset(svg, ns, poincare_pts, w_scale, h_scale,
     # --- Group ---
     ps_group = _group(svg, ns, id="poincare_inset")
 
+    # --- Leader line: panel top-centre → annotation separator ---
+    _line(ps_group, ns,
+          ps_cx, ps_y,
+          ps_cx, anno_sep_y,
+          **{"stroke": border_color,
+             "stroke-width": str(round(0.25 * w_scale, 3)),
+             "stroke-dasharray": "1.5,1.5",
+             "opacity": "0.5"})
+    # Small filled circle at the terminus (same as logistic map)
+    _circle(ps_group, ns,
+            round(ps_cx, 2), round(anno_sep_y, 2),
+            round(0.8 * w_scale, 3),
+            fill=border_color, opacity="0.45")
+
     # --- Background ---
     _rect(ps_group, ns, ps_x, ps_y, ps_w, ps_h,
           fill=bg_color, stroke="none", opacity="0.92")
@@ -800,10 +817,9 @@ def _draw_poincare_inset(svg, ns, poincare_pts, w_scale, h_scale,
         x_range = x_max - x_min if x_max != x_min else 1.0
         y_range = y_max - y_min if y_max != y_min else 1.0
 
-        # Use 90% of panel for the scatter, centred
         pad = 0.05
         plot_w = ps_w * (1 - 2 * pad)
-        plot_h = ps_h * (1 - 2 * pad) - 4.0 * h_scale  # room for label
+        plot_h = ps_h * (1 - 2 * pad)
         plot_x0 = ps_x + ps_w * pad
         plot_y0 = ps_y + ps_h * pad
 
@@ -820,26 +836,14 @@ def _draw_poincare_inset(svg, ns, poincare_pts, w_scale, h_scale,
           fill="none", stroke=border_color,
           **{"stroke-width": str(round(0.5 * w_scale, 3))})
 
-    # --- Label inside panel bottom ---
-    _text(ps_group, ns, ps_cx, ps_y + ps_h - 3.0 * h_scale,
+    # --- Label below panel border (same style as logistic-map zoom labels) ---
+    _text(ps_group, ns, ps_cx, ps_y + ps_h + 3.5 * h_scale,
           "Poincar\u00e9 section (z \u2248 27)",
-          **{**ANNOTATION_STYLE,
-             "fill": border_color,
-             "font-size": str(round(2.4 * w_scale, 2)),
-             "text-anchor": "middle",
-             "opacity": "0.55"})
-
-    # --- Caption to the left of the panel (rotated vertically) ---
-    caption_x = ps_x - 3.0 * w_scale
-    caption_y = ps_cy
-    _text(ps_group, ns, caption_x, caption_y,
-          "Cross-section at z \u2248 27",
           **{**ANNOTATION_STYLE,
              "fill": border_color,
              "font-size": str(round(2.8 * w_scale, 2)),
              "text-anchor": "middle",
-             "opacity": "0.45",
-             "transform": f"rotate(-90, {round(caption_x, 2)}, {round(caption_y, 2)})"})
+             "opacity": "0.65"})
 
 
 # ---------------------------------------------------------------------------
@@ -1160,30 +1164,34 @@ def generate_poster(steps=200000, zoom_multiplier=2, width_mm=BASE_WIDTH_MM, hei
         scaled_extra=scaled_extra,
     )
 
-    # --- Poincaré section panel (upper-left, always shown) ---
-    # Compute Poincaré section from the combined trajectory (main + extra)
-    # for maximum density of crossing points.
+    # --- Pre-compute annotation layout positions ---
+    # These are needed both to position the Poincaré panel (inline in the
+    # annotation row) and to draw the annotation text below it.
+    vis_ys = [p[1] for p in scaled_main]
+    attractor_bottom = max(vis_ys)
+
+    anno_sep_y = attractor_bottom + 10 * h_scale
+    anno_y = anno_sep_y + 18 * h_scale
+
+    col1_cx, col2_cx, col3_cx = [width_mm * f for f in COLUMN_CENTERS]
+
+    # --- Poincaré section panel (inline, in annotation-row inter-column gap) ---
+    # The panel sits in the horizontal gap between col2 and col3 text columns
+    # at the same y-level as the annotation text — mirroring the inline-zoom
+    # placement used by the logistic-map poster.
     combined_traj = traj_main + traj_extra
     poincare_pts = compute_poincare_section(combined_traj, z0=27.0, tol=0.5)
     _draw_poincare_inset(
         svg, ns, poincare_pts, w_scale, h_scale,
-        zoom_info, width_mm, attractor_color,
-        avail_w=avail_w, min_top=min_top, theme=theme,
+        anno_y, anno_sep_y, col2_cx, col3_cx,
+        attractor_color, theme=theme,
     )
 
     # --- Annotations ---
     anno_group = _group(svg, ns, id="annotations")
 
-    vis_ys = [p[1] for p in scaled_main]
-    attractor_bottom = max(vis_ys)
-
-    anno_sep_y = attractor_bottom + 10 * h_scale
     draw_row_separator(anno_group, ns, width_mm, anno_sep_y, w_scale, opacity="0.5",
                        theme=theme)
-
-    anno_y = anno_sep_y + 18 * h_scale
-
-    col1_cx, col2_cx, col3_cx = [width_mm * f for f in COLUMN_CENTERS]
 
     # Arrow targets on the attractor
     if diverge_start < len(scaled_main):
