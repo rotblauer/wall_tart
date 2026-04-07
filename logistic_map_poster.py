@@ -487,15 +487,15 @@ def _draw_inline_zoom(svg, ns, panel_cx, panel_cy, panel_w, panel_h,
           fill="none", stroke=border_color,
           **{"stroke-width": str(round(0.5 * w_scale, 3))})
 
-    # --- Label at bottom of zoom panel ---
+    # --- Label below zoom panel (outside the border, never inside the plot) ---
     _text(zoom_group, ns, panel_cx,
-          panel_y + panel_h - 2.5 * h_scale,
+          panel_y + panel_h + 3.5 * h_scale,
           label,
           **{**ANNOTATION_STYLE,
              "fill": border_color,
              "font-size": str(round(2.8 * w_scale, 2)),
              "text-anchor": "middle",
-             "opacity": "0.55"})
+             "opacity": "0.65"})
 
     return zoom_group
 
@@ -598,10 +598,17 @@ def generate_poster(r_count=2000, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_
     # --- Inline zoom panels: placed in the inter-column gaps beside annotation text ---
     # Each panel sits in the horizontal space between adjacent columns so the
     # annotation text is not displaced vertically and fits on the poster.
-    panel_w = 45 * w_scale
-    panel_h = 30 * h_scale
-    # Panels are vertically centred within the annotation text area
-    panel_cy = anno_y + panel_h / 2 + 3 * h_scale
+    #
+    # Sizing is computed dynamically from the available inter-column gap so the
+    # layout works at any poster dimension, not just A2.
+    col_gap = col2_cx - col1_cx   # = col3_cx - col2_cx for the symmetric 3-col grid
+    # Use ~47% of the gap width — leaves ~26% (~7 mm at A2) clearance on each side
+    panel_w = col_gap * 0.47
+    # Height: ~58% of width gives a natural 5:3 landscape ratio
+    panel_h = panel_w * 0.58
+    # Centre the panel just above the annotation-text midline so the caption
+    # that hangs below the border still clears the row-2 separator.
+    panel_cy = anno_y + panel_h / 2 + 1 * h_scale
 
     # Edge of Chaos: centred in the gap between col1 and col2 (~136mm at A2)
     panel_cx_ec = (col1_cx + col2_cx) / 2
