@@ -348,42 +348,49 @@ def _panel_population_biology(parent, ns, col_cx, anno_y, scale=1):
 # Zoom inset panel for logistic map
 # ---------------------------------------------------------------------------
 
-def _draw_zoom_inset(svg, ns, panel_x, panel_y, panel_w, panel_h,
-                     src_r_min, src_r_max, src_x_min, src_x_max,
-                     data_r_min, data_r_max, data_x_min, data_x_max,
-                     margin, avail_w, avail_h, min_top,
-                     diagram_color, label, clip_id, w_scale, h_scale,
-                     progress=None, theme=None):
-    """Draw a zoom inset panel on the logistic map poster.
+def _draw_inline_zoom(svg, ns, panel_cx, panel_cy, panel_w, panel_h,
+                      src_r_min, src_r_max, src_x_min, src_x_max,
+                      main_transform_fn, diagram_color, label,
+                      clip_id, w_scale, h_scale,
+                      line_stop_y=None,
+                      progress=None, theme=None):
+    """Draw an inline zoom panel in the inter-column gap beside annotation text.
 
-    Computes high-resolution bifurcation data for the source region and
-    draws it inside a clipped panel, with connector lines from the main
-    diagram and a label.
+    The panel is centred at (*panel_cx*, *panel_cy*).  A small bounding
+    box is drawn on the main diagram at the source region, and a single
+    delicate dashed line descends from the bottom-centre of that box.  If
+    *line_stop_y* is supplied the line terminates there (e.g. at the
+    annotation separator) so that it never overlaps the annotation text
+    below.  A small filled circle marks the terminus of the line.
 
     Parameters
     ----------
     svg : Element
         Root SVG element.
-    panel_x, panel_y, panel_w, panel_h : float
-        Position and size of the zoom panel (poster coordinates).
+    panel_cx, panel_cy : float
+        Centre of the zoom panel (poster coordinates).
+    panel_w, panel_h : float
+        Width and height of the zoom panel.
     src_r_min, src_r_max : float
         Source r-parameter range to zoom into.
     src_x_min, src_x_max : float
         Source x-value range to zoom into.
-    data_r_min, data_r_max : float
-        Full r-parameter range of the main diagram.
-    data_x_min, data_x_max : float
-        Full x-value range of the main diagram.
-    margin, avail_w, avail_h, min_top : float
-        Layout parameters from the main diagram.
+    main_transform_fn : callable
+        The ``_transform(r, x) -> (px, py)`` closure from
+        ``generate_poster`` that maps data coordinates to poster
+        coordinates on the main diagram.
     diagram_color : str
         Colour for the bifurcation dots.
     label : str
-        Text label for the zoom panel.
+        Text label drawn at the bottom of the zoom panel.
     clip_id : str
-        Unique id for the SVG clipPath element.
+        Unique id for the SVG ``<clipPath>`` element.
     w_scale, h_scale : float
         Poster scaling factors.
+    line_stop_y : float or None
+        If given, the dashed leader line ends at this y-coordinate instead
+        of continuing all the way to the zoom panel top.  Pass
+        ``anno_sep_y`` to keep the line entirely within the diagram area.
     progress : ProgressReporter or None
         Optional progress reporter.
     theme : str or None
@@ -398,19 +405,16 @@ def _draw_zoom_inset(svg, ns, panel_x, panel_y, panel_w, panel_h,
     border_color = t["border_color"]
     bg_color = t["bg_color"]
 
-    data_r_range = data_r_max - data_r_min if data_r_max != data_r_min else 1.0
-    data_x_range = data_x_max - data_x_min if data_x_max != data_x_min else 1.0
+    # Panel top-left from centre
+    panel_x = panel_cx - panel_w / 2
+    panel_y = panel_cy - panel_h / 2
 
     # --- Map source bounds to main diagram coordinates ---
-    def _main_transform(r_val, x_val):
-        px = margin + (r_val - data_r_min) / data_r_range * avail_w
-        py = min_top + avail_h - (x_val - data_x_min) / data_x_range * avail_h
-        return (px, py)
-
-    tgt_x1, tgt_y1 = _main_transform(src_r_min, src_x_max)  # top-left
-    tgt_x2, tgt_y2 = _main_transform(src_r_max, src_x_min)  # bottom-right
-    tgt_w = tgt_x2 - tgt_x1
-    tgt_h = tgt_y2 - tgt_y1
+    src_tl_x, src_tl_y = main_transform_fn(src_r_min, src_x_max)   # top-left
+    src_br_x, src_br_y = main_transform_fn(src_r_max, src_x_min)   # bottom-right
+    src_w = src_br_x - src_tl_x
+    src_h = src_br_y - src_tl_y
+    src_cx = src_tl_x + src_w / 2
 
     # --- Add clipPath to <defs> ---
     defs_el = svg.find(f"{{{ns}}}defs")
@@ -428,42 +432,40 @@ def _draw_zoom_inset(svg, ns, panel_x, panel_y, panel_w, panel_h,
     # --- Group for all zoom elements ---
     zoom_group = _group(svg, ns, id=clip_id.replace("_clip", ""))
 
-    # --- Target bounding box on the main diagram ---
-    _rect(zoom_group, ns, tgt_x1, tgt_y1, tgt_w, tgt_h,
+    # --- Source bounding box on the main diagram ---
+    _rect(zoom_group, ns, src_tl_x, src_tl_y, src_w, src_h,
           fill=border_color,
           **{"fill-opacity": "0.07",
              "stroke": border_color,
              "stroke-width": str(round(0.35 * w_scale, 3))})
 
-    # --- Connector lines: target box corners → zoom panel corners ---
-    conn_style = {
-        "stroke": border_color,
-        "stroke-width": str(round(0.25 * w_scale, 3)),
-        "stroke-dasharray": "1.5,1.5",
-        "opacity": "0.35",
-    }
-    src_corners = [
-        (tgt_x1, tgt_y1), (tgt_x2, tgt_y1),
-        (tgt_x2, tgt_y2), (tgt_x1, tgt_y2),
-    ]
-    panel_corners = [
-        (panel_x, panel_y), (panel_x + panel_w, panel_y),
-        (panel_x + panel_w, panel_y + panel_h), (panel_x, panel_y + panel_h),
-    ]
-    for (sx, sy), (zx, zy) in zip(src_corners, panel_corners):
-        _line(zoom_group, ns, sx, sy, zx, zy, **conn_style)
+    # --- Dashed leader line: bottom-centre of source box → stop point ---
+    # When line_stop_y is provided the line terminates there (at the
+    # annotation separator) so it never runs through the annotation text.
+    line_end_y = line_stop_y if line_stop_y is not None else panel_y
+    line_end_x = panel_cx
+    _line(zoom_group, ns,
+          src_cx, src_br_y,
+          line_end_x, line_end_y,
+          **{"stroke": border_color,
+             "stroke-width": str(round(0.25 * w_scale, 3)),
+             "stroke-dasharray": "1.5,1.5",
+             "opacity": "0.5"})
+    # Small filled circle at the terminus so the viewer can follow the chain
+    # from the diagram down to the zoom panel sitting just below.
+    _circle(zoom_group, ns,
+            round(line_end_x, 2), round(line_end_y, 2),
+            round(0.8 * w_scale, 3),
+            fill=border_color, opacity="0.45")
 
     # --- Panel background ---
     _rect(zoom_group, ns, panel_x, panel_y, panel_w, panel_h,
           fill=bg_color, stroke="none", opacity="0.92")
 
     # --- Compute high-res bifurcation data for the zoom region ---
-    # Higher resolution than the main diagram to reveal fractal detail:
-    # 800 r-samples, 500 settle iterations (ensures convergence in narrow
-    # windows), 200 plot values per sample.
     zoom_data = bifurcation_data(
         r_min=src_r_min, r_max=src_r_max,
-        n_r=800, n_settle=500, n_plot=200,
+        n_r=600, n_settle=400, n_plot=150,
         progress=progress,
     )
 
@@ -473,7 +475,7 @@ def _draw_zoom_inset(svg, ns, panel_x, panel_y, panel_w, panel_h,
     zoom_r_range = src_r_max - src_r_min if src_r_max != src_r_min else 1.0
     zoom_x_range = src_x_max - src_x_min if src_x_max != src_x_min else 1.0
 
-    dot_r = round(0.12 * w_scale, 3)
+    dot_r = round(0.15 * w_scale, 3)
     for r_val, x_val in zoom_data:
         px = panel_x + (r_val - src_r_min) / zoom_r_range * panel_w
         py = panel_y + panel_h - (x_val - src_x_min) / zoom_x_range * panel_h
@@ -485,15 +487,15 @@ def _draw_zoom_inset(svg, ns, panel_x, panel_y, panel_w, panel_h,
           fill="none", stroke=border_color,
           **{"stroke-width": str(round(0.5 * w_scale, 3))})
 
-    # --- Label at bottom of zoom panel ---
-    _text(zoom_group, ns, panel_x + panel_w / 2,
-          panel_y + panel_h - 2.5 * h_scale,
+    # --- Label below zoom panel (outside the border, never inside the plot) ---
+    _text(zoom_group, ns, panel_cx,
+          panel_y + panel_h + 3.5 * h_scale,
           label,
           **{**ANNOTATION_STYLE,
              "fill": border_color,
              "font-size": str(round(2.8 * w_scale, 2)),
              "text-anchor": "middle",
-             "opacity": "0.55"})
+             "opacity": "0.65"})
 
     return zoom_group
 
@@ -582,59 +584,6 @@ def generate_poster(r_count=2000, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_
     y_label.set("transform",
                 f"rotate(-90, {margin - 8 * w_scale}, {min_top + avail_h / 2})")
 
-    # --- Zoom inset panels (placed in upper-left where the diagram is sparse) ---
-    zoom_panel_w = min(55.0 * w_scale, avail_w * 0.35)
-    zoom_panel_h = min(42.0 * w_scale, avail_h * 0.25)
-    zoom_gap = 6.0 * w_scale
-
-    zoom1_x = margin + 4.0 * w_scale
-    zoom1_y = min_top + 4.0 * h_scale
-
-    _pz1 = ProgressReporter(800, "Logistic: zoom 1") if verbose else None
-    _draw_zoom_inset(
-        svg, ns, zoom1_x, zoom1_y, zoom_panel_w, zoom_panel_h,
-        # Period-3 window: famous stable 3-cycle visible near r ≈ 3.83
-        src_r_min=3.828, src_r_max=3.856,
-        src_x_min=0.4, src_x_max=0.55,
-        data_r_min=r_min, data_r_max=r_max,
-        data_x_min=data_x_min, data_x_max=data_x_max,
-        margin=margin, avail_w=avail_w, avail_h=avail_h, min_top=min_top,
-        diagram_color=diagram_color,
-        label="Period-3 Window",
-        clip_id="zoom1_clip",
-        w_scale=w_scale, h_scale=h_scale,
-        progress=_pz1, theme=theme,
-    )
-    if _pz1:
-        _pz1.done()
-
-    zoom2_x = zoom1_x
-    zoom2_y = zoom1_y + zoom_panel_h + zoom_gap
-
-    _pz2 = ProgressReporter(800, "Logistic: zoom 2") if verbose else None
-    _draw_zoom_inset(
-        svg, ns, zoom2_x, zoom2_y, zoom_panel_w, zoom_panel_h,
-        # Onset of chaos: the Feigenbaum accumulation point region
-        src_r_min=3.54, src_r_max=3.59,
-        src_x_min=0.8, src_x_max=0.9,
-        data_r_min=r_min, data_r_max=r_max,
-        data_x_min=data_x_min, data_x_max=data_x_max,
-        margin=margin, avail_w=avail_w, avail_h=avail_h, min_top=min_top,
-        diagram_color=diagram_color,
-        label="Onset of Chaos",
-        clip_id="zoom2_clip",
-        w_scale=w_scale, h_scale=h_scale,
-        progress=_pz2, theme=theme,
-    )
-    if _pz2:
-        _pz2.done()
-
-    # Zoom panel centres for annotation arrow targets
-    zoom1_cx = zoom1_x + zoom_panel_w / 2
-    zoom1_cy = zoom1_y + zoom_panel_h / 2
-    zoom2_cx = zoom2_x + zoom_panel_w / 2
-    zoom2_cy = zoom2_y + zoom_panel_h / 2
-
     # --- Annotations ---
     anno_group = _group(svg, ns, id="annotations")
 
@@ -646,10 +595,70 @@ def generate_poster(r_count=2000, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_
 
     col1_cx, col2_cx, col3_cx = [width_mm * f for f in COLUMN_CENTERS]
 
-    # Arrow targets: point annotations to zoom panels where applicable
+    # --- Inline zoom panels: placed in the inter-column gaps beside annotation text ---
+    # Each panel sits in the horizontal space between adjacent columns so the
+    # annotation text is not displaced vertically and fits on the poster.
+    #
+    # Sizing is computed dynamically from the available inter-column gap so the
+    # layout works at any poster dimension, not just A2.
+    col_gap = col2_cx - col1_cx   # = col3_cx - col2_cx for the symmetric 3-col grid
+    # Use ~47% of the gap width — leaves ~26% (~7 mm at A2) clearance on each side
+    panel_w = col_gap * 0.47
+    # Height: ~58% of width gives a natural 5:3 landscape ratio
+    panel_h = panel_w * 0.58
+    # Centre the panel just above the annotation-text midline so the caption
+    # that hangs below the border still clears the row-2 separator.
+    panel_cy = anno_y + panel_h / 2 + 1 * h_scale
+
+    # Edge of Chaos: centred in the gap between col1 and col2 (~136mm at A2)
+    panel_cx_ec = (col1_cx + col2_cx) / 2
+    # Period-3 Window: centred in the gap between col2 and col3 (~284mm at A2)
+    panel_cx_wo = (col2_cx + col3_cx) / 2
+
+    # Zoom 1: Edge of Chaos (left of col2 text)
+    _pz1 = ProgressReporter(600, "Logistic: zoom 1") if verbose else None
+    _draw_inline_zoom(
+        svg, ns,
+        panel_cx=panel_cx_ec, panel_cy=panel_cy,
+        panel_w=panel_w, panel_h=panel_h,
+        src_r_min=3.54, src_r_max=3.59,
+        src_x_min=0.8, src_x_max=0.9,
+        main_transform_fn=_transform,
+        diagram_color=diagram_color,
+        label="Onset of Chaos",
+        clip_id="zoom1_clip",
+        w_scale=w_scale, h_scale=h_scale,
+        line_stop_y=anno_sep_y,
+        progress=_pz1, theme=theme,
+    )
+    if _pz1:
+        _pz1.done()
+
+    # Zoom 2: Period-3 Window (left of col3 text)
+    _pz2 = ProgressReporter(600, "Logistic: zoom 2") if verbose else None
+    _draw_inline_zoom(
+        svg, ns,
+        panel_cx=panel_cx_wo, panel_cy=panel_cy,
+        panel_w=panel_w, panel_h=panel_h,
+        src_r_min=3.828, src_r_max=3.856,
+        src_x_min=0.4, src_x_max=0.55,
+        main_transform_fn=_transform,
+        diagram_color=diagram_color,
+        label="Period-3 Window",
+        clip_id="zoom2_clip",
+        w_scale=w_scale, h_scale=h_scale,
+        line_stop_y=anno_sep_y,
+        progress=_pz2, theme=theme,
+    )
+    if _pz2:
+        _pz2.done()
+
+    # All annotation arrows point upward to their r-value on the main diagram.
+    # The zoom panels are already visually connected to the diagram via the
+    # source-region highlight box, so no extra cross-text arrow is needed.
     pd_target = _transform(3.2, 0.8)
-    ec_target = (zoom2_cx, zoom2_y + zoom_panel_h)
-    wo_target = (zoom1_cx, zoom1_y + zoom_panel_h)
+    ec_target = _transform(3.5699, 0.5)   # Feigenbaum point (onset of chaos)
+    wo_target = _transform(3.83, 0.5)     # Period-3 window
 
     draw_annotation_row(
         anno_group, ns, anno_y,

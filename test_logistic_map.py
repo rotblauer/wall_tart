@@ -228,13 +228,16 @@ class TestGeneratePoster:
         assert float(rect.get("width")) > 0
         assert float(rect.get("height")) > 0
 
-    def test_zoom1_connector_lines_present(self):
-        """The zoom1 group contains 4 dashed connector lines."""
+    def test_zoom1_connector_line_present(self):
+        """The zoom1 group contains a single dashed leader line."""
         svg = generate_poster(r_count=50, width_mm=200, height_mm=300)
         ns = "http://www.w3.org/2000/svg"
         zoom1 = svg.find(f".//{{{ns}}}g[@id='zoom1']")
         lines = zoom1.findall(f"{{{ns}}}line")
-        assert len(lines) == 4
+        assert len(lines) == 1
+        # Verify it has the expected dash style
+        line = lines[0]
+        assert line.get("stroke-dasharray") == "1.5,1.5"
 
     def test_zoom1_has_circles(self):
         """Zoom 1 panel contains high-res bifurcation circles."""
