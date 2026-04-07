@@ -558,16 +558,17 @@ class TestPoincareInsetPoster:
 
     def test_poincare_panel_on_left_side(self):
         """The Poincaré panel is positioned on the left side of the poster."""
-        svg = generate_poster(steps=5000, width_mm=200, height_mm=300)
+        w = 200
+        svg = generate_poster(steps=5000, width_mm=w, height_mm=300)
         ns = "http://www.w3.org/2000/svg"
         clip = svg.find(f".//{{{ns}}}clipPath[@id='poincare_clip']")
         rect = clip.find(f"{{{ns}}}rect")
         ps_x = float(rect.get("x"))
         ps_w = float(rect.get("width"))
         # The panel should be on the left half of the poster
-        assert ps_x + ps_w < 200 / 2, (
+        assert ps_x + ps_w < w / 2, (
             f"Poincaré panel right edge ({ps_x + ps_w:.1f}) should be "
-            f"on the left half of the poster (< {200 / 2})"
+            f"on the left half of the poster (< {w / 2})"
         )
 
     def test_poincare_caption_present(self):

@@ -743,6 +743,14 @@ def _draw_poincare_inset(svg, ns, poincare_pts, w_scale, h_scale,
     informative panels: Poincaré section (left), zoom (right), and
     ultra-zoom (right, below zoom).
 
+    Parameters
+    ----------
+    avail_w : float
+        Available content width (mm) — used to compute the left margin.
+    min_top : float
+        Top of the content area (mm) — unused here but kept for symmetry
+        with the zoom-panel helpers.
+
     A small caption is placed to the left of the panel.
     """
     t = get_theme(theme)
