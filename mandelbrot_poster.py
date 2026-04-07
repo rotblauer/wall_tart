@@ -408,6 +408,7 @@ def _draw_grid(parent, ns, grid, max_iter, gx, gy, cell_w, cell_h,
     blend smoothly into the poster background instead of forming abrupt dark
     rectangles.
     """
+    # ~1/12 of max_iter provides a smooth fade zone at the grid edges
     fade_iters = max(1, max_iter // 12) if fade_edges else 0
     for row_idx, row_data in enumerate(grid):
         for col_idx, escape in enumerate(row_data):
@@ -417,6 +418,7 @@ def _draw_grid(parent, ns, grid, max_iter, gx, gy, cell_w, cell_h,
             extra = {}
             if fade_iters and 0 < escape < fade_iters and escape < max_iter:
                 op = escape / fade_iters
+                # Skip cells that would be nearly invisible (< 2 % opacity)
                 if op < 0.02:
                     continue
                 extra["fill-opacity"] = str(round(op, 3))

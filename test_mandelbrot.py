@@ -244,9 +244,9 @@ class TestJuliaInlinePlacement:
         svg = generate_poster(resolution=10, max_iter=10, width_mm=200, height_mm=300)
         ns = "http://www.w3.org/2000/svg"
         julia_g = svg.find(f".//{{{ns}}}g[@id='julia_sets']")
-        # Each Julia inset produces 2 circles (ring + centre dot) + 1 terminal circle
+        # Each Julia inset draws 3 circles: marker ring, centre dot, terminal dot
         circles = julia_g.findall(f".//{{{ns}}}circle")
-        assert len(circles) >= 8  # at least 2 per inset × 4 insets
+        assert len(circles) >= 12  # 3 circles × 4 insets
 
 
 class TestFadeEdges:
