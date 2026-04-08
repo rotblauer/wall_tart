@@ -399,6 +399,46 @@ def _panel_special_regions(parent, ns, col_cx, anno_y, scale=1):
 # Poster composition
 # ---------------------------------------------------------------------------
 
+def _add_ellipse_clip(svg, ns, clip_id, cx, cy, rx, ry):
+    """Insert a ``<clipPath>`` containing an ellipse into the SVG ``<defs>``.
+
+    Creates the ``<defs>`` element if it does not already exist in *svg*.
+
+    Parameters
+    ----------
+    svg : Element
+        The root ``<svg>`` element.
+    ns : str
+        SVG namespace URI.
+    clip_id : str
+        Unique ``id`` for the ``<clipPath>`` element.
+    cx, cy : float
+        Centre of the ellipse in poster coordinates (mm).
+    rx, ry : float
+        Horizontal and vertical radii of the ellipse (mm).
+
+    Returns
+    -------
+    Element
+        The newly created ``<clipPath>`` element.
+    """
+    defs = svg.find(f"{{{ns}}}defs")
+    if defs is None:
+        defs = ET.SubElement(svg, f"{{{ns}}}defs")
+    clip = ET.SubElement(defs, f"{{{ns}}}clipPath", attrib={"id": clip_id})
+    ET.SubElement(
+        clip,
+        f"{{{ns}}}ellipse",
+        attrib={
+            "cx": str(round(cx, 4)),
+            "cy": str(round(cy, 4)),
+            "rx": str(round(rx, 4)),
+            "ry": str(round(ry, 4)),
+        },
+    )
+    return clip
+
+
 def _draw_grid(parent, ns, grid, max_iter, gx, gy, cell_w, cell_h,
                set_color="#1C1C1C", fade_edges=False):
     """Render a 2-D escape-time grid as coloured SVG rectangles.
@@ -433,7 +473,8 @@ def _draw_grid(parent, ns, grid, max_iter, gx, gy, cell_w, cell_h,
 def _draw_julia_inset(parent, ns, panel_x, panel_y, panel_w, panel_h,
                       c_real, c_imag, label, marker_px, marker_py,
                       j_grid, max_iter, set_color, w_scale, h_scale,
-                      line_stop_y=None, fade_edges=False, theme=None):
+                      line_stop_y=None, fade_edges=False, theme=None,
+                      clip_path_id=None):
     """Draw a Julia set inset panel on the Mandelbrot poster.
 
     Renders the Julia grid inside a styled panel, places a small circular
@@ -473,6 +514,12 @@ def _draw_julia_inset(parent, ns, panel_x, panel_y, panel_w, panel_h,
         so the Julia structure floats on the poster background.
     theme : str or None
         Poster theme name.
+    clip_path_id : str or None
+        When provided, the ``clip-path="url(#clip_path_id)"`` attribute is
+        applied to the grid sub-group so the rendered cells are clipped to
+        the pre-registered elliptical ``<clipPath>``.  The label, marker
+        circle, and connector line are drawn outside the clip so they remain
+        fully visible.
     """
     t = get_theme(theme)
     border_color = t["border_color"]
@@ -491,7 +538,12 @@ def _draw_julia_inset(parent, ns, panel_x, panel_y, panel_w, panel_h,
     j_cols = len(j_grid[0]) if j_rows > 0 else 1
     j_cell_w = panel_w / j_cols
     j_cell_h = panel_h / j_rows
-    _draw_grid(inset_group, ns, j_grid, max_iter,
+    # Grid cells go into their own sub-group so the optional elliptical clip
+    # only affects the fractal cells, not the label or marker circle.
+    grid_group = _group(inset_group, ns)
+    if clip_path_id:
+        grid_group.set("clip-path", f"url(#{clip_path_id})")
+    _draw_grid(grid_group, ns, j_grid, max_iter,
                panel_x, panel_y, j_cell_w, j_cell_h,
                set_color=set_color, fade_edges=fade_edges)
 
@@ -631,7 +683,19 @@ def generate_poster(resolution=80, max_iter=100,
     fractal_y = min_top + (fractal_h - render_h) / 2
 
     # --- Draw Mandelbrot set ---
+    # Wrap the fractal cells in an elliptical clip to dissolve the hard
+    # rectangular grid boundary.  The ellipse is sized to encompass the
+    # full extent of the Mandelbrot set while clipping the featureless
+    # corners of the rectangular render area.
+    _add_ellipse_clip(
+        svg, ns, "mandelbrotClip",
+        cx=fractal_x + render_w / 2,
+        cy=fractal_y + render_h / 2,
+        rx=render_w / 2 * 0.87,
+        ry=render_h / 2 * 0.98,
+    )
     fractal_group = _group(svg, ns, id="fractal")
+    fractal_group.set("clip-path", "url(#mandelbrotClip)")
     _draw_grid(fractal_group, ns, grid, max_iter,
                fractal_x, fractal_y, cell_size, cell_size,
                set_color=set_color, fade_edges=True)
@@ -736,13 +800,23 @@ def generate_poster(resolution=80, max_iter=100,
         (julia_cs[3], panel_cx_right, panel_cy_r2, row2_sep_y),
     ]
 
-    for (cr, ci, label), pcx, pcy, stop_y in julia_panel_specs:
+    for j_idx, ((cr, ci, label), pcx, pcy, stop_y) in enumerate(julia_panel_specs):
         _pj = ProgressReporter(julia_h_res, f"Julia: {label[:16]}") if verbose else None
         j_grid = compute_julia_grid(cr, ci, -1.5, 1.5, -1.2, 1.2,
                                     julia_res, julia_h_res, max_iter, progress=_pj)
         if _pj:
             _pj.done()
         marker_px, marker_py = _mb_to_poster(cr, ci)
+        # Elliptical clip for this Julia inset — clips only the grid cells so
+        # labels and marker circles remain fully visible outside the clip region.
+        julia_clip_id = f"juliaClip{j_idx}"
+        _add_ellipse_clip(
+            svg, ns, julia_clip_id,
+            cx=pcx,
+            cy=pcy,
+            rx=panel_side / 2 * 0.90,
+            ry=panel_side / 2 * 0.90,
+        )
         _draw_julia_inset(
             julia_group, ns,
             panel_x=pcx - panel_side / 2,
@@ -758,6 +832,7 @@ def generate_poster(resolution=80, max_iter=100,
             line_stop_y=stop_y,
             fade_edges=True,
             theme=theme,
+            clip_path_id=julia_clip_id,
         )
 
     finalize_poster(
