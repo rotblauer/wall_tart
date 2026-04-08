@@ -169,6 +169,18 @@ def project_3d_to_2d(points_3d, angle_x=-0.35, angle_z=0.85):
 ATTRACTOR_COLOR = "#1C1C1C"  # near-black ink
 DIVERGED_COLOR = "#8B0000"   # red for diverged trajectory
 
+# ---------------------------------------------------------------------------
+# Default projection angles (radians)
+#
+# These angles control the 3-D → 2-D rotation used when drawing the
+# attractor.  Adjusting them changes the viewing perspective:
+#   angle_x  — rotation about the X-axis (tilts the butterfly up/down)
+#   angle_z  — rotation about the Z-axis (rotates the butterfly left/right)
+# ---------------------------------------------------------------------------
+
+DEFAULT_ANGLE_X = -0.35
+DEFAULT_ANGLE_Z = 0.85
+
 
 # ---------------------------------------------------------------------------
 # Annotation builders
@@ -177,34 +189,35 @@ DIVERGED_COLOR = "#8B0000"   # red for diverged trajectory
 def _annotation_butterfly_effect(parent, ns, target_x, target_y,
                                   col_cx, anno_y, scale=1, theme=None):
     """Annotation: sensitive dependence on initial conditions."""
-    g = draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
-                               "The Butterfly Effect", scale, theme=theme)
+    t = get_theme(theme)
+    g = _group(parent, ns)
 
-    body_style = {**ANNOTATION_STYLE, "font-size": str(round(3.8 * scale, 2)),
-                  "text-anchor": "middle"}
-    body_y = anno_y + 9 * scale
-    lh = 5 * scale
-
-    _multiline_text(
-        g, ns, col_cx, body_y,
-        [
-            "Two trajectories start just 1e-10",
-            "apart \u2014 an unimaginably tiny gap.",
-            "Yet they diverge wildly: sensitive",
-            "dependence on initial conditions",
-            "makes long-term prediction impossible.",
-        ],
-        line_height=lh,
-        **body_style,
-    )
+    _text(g, ns, col_cx, anno_y + 2 * scale, "The Butterfly Effect",
+          **{**ANNOTATION_STYLE,
+             "font-size": str(round(5 * scale, 2)),
+             "fill": t["accent_color"],
+             "text-anchor": "middle"})
+    draw_annotation_body(g, ns, col_cx, anno_y, [
+        "Two trajectories start just 1e-10",
+        "apart \u2014 an unimaginably tiny gap.",
+        "Yet they diverge wildly: sensitive",
+        "dependence on initial conditions",
+        "makes long-term prediction impossible.",
+    ], scale, theme=theme)
     return g
 
 
 def _annotation_two_wings(parent, ns, target_x, target_y,
                            col_cx, anno_y, scale=1, theme=None):
     """Annotation: the two lobes ('wings') of the attractor."""
-    g = draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
-                               "The Two \u2018Wings\u2019", scale, theme=theme)
+    t = get_theme(theme)
+    g = _group(parent, ns)
+
+    _text(g, ns, col_cx, anno_y + 2 * scale, "The Two \u2018Wings\u2019",
+          **{**ANNOTATION_STYLE,
+             "font-size": str(round(5 * scale, 2)),
+             "fill": t["accent_color"],
+             "text-anchor": "middle"})
     draw_annotation_body(g, ns, col_cx, anno_y, [
         "The trajectory orbits two unstable",
         "fixed points, spiralling around one",
@@ -219,17 +232,20 @@ def _annotation_infinite_complexity(parent, ns, target_x, target_y,
                                      col_cx, anno_y, scale=1, theme=None):
     """Annotation: the fractal nature of the strange attractor.
 
-    The callout line points to the zoom inset panel (target_x/target_y are
-    set to the panel's centre so the arrow terminates there).
+    The callout line points to the zoom source box (saddle region) on the
+    attractor.  Two Poincaré section panels flank this text — x ≈ 0 on the
+    left and z ≈ 27 on the right — exposing the fractal structure from
+    different slicing planes.
     """
     g = draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
                                "Infinite Complexity", scale, theme=theme)
     draw_annotation_body(g, ns, col_cx, anno_y, [
         "The line never intersects itself,",
         "despite being trapped in a bounded",
-        "region of space. A cross-section",
-        "reveals fractal structure \u2014 infinite",
-        "layers, like pages of a closed book.",
+        "region. Two Poincar\u00e9 slices \u2014",
+        "at x = 0 and z = 27 \u2014 expose",
+        "fractal layers: infinite sheets,",
+        "like pages of a closed book.",
     ], scale, theme=theme)
     return g
 
@@ -301,7 +317,7 @@ def _find_best_zoom_center(scaled_main, origin_x, origin_y, w_scale):
 def _draw_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
                      center_x, center_y, avail_w, avail_h, min_top,
                      width_mm, attractor_color, origin_poster=None,
-                     theme=None, scaled_extra=None):
+                     theme=None, scaled_extra=None, preferred_y=None):
     """Draw a zoom-inset panel highlighting the saddle / transition region.
 
     The saddle region near the 3-D origin (0, 0, 0) is where the two lobes
@@ -358,7 +374,11 @@ def _draw_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
     zoom_w = min(70.0 * w_scale, avail_w * 0.4)
     zoom_h = min(70.0 * w_scale, avail_h * 0.4)
     zoom_x = width_mm - right_margin - zoom_w  # flush with right margin
-    zoom_y = min_top + 4.0 * h_scale           # just below the header-rule gap
+    if preferred_y is not None:
+        # Caller has requested a specific top-y for the panel.
+        zoom_y = max(min_top + 4.0 * h_scale, preferred_y)
+    else:
+        zoom_y = min_top + 4.0 * h_scale       # just below the header-rule gap
 
     # Clamp so the panel stays within poster bounds.
     if zoom_x + zoom_w > width_mm - right_margin:
@@ -448,7 +468,10 @@ def _draw_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
                      "stroke-linecap": "round"})
 
     # --- Extra-detail trajectory (only in zoom) ---
+    # Drawn at reduced opacity so it is subtly distinguishable from the
+    # main trajectory while still contributing fractal detail.
     if scaled_extra:
+        extra_sw = str(round(0.04 * w_scale, 3))
         segment = []
         for px, py in scaled_extra:
             if abs(px - src_cx) <= sample_hw and abs(py - src_cy) <= sample_hh:
@@ -456,15 +479,15 @@ def _draw_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
             else:
                 if len(segment) >= 2:
                     _polyline(zoom_lines_g, ns, segment,
-                              stroke=attractor_color, opacity="0.75",
-                              **{"stroke-width": thin_sw,
+                              stroke=attractor_color, opacity="0.45",
+                              **{"stroke-width": extra_sw,
                                  "stroke-linejoin": "round",
                                  "stroke-linecap": "round"})
                 segment = []
         if len(segment) >= 2:
             _polyline(zoom_lines_g, ns, segment,
-                      stroke=attractor_color, opacity="0.75",
-                      **{"stroke-width": thin_sw,
+                      stroke=attractor_color, opacity="0.45",
+                      **{"stroke-width": extra_sw,
                          "stroke-linejoin": "round",
                          "stroke-linecap": "round"})
 
@@ -475,7 +498,7 @@ def _draw_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
 
     # --- Subtle label in bottom of zoom panel ---
     _text(zoom_group, ns, zoom_cx, zoom_y + zoom_h - 3.5 * h_scale,
-          magnify_label,
+          f"{magnify_label}  \u2014  saddle region",
           **{**ANNOTATION_STYLE,
              "fill": border_color,
              "font-size": str(round(2.8 * w_scale, 2)),
@@ -645,7 +668,10 @@ def _draw_ultra_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
                      "stroke-linecap": "round"})
 
     # --- Extra-detail trajectory (only in ultra-zoom) ---
+    # Drawn at reduced opacity so it is subtly distinguishable from the
+    # main trajectory while still contributing fractal detail.
     if scaled_extra:
+        extra_sw = str(round(0.02 * w_scale, 3))
         segment = []
         for px, py in scaled_extra:
             if abs(px - src_cx) <= sample_hw and abs(py - src_cy) <= sample_hh:
@@ -653,15 +679,15 @@ def _draw_ultra_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
             else:
                 if len(segment) >= 2:
                     _polyline(uz_lines_g, ns, segment,
-                              stroke=attractor_color, opacity="0.75",
-                              **{"stroke-width": ultra_thin_sw,
+                              stroke=attractor_color, opacity="0.45",
+                              **{"stroke-width": extra_sw,
                                  "stroke-linejoin": "round",
                                  "stroke-linecap": "round"})
                 segment = []
         if len(segment) >= 2:
             _polyline(uz_lines_g, ns, segment,
-                      stroke=attractor_color, opacity="0.75",
-                      **{"stroke-width": ultra_thin_sw,
+                      stroke=attractor_color, opacity="0.45",
+                      **{"stroke-width": extra_sw,
                          "stroke-linejoin": "round",
                          "stroke-linecap": "round"})
 
@@ -678,6 +704,188 @@ def _draw_ultra_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
              "font-size": str(round(2.4 * w_scale, 2)),
              "text-anchor": "middle",
              "opacity": "0.55"})
+
+
+# ---------------------------------------------------------------------------
+# Poincaré section helpers
+# ---------------------------------------------------------------------------
+
+def compute_poincare_section(trajectory, z0=27.0, tol=0.5):
+    """Collect (x, y) points where the trajectory crosses z ≈ z0.
+
+    The Poincaré section is a standard tool for visualising fractal
+    structure in the Lorenz attractor.  By slicing through a fixed
+    z-plane the continuous 3-D flow is reduced to a 2-D point cloud
+    whose structure reveals the attractor's fractal layers.
+
+    Parameters
+    ----------
+    trajectory : list[tuple[float, float, float]]
+        3-D trajectory from :func:`integrate_lorenz`.
+    z0 : float
+        The z-value at which to take the cross-section (default 27,
+        near the top of the attractor where the lobes meet).
+    tol : float
+        Half-width of the z-band: points with ``|z - z0| < tol``
+        are included.
+
+    Returns
+    -------
+    list[tuple[float, float]]
+        The (x, y) coordinates of each crossing point.
+    """
+    section = []
+    for x, y, z in trajectory:
+        if abs(z - z0) < tol:
+            section.append((x, y))
+    return section
+
+
+def compute_poincare_section_x0(trajectory, x0=0.0, tol=1.0):
+    """Collect (y, z) points where the trajectory crosses x ≈ x0.
+
+    A cross-section through the x = 0 plane cuts across both wings of the
+    Lorenz butterfly, revealing a different fractal layering to the z = 27
+    section.  The (y, z) scatter plot shows the attractor's structure in
+    the plane perpendicular to the x-axis.
+
+    Parameters
+    ----------
+    trajectory : list[tuple[float, float, float]]
+        3-D trajectory from :func:`integrate_lorenz`.
+    x0 : float
+        The x-value at which to take the cross-section (default 0).
+    tol : float
+        Half-width of the x-band (default 1.0 — wider than the z-section
+        tolerance because x changes faster near the wing transitions).
+
+    Returns
+    -------
+    list[tuple[float, float]]
+        The (y, z) coordinates of each crossing point.
+    """
+    section = []
+    for x, y, z in trajectory:
+        if abs(x - x0) < tol:
+            section.append((y, z))
+    return section
+
+
+def _draw_poincare_inset(svg, ns, poincare_pts, w_scale, h_scale,
+                         anno_y, anno_sep_y, col_left_cx, col_right_cx,
+                         attractor_color, clip_id, group_id, label,
+                         theme=None):
+    """Draw a Poincaré section inset panel in an annotation-row inter-column gap.
+
+    The panel is centred in the horizontal gap between *col_left_cx* and
+    *col_right_cx* (same pattern as the logistic-map inline zoom panels),
+    at the same vertical level as the annotation text.  A short dashed leader
+    line rises from the panel top to the annotation separator.
+
+    Parameters
+    ----------
+    anno_y : float
+        Y-coordinate of the top of the annotation text row (poster mm).
+    anno_sep_y : float
+        Y-coordinate of the annotation separator line (panel leader line
+        terminus).
+    col_left_cx, col_right_cx : float
+        Centre x-coordinates of the two annotation columns that flank the
+        target inter-column gap (mm).
+    attractor_color : str
+        Fill colour for the scatter dots.
+    clip_id : str
+        Unique id for the clipPath element (e.g. ``"poincare_z27_clip"``).
+    group_id : str
+        Unique id for the SVG group (e.g. ``"poincare_z27_inset"``).
+    label : str
+        Caption text placed below the panel border.
+    theme : str or None
+        Poster theme name.
+    """
+    t = get_theme(theme)
+    border_color = t["border_color"]
+    bg_color = t["bg_color"]
+
+    # --- Panel geometry: inter-column gap ---
+    col_gap = col_right_cx - col_left_cx
+    ps_w = col_gap * 0.40
+    ps_h = min(ps_w, 44.0 * w_scale)   # square or capped at 44 mm
+    ps_cx = (col_left_cx + col_right_cx) / 2
+    ps_cy = anno_y + 1.0 * h_scale + ps_h / 2
+    ps_x = ps_cx - ps_w / 2
+    ps_y = ps_cy - ps_h / 2
+
+    # --- clipPath ---
+    defs_el = svg.find(f"{{{ns}}}defs")
+    if defs_el is None:
+        defs_el = ET.SubElement(svg, f"{{{ns}}}defs")
+    clip_el = ET.SubElement(defs_el, f"{{{ns}}}clipPath",
+                            attrib={"id": clip_id})
+    ET.SubElement(clip_el, f"{{{ns}}}rect", attrib={
+        "x": str(round(ps_x, 4)),
+        "y": str(round(ps_y, 4)),
+        "width": str(round(ps_w, 4)),
+        "height": str(round(ps_h, 4)),
+    })
+
+    # --- Group ---
+    ps_group = _group(svg, ns, id=group_id)
+
+    # --- Leader line: panel top-centre → annotation separator ---
+    _line(ps_group, ns,
+          ps_cx, ps_y,
+          ps_cx, anno_sep_y,
+          **{"stroke": border_color,
+             "stroke-width": str(round(0.25 * w_scale, 3)),
+             "stroke-dasharray": "1.5,1.5",
+             "opacity": "0.5"})
+    # Small filled circle at the terminus (same as logistic map)
+    _circle(ps_group, ns,
+            round(ps_cx, 2), round(anno_sep_y, 2),
+            round(0.8 * w_scale, 3),
+            fill=border_color, opacity="0.45")
+
+    # --- Background ---
+    _rect(ps_group, ns, ps_x, ps_y, ps_w, ps_h,
+          fill=bg_color, stroke="none", opacity="0.92")
+
+    # --- Plot Poincaré points ---
+    if poincare_pts:
+        px_vals = [p[0] for p in poincare_pts]
+        py_vals = [p[1] for p in poincare_pts]
+        x_min, x_max = min(px_vals), max(px_vals)
+        y_min, y_max = min(py_vals), max(py_vals)
+        x_range = x_max - x_min if x_max != x_min else 1.0
+        y_range = y_max - y_min if y_max != y_min else 1.0
+
+        pad = 0.05
+        plot_w = ps_w * (1 - 2 * pad)
+        plot_h = ps_h * (1 - 2 * pad)
+        plot_x0 = ps_x + ps_w * pad
+        plot_y0 = ps_y + ps_h * pad
+
+        scatter_g = _group(ps_group, ns, **{"clip-path": f"url(#{clip_id})"})
+        dot_r = str(round(0.25 * w_scale, 3))
+        for px, py in poincare_pts:
+            sx = plot_x0 + ((px - x_min) / x_range) * plot_w
+            sy = plot_y0 + ((py - y_min) / y_range) * plot_h
+            _circle(scatter_g, ns, sx, sy, dot_r,
+                    fill=attractor_color, opacity="0.55")
+
+    # --- Border ---
+    _rect(ps_group, ns, ps_x, ps_y, ps_w, ps_h,
+          fill="none", stroke=border_color,
+          **{"stroke-width": str(round(0.5 * w_scale, 3))})
+
+    # --- Label below panel border (same style as logistic-map zoom labels) ---
+    _text(ps_group, ns, ps_cx, ps_y + ps_h + 3.5 * h_scale,
+          label,
+          **{**ANNOTATION_STYLE,
+             "fill": border_color,
+             "font-size": str(round(2.8 * w_scale, 2)),
+             "text-anchor": "middle",
+             "opacity": "0.65"})
 
 
 # ---------------------------------------------------------------------------
@@ -843,8 +1051,36 @@ def _panel_weather_model(parent, ns, col_cx, anno_y, scale=1):
 # ---------------------------------------------------------------------------
 
 def generate_poster(steps=200000, zoom_multiplier=2, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_MM,
-                    designed_by=None, designed_for=None, theme=None, verbose=True):
-    """Build and return the full poster as an ElementTree SVG root."""
+                    designed_by=None, designed_for=None, theme=None, verbose=True,
+                    angle_x=None, angle_z=None):
+    """Build and return the full poster as an ElementTree SVG root.
+
+    Parameters
+    ----------
+    steps : int
+        Number of RK4 integration steps for the main trajectory.
+    zoom_multiplier : int
+        Extra integration multiplier for zoom panels (0 to disable).
+    width_mm, height_mm : float
+        Poster dimensions in millimetres.
+    designed_by, designed_for : str or None
+        Optional credit lines for the poster footer.
+    theme : str or None
+        Colour-theme name (see :data:`poster_utils.AVAILABLE_THEMES`).
+    verbose : bool
+        If True, print progress bars to stderr during integration.
+    angle_x : float or None
+        Rotation angle about the X-axis for the 3-D → 2-D projection
+        (radians).  Defaults to :data:`DEFAULT_ANGLE_X` (-0.35).
+    angle_z : float or None
+        Rotation angle about the Z-axis for the 3-D → 2-D projection
+        (radians).  Defaults to :data:`DEFAULT_ANGLE_Z` (0.85).
+    """
+    if angle_x is None:
+        angle_x = DEFAULT_ANGLE_X
+    if angle_z is None:
+        angle_z = DEFAULT_ANGLE_Z
+
     t = get_theme(theme)
     attractor_color = t["content_primary"]
     diverged_color = t["accent_color"]
@@ -883,8 +1119,8 @@ def generate_poster(steps=200000, zoom_multiplier=2, width_mm=BASE_WIDTH_MM, hei
     else:
         traj_extra = []
 
-    proj_main = project_3d_to_2d(traj_main)
-    proj_div = project_3d_to_2d(traj_div)
+    proj_main = project_3d_to_2d(traj_main, angle_x=angle_x, angle_z=angle_z)
+    proj_div = project_3d_to_2d(traj_div, angle_x=angle_x, angle_z=angle_z)
 
     # --- Fit the attractor into the poster space ---
     ca = content_area(rule_y, width_mm, height_mm, margin_frac=0.10)
@@ -914,7 +1150,7 @@ def generate_poster(steps=200000, zoom_multiplier=2, width_mm=BASE_WIDTH_MM, hei
     scaled_div = [_transform(px, py) for px, py in proj_div]
 
     if traj_extra:
-        proj_extra = project_3d_to_2d(traj_extra)
+        proj_extra = project_3d_to_2d(traj_extra, angle_x=angle_x, angle_z=angle_z)
         scaled_extra = [_transform(px, py) for px, py in proj_extra]
     else:
         scaled_extra = []
@@ -955,13 +1191,27 @@ def generate_poster(steps=200000, zoom_multiplier=2, width_mm=BASE_WIDTH_MM, hei
     # The 3-D origin (0,0,0) projects to the saddle region where the two
     # lobes meet — the ideal region for revealing fractal sheet structure.
     origin_poster = _transform(0, 0)
+
+    # Pre-compute attractor vertical extent so we can position the zoom
+    # panels lower (closer to the attractor bottom) as requested.
+    vis_ys = [p[1] for p in scaled_main]
+    attractor_bottom = max(vis_ys)
+
+    # Approximate combined height of both zoom panels so the bottom panel
+    # aligns with the lower portion of the content area (max_bot).
+    approx_zoom_h = min(70.0 * w_scale, avail_h * 0.4)
+    approx_uz_h = min(46.0 * w_scale, approx_zoom_h * 0.85)
+    zoom_preferred_y = max(
+        min_top + 4.0 * h_scale,
+        min_top + avail_h - approx_zoom_h - approx_uz_h - 10 * h_scale,  # 10 mm gap below ultra-zoom
+    )
+
     zoom_info = _draw_zoom_inset(
         svg, ns, scaled_main, w_scale, h_scale,
         center_x, center_y, avail_w, avail_h, min_top,
         width_mm, attractor_color, origin_poster=origin_poster, theme=theme,
-        scaled_extra=scaled_extra,
+        scaled_extra=scaled_extra, preferred_y=zoom_preferred_y,
     )
-    zoom_target_x, zoom_target_y = zoom_info["anno_target"]
 
     # --- Ultra-zoom panel (second-level zoom for deeper fractal structure) ---
     _draw_ultra_zoom_inset(
@@ -970,19 +1220,45 @@ def generate_poster(steps=200000, zoom_multiplier=2, width_mm=BASE_WIDTH_MM, hei
         scaled_extra=scaled_extra,
     )
 
-    # --- Annotations ---
-    anno_group = _group(svg, ns, id="annotations")
-
-    vis_ys = [p[1] for p in scaled_main]
-    attractor_bottom = max(vis_ys)
-
+    # --- Pre-compute annotation layout positions ---
+    # Needed both to position the Poincaré panels (inline in the annotation
+    # row) and to draw the annotation text below them.
     anno_sep_y = attractor_bottom + 10 * h_scale
-    draw_row_separator(anno_group, ns, width_mm, anno_sep_y, w_scale, opacity="0.5",
-                       theme=theme)
-
     anno_y = anno_sep_y + 18 * h_scale
 
     col1_cx, col2_cx, col3_cx = [width_mm * f for f in COLUMN_CENTERS]
+
+    # --- Poincaré section panels: two inline panels flanking IC annotation ---
+    # Left panel  (col1–col2 gap): cross-section at x ≈ 0 (shows y–z structure)
+    # Right panel (col2–col3 gap): cross-section at z ≈ 27 (classic section)
+    combined_traj = traj_main + traj_extra
+    poincare_z27_pts = compute_poincare_section(combined_traj, z0=27.0, tol=0.5)
+    poincare_x0_pts = compute_poincare_section_x0(combined_traj, x0=0.0, tol=1.0)
+
+    _draw_poincare_inset(
+        svg, ns, poincare_x0_pts, w_scale, h_scale,
+        anno_y, anno_sep_y, col1_cx, col2_cx,
+        attractor_color,
+        clip_id="poincare_x0_clip",
+        group_id="poincare_x0_inset",
+        label="Poincar\u00e9 section (x \u2248 0)",
+        theme=theme,
+    )
+    _draw_poincare_inset(
+        svg, ns, poincare_z27_pts, w_scale, h_scale,
+        anno_y, anno_sep_y, col2_cx, col3_cx,
+        attractor_color,
+        clip_id="poincare_z27_clip",
+        group_id="poincare_z27_inset",
+        label="Poincar\u00e9 section (z \u2248 27)",
+        theme=theme,
+    )
+
+    # --- Annotations ---
+    anno_group = _group(svg, ns, id="annotations")
+
+    draw_row_separator(anno_group, ns, width_mm, anno_sep_y, w_scale, opacity="0.5",
+                       theme=theme)
 
     # Arrow targets on the attractor
     if diverge_start < len(scaled_main):
@@ -999,18 +1275,25 @@ def generate_poster(steps=200000, zoom_multiplier=2, width_mm=BASE_WIDTH_MM, hei
     wing_target_x = scaled_main[left_idx][0]
     wing_target_y = scaled_main[left_idx][1]
 
-    # 'Infinite Complexity' now points to the zoom inset panel centre
-    draw_annotation_row(
-        anno_group, ns, anno_y,
-        [col1_cx, col2_cx, col3_cx],
-        [
-            (_annotation_butterfly_effect, be_target_x, be_target_y),
-            (_annotation_two_wings, wing_target_x, wing_target_y),
-            (_annotation_infinite_complexity, zoom_target_x, zoom_target_y),
-        ],
-        w_scale,
-        theme=theme,
-    )
+    # 'Infinite Complexity' points to the zoom source box (saddle region).
+    # Using the source centre gives it an x-coordinate near poster centre
+    # so it naturally occupies the middle column.
+    src_cx = zoom_info["src_cx"]
+    src_cy = zoom_info["src_cy"]
+
+    # Explicit column placement:
+    #   col1 (left)   → "The Two Wings"        (leftmost attractor point)
+    #   col2 (centre) → "Infinite Complexity"  (zoom source / saddle region)
+    #   col3 (right)  → "The Butterfly Effect" (diverged trajectory; arched line)
+    _annotation_two_wings(anno_group, ns,
+                          wing_target_x, wing_target_y,
+                          col1_cx, anno_y, w_scale, theme=theme)
+    _annotation_infinite_complexity(anno_group, ns,
+                                    src_cx, src_cy,
+                                    col2_cx, anno_y, w_scale, theme=theme)
+    _annotation_butterfly_effect(anno_group, ns,
+                                 be_target_x, be_target_y,
+                                 col3_cx, anno_y, w_scale, theme=theme)
 
     # --- Second row: educational connections ---
     edu_group = _group(svg, ns, id="educational")
@@ -1063,6 +1346,20 @@ def build_arg_parser():
         "--zoom-multiplier", type=int, default=2, dest="zoom_multiplier",
         help="Extra integration multiplier for zoom panels (default: 2).",
     )
+    parser.add_argument(
+        "--angle-x", type=float, default=None, dest="angle_x",
+        help=(
+            "Rotation angle about the X-axis in radians "
+            f"(default: {DEFAULT_ANGLE_X})."
+        ),
+    )
+    parser.add_argument(
+        "--angle-z", type=float, default=None, dest="angle_z",
+        help=(
+            "Rotation angle about the Z-axis in radians "
+            f"(default: {DEFAULT_ANGLE_Z})."
+        ),
+    )
     add_common_poster_args(parser)
     return parser
 
@@ -1077,6 +1374,8 @@ def _generate_from_args(args):
         designed_by=args.designed_by,
         designed_for=args.designed_for,
         theme=args.theme,
+        angle_x=args.angle_x,
+        angle_z=args.angle_z,
     )
 
 
