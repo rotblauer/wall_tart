@@ -188,38 +188,9 @@ DEFAULT_ANGLE_Z = 0.85
 
 def _annotation_butterfly_effect(parent, ns, target_x, target_y,
                                   col_cx, anno_y, scale=1, theme=None):
-    """Annotation: sensitive dependence on initial conditions.
-
-    The arrow uses a cubic bezier arch that bulges to the right so it
-    cannot cross the straight arrows from col1 and col2, even if the
-    target point is to the left of col_cx.
-    """
+    """Annotation: sensitive dependence on initial conditions."""
     t = get_theme(theme)
     g = _group(parent, ns)
-
-    arrow_y = anno_y - 8 * scale
-
-    # Cubic bezier arch: control points push the curve rightward of col_cx
-    # so it clears the other annotation arrows (which live left of col_cx).
-    cp1_x = col_cx + 30 * scale
-    cp1_y = (arrow_y + target_y) / 2
-    cp2_x = max(col_cx, target_x) + 22 * scale
-    cp2_y = target_y + 8 * scale
-    path_d = (
-        f"M {round(col_cx, 2)},{round(arrow_y, 2)} "
-        f"C {round(cp1_x, 2)},{round(cp1_y, 2)} "
-        f"{round(cp2_x, 2)},{round(cp2_y, 2)} "
-        f"{round(target_x, 2)},{round(target_y, 2)}"
-    )
-    ET.SubElement(g, f"{{{ns}}}path", attrib={
-        "d": path_d,
-        "stroke": t["accent_color"],
-        "stroke-width": "0.5",
-        "stroke-dasharray": "2,1.5",
-        "fill": "none",
-        "marker-end": "url(#arrowhead)",
-    })
-    _circle(g, ns, col_cx, arrow_y, 1 * scale, fill=t["accent_color"])
 
     _text(g, ns, col_cx, anno_y + 2 * scale, "The Butterfly Effect",
           **{**ANNOTATION_STYLE,
@@ -239,8 +210,14 @@ def _annotation_butterfly_effect(parent, ns, target_x, target_y,
 def _annotation_two_wings(parent, ns, target_x, target_y,
                            col_cx, anno_y, scale=1, theme=None):
     """Annotation: the two lobes ('wings') of the attractor."""
-    g = draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
-                               "The Two \u2018Wings\u2019", scale, theme=theme)
+    t = get_theme(theme)
+    g = _group(parent, ns)
+
+    _text(g, ns, col_cx, anno_y + 2 * scale, "The Two \u2018Wings\u2019",
+          **{**ANNOTATION_STYLE,
+             "font-size": str(round(5 * scale, 2)),
+             "fill": t["accent_color"],
+             "text-anchor": "middle"})
     draw_annotation_body(g, ns, col_cx, anno_y, [
         "The trajectory orbits two unstable",
         "fixed points, spiralling around one",

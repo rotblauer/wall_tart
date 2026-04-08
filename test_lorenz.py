@@ -657,14 +657,22 @@ class TestPoincareInsetPoster:
             assert pz is not None, f"poincare_z27_inset missing for theme '{theme}'"
             assert px is not None, f"poincare_x0_inset missing for theme '{theme}'"
 
-    def test_butterfly_effect_annotation_uses_arch(self):
-        """The Butterfly Effect annotation uses a curved path (not a straight line)."""
+    def test_butterfly_effect_has_no_callout_arrow(self):
+        """The Butterfly Effect annotation has no callout arrow (no bezier path)."""
         svg = generate_poster(steps=5000, width_mm=200, height_mm=300)
         ns = "http://www.w3.org/2000/svg"
-        # There should be a <path> element with a cubic bezier 'C' command
+        # No <path> element with a cubic bezier 'C' command should exist
         paths = svg.findall(f".//{{{ns}}}path")
         arch_paths = [p for p in paths if "C " in (p.get("d") or "")]
-        assert len(arch_paths) >= 1, "Expected at least one cubic bezier arch path"
+        assert len(arch_paths) == 0, "Expected no cubic bezier arch paths"
+
+    def test_two_wings_has_no_callout_arrow(self):
+        """The Two Wings annotation has no callout arrow (no extra straight line)."""
+        svg = generate_poster(steps=5000, width_mm=200, height_mm=300)
+        xml_str = ET.tostring(svg, encoding="unicode")
+        # The only straight annotation arrow should be from Infinite Complexity
+        # We verify by checking only one arrowhead marker is used
+        assert xml_str.count("marker-end") == 1
 
     def test_infinite_complexity_references_both_sections(self):
         """'Infinite Complexity' body text mentions both x=0 and z=27."""
