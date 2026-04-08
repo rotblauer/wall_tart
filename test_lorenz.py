@@ -12,6 +12,7 @@ from lorenz_poster import (
     DEFAULT_ANGLE_X,
     DEFAULT_ANGLE_Z,
     compute_poincare_section,
+    compute_poincare_section_x0,
     generate_poster,
     integrate_lorenz,
     lorenz_derivatives,
@@ -521,48 +522,98 @@ class TestComputePoincareSection:
         assert len(tight) <= len(wide)
 
 
+# ---------------------------------------------------------------------------
+# Poincaré section — x=0 cross-section
+# ---------------------------------------------------------------------------
+
+class TestComputePoincareSectionX0:
+    def test_returns_list(self):
+        traj = integrate_lorenz(steps=5000)
+        section = compute_poincare_section_x0(traj, x0=0.0, tol=1.0)
+        assert isinstance(section, list)
+
+    def test_points_are_2d(self):
+        traj = integrate_lorenz(steps=5000)
+        section = compute_poincare_section_x0(traj, x0=0.0, tol=1.0)
+        for pt in section:
+            assert len(pt) == 2
+
+    def test_nonempty_for_default_params(self):
+        """With enough steps near the attractor, the x=0 section should be nonempty."""
+        traj = integrate_lorenz(steps=20000)
+        section = compute_poincare_section_x0(traj, x0=0.0, tol=1.0)
+        assert len(section) > 0
+
+    def test_tight_tolerance_yields_fewer_points(self):
+        """Tighter x tolerance should yield fewer or equal points."""
+        traj = integrate_lorenz(steps=10000)
+        wide = compute_poincare_section_x0(traj, x0=0.0, tol=2.0)
+        tight = compute_poincare_section_x0(traj, x0=0.0, tol=0.1)
+        assert len(tight) <= len(wide)
+
+
 class TestPoincareInsetPoster:
-    def test_poincare_inset_group_present(self):
-        """A 'poincare_inset' group exists by default."""
+    def test_poincare_z27_inset_group_present(self):
+        """A 'poincare_z27_inset' group exists by default."""
         svg = generate_poster(steps=5000, width_mm=200, height_mm=300)
         ns = "http://www.w3.org/2000/svg"
-        ps = svg.find(f".//{{{ns}}}g[@id='poincare_inset']")
+        ps = svg.find(f".//{{{ns}}}g[@id='poincare_z27_inset']")
         assert ps is not None
 
-    def test_poincare_clip_path_present(self):
-        """A clipPath with id 'poincare_clip' exists."""
+    def test_poincare_x0_inset_group_present(self):
+        """A 'poincare_x0_inset' group exists by default."""
         svg = generate_poster(steps=5000, width_mm=200, height_mm=300)
         ns = "http://www.w3.org/2000/svg"
-        clip = svg.find(f".//{{{ns}}}clipPath[@id='poincare_clip']")
+        ps = svg.find(f".//{{{ns}}}g[@id='poincare_x0_inset']")
+        assert ps is not None
+
+    def test_poincare_z27_clip_path_present(self):
+        """A clipPath with id 'poincare_z27_clip' exists."""
+        svg = generate_poster(steps=5000, width_mm=200, height_mm=300)
+        ns = "http://www.w3.org/2000/svg"
+        clip = svg.find(f".//{{{ns}}}clipPath[@id='poincare_z27_clip']")
         assert clip is not None
         rect = clip.find(f"{{{ns}}}rect")
         assert rect is not None
         assert float(rect.get("width")) > 0
         assert float(rect.get("height")) > 0
 
-    def test_poincare_label_present(self):
-        """The Poincaré section label text is in the SVG."""
+    def test_poincare_x0_clip_path_present(self):
+        """A clipPath with id 'poincare_x0_clip' exists."""
+        svg = generate_poster(steps=5000, width_mm=200, height_mm=300)
+        ns = "http://www.w3.org/2000/svg"
+        clip = svg.find(f".//{{{ns}}}clipPath[@id='poincare_x0_clip']")
+        assert clip is not None
+        rect = clip.find(f"{{{ns}}}rect")
+        assert rect is not None
+        assert float(rect.get("width")) > 0
+        assert float(rect.get("height")) > 0
+
+    def test_poincare_labels_present(self):
+        """Both Poincaré section labels are in the SVG."""
         svg = generate_poster(steps=5000, width_mm=200, height_mm=300)
         xml_str = ET.tostring(svg, encoding="unicode")
-        assert "Poincar" in xml_str
-        assert "section" in xml_str
+        assert "z \u2248 27" in xml_str
+        assert "x \u2248 0" in xml_str
 
     def test_ultra_zoom_still_present_with_poincare(self):
-        """Both ultra_zoom_inset and poincare_inset groups exist."""
+        """ultra_zoom_inset, poincare_z27_inset, and poincare_x0_inset all exist."""
         svg = generate_poster(steps=5000, width_mm=200, height_mm=300)
         ns = "http://www.w3.org/2000/svg"
         uz = svg.find(f".//{{{ns}}}g[@id='ultra_zoom_inset']")
-        ps = svg.find(f".//{{{ns}}}g[@id='poincare_inset']")
+        pz = svg.find(f".//{{{ns}}}g[@id='poincare_z27_inset']")
+        px = svg.find(f".//{{{ns}}}g[@id='poincare_x0_inset']")
         assert uz is not None
-        assert ps is not None
+        assert pz is not None
+        assert px is not None
 
-    def test_poincare_panel_in_annotation_row(self):
-        """The Poincaré panel is in the inter-column gap between col2 and col3."""
+    def test_poincare_z27_panel_in_col2_col3_gap(self):
+        """The z≈27 Poincaré panel is in the col2-col3 inter-column gap."""
         from poster_utils import COLUMN_CENTERS
         w = 200
         svg = generate_poster(steps=5000, width_mm=w, height_mm=300)
         ns = "http://www.w3.org/2000/svg"
-        clip = svg.find(f".//{{{ns}}}clipPath[@id='poincare_clip']")
+        clip = svg.find(f".//{{{ns}}}clipPath[@id='poincare_z27_clip']")
         rect = clip.find(f"{{{ns}}}rect")
         ps_x = float(rect.get("x"))
         ps_w = float(rect.get("width"))
@@ -570,28 +621,57 @@ class TestPoincareInsetPoster:
         col2_cx = w * COLUMN_CENTERS[1]
         col3_cx = w * COLUMN_CENTERS[2]
         expected_cx = (col2_cx + col3_cx) / 2
-        # Panel centre should be within one panel-width of the inter-column midpoint
         assert abs(ps_cx - expected_cx) <= ps_w, (
-            f"Poincaré panel centre ({ps_cx:.1f}) should be near "
-            f"inter-column midpoint ({expected_cx:.1f})"
+            f"z≈27 panel centre ({ps_cx:.1f}) should be near "
+            f"col2-col3 midpoint ({expected_cx:.1f})"
         )
 
-    def test_poincare_label_below_panel(self):
-        """The Poincaré panel label appears below the panel border."""
-        svg = generate_poster(steps=5000, width_mm=200, height_mm=300)
-        xml_str = ET.tostring(svg, encoding="unicode")
-        # Label text is rendered outside/below the panel border
-        assert "Poincar" in xml_str
+    def test_poincare_x0_panel_in_col1_col2_gap(self):
+        """The x≈0 Poincaré panel is in the col1-col2 inter-column gap."""
+        from poster_utils import COLUMN_CENTERS
+        w = 200
+        svg = generate_poster(steps=5000, width_mm=w, height_mm=300)
+        ns = "http://www.w3.org/2000/svg"
+        clip = svg.find(f".//{{{ns}}}clipPath[@id='poincare_x0_clip']")
+        rect = clip.find(f"{{{ns}}}rect")
+        ps_x = float(rect.get("x"))
+        ps_w = float(rect.get("width"))
+        ps_cx = ps_x + ps_w / 2
+        col1_cx = w * COLUMN_CENTERS[0]
+        col2_cx = w * COLUMN_CENTERS[1]
+        expected_cx = (col1_cx + col2_cx) / 2
+        assert abs(ps_cx - expected_cx) <= ps_w, (
+            f"x≈0 panel centre ({ps_cx:.1f}) should be near "
+            f"col1-col2 midpoint ({expected_cx:.1f})"
+        )
 
     def test_poincare_all_themes(self):
-        """Poincaré section renders without error for all themes."""
+        """Both Poincaré section panels render without error for all themes."""
         from poster_utils import AVAILABLE_THEMES
         for theme in AVAILABLE_THEMES:
             svg = generate_poster(steps=5000, width_mm=200, height_mm=300,
                                   theme=theme)
             ns = "http://www.w3.org/2000/svg"
-            ps = svg.find(f".//{{{ns}}}g[@id='poincare_inset']")
-            assert ps is not None, f"poincare_inset missing for theme '{theme}'"
+            pz = svg.find(f".//{{{ns}}}g[@id='poincare_z27_inset']")
+            px = svg.find(f".//{{{ns}}}g[@id='poincare_x0_inset']")
+            assert pz is not None, f"poincare_z27_inset missing for theme '{theme}'"
+            assert px is not None, f"poincare_x0_inset missing for theme '{theme}'"
+
+    def test_butterfly_effect_annotation_uses_arch(self):
+        """The Butterfly Effect annotation uses a curved path (not a straight line)."""
+        svg = generate_poster(steps=5000, width_mm=200, height_mm=300)
+        ns = "http://www.w3.org/2000/svg"
+        # There should be a <path> element with a cubic bezier 'C' command
+        paths = svg.findall(f".//{{{ns}}}path")
+        arch_paths = [p for p in paths if "C " in (p.get("d") or "")]
+        assert len(arch_paths) >= 1, "Expected at least one cubic bezier arch path"
+
+    def test_infinite_complexity_references_both_sections(self):
+        """'Infinite Complexity' body text mentions both x=0 and z=27."""
+        svg = generate_poster(steps=5000, width_mm=200, height_mm=300)
+        xml_str = ET.tostring(svg, encoding="unicode")
+        assert "x = 0" in xml_str
+        assert "z = 27" in xml_str
 
 
 # ---------------------------------------------------------------------------
