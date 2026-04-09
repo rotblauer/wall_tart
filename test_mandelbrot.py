@@ -249,7 +249,60 @@ class TestJuliaInlinePlacement:
         assert len(circles) >= 12  # 3 circles × 4 insets
 
 
-class TestFadeEdges:
+class TestClipPaths:
+    """Tests for SVG clipPath elements that eliminate rectangular grid artifacts."""
+
+    def test_fractal_group_has_clip_path(self):
+        """The fractal group should carry a clip-path attribute."""
+        svg = generate_poster(resolution=10, max_iter=10, width_mm=100, height_mm=150)
+        ns = "http://www.w3.org/2000/svg"
+        fractal = svg.find(f".//{{{ns}}}g[@id='fractal']")
+        assert fractal is not None
+        assert fractal.get("clip-path") is not None
+
+    def test_mandelbrot_clip_path_in_defs(self):
+        """SVG defs should contain a clipPath with id 'mandelbrotClip'."""
+        svg = generate_poster(resolution=10, max_iter=10, width_mm=100, height_mm=150)
+        ns = "http://www.w3.org/2000/svg"
+        clip = svg.find(f".//{{{ns}}}clipPath[@id='mandelbrotClip']")
+        assert clip is not None
+
+    def test_mandelbrot_clip_contains_ellipse(self):
+        """The mandelbrotClip clipPath should contain an ellipse element."""
+        svg = generate_poster(resolution=10, max_iter=10, width_mm=100, height_mm=150)
+        ns = "http://www.w3.org/2000/svg"
+        clip = svg.find(f".//{{{ns}}}clipPath[@id='mandelbrotClip']")
+        ellipse = clip.find(f"{{{ns}}}ellipse")
+        assert ellipse is not None
+        # Ellipse must have valid positive radii
+        assert float(ellipse.get("rx")) > 0
+        assert float(ellipse.get("ry")) > 0
+
+    def test_julia_clip_paths_in_defs(self):
+        """SVG defs should contain one clipPath per Julia inset."""
+        svg = generate_poster(resolution=10, max_iter=10, width_mm=100, height_mm=150)
+        ns = "http://www.w3.org/2000/svg"
+        # Four Julia insets → four juliaClip0..3 clipPath elements
+        for idx in range(4):
+            clip = svg.find(f".//{{{ns}}}clipPath[@id='juliaClip{idx}']")
+            assert clip is not None, f"juliaClip{idx} not found in defs"
+
+    def test_julia_clip_contains_ellipse(self):
+        """Each Julia clipPath should contain an ellipse element."""
+        svg = generate_poster(resolution=10, max_iter=10, width_mm=100, height_mm=150)
+        ns = "http://www.w3.org/2000/svg"
+        clip = svg.find(f".//{{{ns}}}clipPath[@id='juliaClip0']")
+        ellipse = clip.find(f"{{{ns}}}ellipse")
+        assert ellipse is not None
+        assert float(ellipse.get("rx")) > 0
+        assert float(ellipse.get("ry")) > 0
+
+    def test_total_clip_paths_count(self):
+        """SVG should have exactly 5 clipPath elements (1 Mandelbrot + 4 Julia)."""
+        svg = generate_poster(resolution=10, max_iter=10, width_mm=100, height_mm=150)
+        ns = "http://www.w3.org/2000/svg"
+        clips = svg.findall(f".//{{{ns}}}clipPath")
+        assert len(clips) == 5
     """Tests for edge-fading on the Mandelbrot and Julia grids."""
 
     def test_julia_grids_have_faded_cells(self):
