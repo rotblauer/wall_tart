@@ -403,8 +403,8 @@ def _draw_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
     bg_color = t["bg_color"]
 
     # --- Source (target) box near the saddle / transition region ---
-    src_hw = 6.0 * w_scale               # half-width  → 12 mm total
-    src_hh = 6.0 * w_scale               # half-height → 12 mm total
+    src_hw = 5.0 * w_scale               # half-width  → 10 mm total
+    src_hh = 5.0 * w_scale               # half-height → 10 mm total
 
     if origin_poster is not None:
         origin_x, origin_y = origin_poster
@@ -462,7 +462,7 @@ def _draw_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
 
     # --- Zoom panel background (covers underlying attractor lines) ---
     _rect(zoom_group, ns, zoom_x, zoom_y, zoom_w, zoom_h,
-          fill=bg_color, stroke="none", opacity="0.92")
+          fill=bg_color, stroke="none", opacity="0.96")
 
     # --- Zoomed attractor dots — x-z projection for fractal sheet reveal ---
     # Instead of re-using the main poster projection, filter the 3-D
@@ -553,9 +553,10 @@ def _draw_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
     # --- Source (target) box on the main attractor ---
     _rect(zoom_group, ns, src_x1, src_y1, 2 * src_hw, 2 * src_hh,
           fill=border_color,
-          **{"fill-opacity": "0.07",
+          **{"fill-opacity": "0.05",
              "stroke": border_color,
-             "stroke-width": str(round(0.35 * w_scale, 3))})
+             "stroke-width": str(round(0.25 * w_scale, 3)),
+             "stroke-dasharray": "2,1.5"})
 
     # Return zoom info for the 'Infinite Complexity' annotation and for
     # the ultra-zoom panel.
@@ -662,7 +663,7 @@ def _draw_ultra_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
 
     # --- Ultra-zoom panel background ---
     _rect(uz_group, ns, uz_x, uz_y, uz_w, uz_h,
-          fill=bg_color, stroke="none", opacity="0.92")
+          fill=bg_color, stroke="none", opacity="0.96")
 
     # --- Zoomed attractor dots — x-z projection (same technique as zoom) ---
     uz_dots_g = _group(uz_group, ns, **{"clip-path": f"url(#{uz_clip_id})"})
@@ -1398,7 +1399,7 @@ def generate_poster(steps=200000, zoom_multiplier=2, width_mm=BASE_WIDTH_MM, hei
             "while modelling atmospheric convection."
         ),
         secondary_line=(
-            f"Generated with {steps:,} integration steps  "
+            f"x\u2013z projection  \u00b7  {steps:,} integration steps  "
             f"\u00b7  dt = 0.005  \u00b7  \u03c3 = 10, \u03c1 = 28, \u03b2 = 8/3"
         ),
         designed_by=designed_by,
