@@ -314,6 +314,53 @@ def _find_best_zoom_center(scaled_main, origin_x, origin_y, w_scale):
             origin_y + (best_key[1] + 0.5) * bin_size)
 
 
+def _time_color(t_frac):
+    """Interpolate dark blue (#1a237e) → gold (#ffc107) based on *t_frac* ∈ [0, 1]."""
+    r = int(0x1a + (0xff - 0x1a) * t_frac)
+    g = int(0x23 + (0xc1 - 0x23) * t_frac)
+    b = int(0x7e + (0x07 - 0x7e) * t_frac)
+    return f"#{r:02x}{g:02x}{b:02x}"
+
+
+def _render_saddle_dots(traj_3d, group, ns, dot_r, stride_n, base_opacity,
+                        panel_x, panel_y, panel_w, panel_h,
+                        saddle_x_half, saddle_z_center, saddle_z_half):
+    """Filter 3-D trajectory for the saddle region, project x-z, and draw dots.
+
+    Points in the saddle region (|x| ≤ *saddle_x_half* and
+    |z − saddle_z_center| ≤ *saddle_z_half*) are collected, strided, and
+    rendered as time-coloured circles within the given panel rectangle.
+    """
+    filtered = []
+    for idx, (x3, y3, z3) in enumerate(traj_3d):
+        if abs(x3) <= saddle_x_half and abs(z3 - saddle_z_center) <= saddle_z_half:
+            filtered.append((idx, x3, z3))
+    if not filtered:
+        return
+    filtered = filtered[::stride_n]
+    if not filtered:
+        return
+    xs = [p[1] for p in filtered]
+    zs = [p[2] for p in filtered]
+    x_min, x_max = min(xs), max(xs)
+    z_min, z_max = min(zs), max(zs)
+    x_range = x_max - x_min if x_max != x_min else 1.0
+    z_range = z_max - z_min if z_max != z_min else 1.0
+    pad_frac = 0.05
+    pw = panel_w * (1 - 2 * pad_frac)
+    ph = panel_h * (1 - 2 * pad_frac)
+    px0 = panel_x + panel_w * pad_frac
+    py0 = panel_y + panel_h * pad_frac
+    total_pts = len(traj_3d)
+    r_str = str(dot_r)
+    for idx, x3, z3 in filtered:
+        sx = px0 + ((x3 - x_min) / x_range) * pw
+        sy = py0 + ((z3 - z_min) / z_range) * ph
+        t_frac = idx / max(total_pts - 1, 1)
+        _circle(group, ns, sx, sy, r_str,
+                fill=_time_color(t_frac), opacity=str(base_opacity))
+
+
 def _draw_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
                      center_x, center_y, avail_w, avail_h, min_top,
                      width_mm, attractor_color, origin_poster=None,
@@ -445,50 +492,10 @@ def _draw_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
     saddle_z_center = 23.0
     saddle_z_half = 15.0
 
-    def _time_color(t_frac):
-        """Interpolate dark blue (#1a237e) → gold (#ffc107) based on *t_frac* ∈ [0, 1]."""
-        r = int(0x1a + (0xff - 0x1a) * t_frac)
-        g = int(0x23 + (0xc1 - 0x23) * t_frac)
-        b = int(0x7e + (0x07 - 0x7e) * t_frac)
-        return f"#{r:02x}{g:02x}{b:02x}"
-
-    def _render_dots(traj_3d, group, r, stride_n, base_opacity):
-        """Filter, project (x-z), rescale to zoom panel, and draw dots."""
-        # Collect saddle-region points with their global time index.
-        filtered = []
-        for idx, (x3, y3, z3) in enumerate(traj_3d):
-            if abs(x3) <= saddle_x_half and abs(z3 - saddle_z_center) <= saddle_z_half:
-                filtered.append((idx, x3, z3))
-        if not filtered:
-            return
-        # Apply stride.
-        filtered = filtered[::stride_n]
-        if not filtered:
-            return
-        # Compute bounding box of the local x-z projection.
-        xs = [p[1] for p in filtered]
-        zs = [p[2] for p in filtered]
-        x_min, x_max = min(xs), max(xs)
-        z_min, z_max = min(zs), max(zs)
-        x_range = x_max - x_min if x_max != x_min else 1.0
-        z_range = z_max - z_min if z_max != z_min else 1.0
-        # Map into the zoom panel rectangle (with 5 % padding).
-        pad_frac = 0.05
-        pw = zoom_w * (1 - 2 * pad_frac)
-        ph = zoom_h * (1 - 2 * pad_frac)
-        px0 = zoom_x + zoom_w * pad_frac
-        py0 = zoom_y + zoom_h * pad_frac
-        total_pts = len(traj_3d)
-        r_str = str(r)
-        for idx, x3, z3 in filtered:
-            sx = px0 + ((x3 - x_min) / x_range) * pw
-            sy = py0 + ((z3 - z_min) / z_range) * ph
-            t_frac = idx / max(total_pts - 1, 1)
-            _circle(group, ns, sx, sy, r_str,
-                    fill=_time_color(t_frac), opacity=str(base_opacity))
-
     if traj_main_3d:
-        _render_dots(traj_main_3d, zoom_dots_g, dot_r, stride, 0.75)
+        _render_saddle_dots(traj_main_3d, zoom_dots_g, ns, dot_r, stride, 0.75,
+                            zoom_x, zoom_y, zoom_w, zoom_h,
+                            saddle_x_half, saddle_z_center, saddle_z_half)
     else:
         # Fallback: use 2-D scaled_main polylines if 3-D data unavailable.
         sample_hw = src_hw * 2.0
@@ -520,21 +527,23 @@ def _draw_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
 
     # --- Extra-detail trajectory dots (only in zoom) ---
     if traj_extra_3d:
-        _render_dots(traj_extra_3d, zoom_dots_g, dot_r, stride, 0.55)
+        _render_saddle_dots(traj_extra_3d, zoom_dots_g, ns, dot_r, stride, 0.55,
+                            zoom_x, zoom_y, zoom_w, zoom_h,
+                            saddle_x_half, saddle_z_center, saddle_z_half)
     elif scaled_extra:
         # Fallback: use 2-D scaled_extra polylines if 3-D data unavailable.
         sample_hw = src_hw * 2.0
         sample_hh = src_hh * 2.0
         extra_sw = str(round(0.04 * w_scale, 3))
 
-        def _to_zoom_fb(px, py):
+        def _to_zoom_fallback(px, py):
             return (zoom_cx + (px - src_cx) * magnify,
                     zoom_cy + (py - src_cy) * magnify)
 
         segment = []
         for px, py in scaled_extra:
             if abs(px - src_cx) <= sample_hw and abs(py - src_cy) <= sample_hh:
-                segment.append(_to_zoom_fb(px, py))
+                segment.append(_to_zoom_fallback(px, py))
             else:
                 if len(segment) >= 2:
                     _polyline(zoom_dots_g, ns, segment,
@@ -706,45 +715,10 @@ def _draw_ultra_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
     saddle_z_center = 23.0
     saddle_z_half = 8.0
 
-    def _uz_time_color(t_frac):
-        """Interpolate dark blue (#1a237e) → gold (#ffc107)."""
-        r = int(0x1a + (0xff - 0x1a) * t_frac)
-        g = int(0x23 + (0xc1 - 0x23) * t_frac)
-        b = int(0x7e + (0x07 - 0x7e) * t_frac)
-        return f"#{r:02x}{g:02x}{b:02x}"
-
-    def _uz_render_dots(traj_3d, group, r, stride_n, base_opacity):
-        filtered = []
-        for idx, (x3, y3, z3) in enumerate(traj_3d):
-            if abs(x3) <= saddle_x_half and abs(z3 - saddle_z_center) <= saddle_z_half:
-                filtered.append((idx, x3, z3))
-        if not filtered:
-            return
-        filtered = filtered[::stride_n]
-        if not filtered:
-            return
-        xs = [p[1] for p in filtered]
-        zs = [p[2] for p in filtered]
-        x_min, x_max = min(xs), max(xs)
-        z_min, z_max = min(zs), max(zs)
-        x_range = x_max - x_min if x_max != x_min else 1.0
-        z_range = z_max - z_min if z_max != z_min else 1.0
-        pad_frac = 0.05
-        pw = uz_w * (1 - 2 * pad_frac)
-        ph = uz_h * (1 - 2 * pad_frac)
-        px0 = uz_x + uz_w * pad_frac
-        py0 = uz_y + uz_h * pad_frac
-        total_pts = len(traj_3d)
-        r_str = str(r)
-        for idx, x3, z3 in filtered:
-            sx = px0 + ((x3 - x_min) / x_range) * pw
-            sy = py0 + ((z3 - z_min) / z_range) * ph
-            t_frac = idx / max(total_pts - 1, 1)
-            _circle(group, ns, sx, sy, r_str,
-                    fill=_uz_time_color(t_frac), opacity=str(base_opacity))
-
     if traj_main_3d:
-        _uz_render_dots(traj_main_3d, uz_dots_g, uz_dot_r, stride, 0.75)
+        _render_saddle_dots(traj_main_3d, uz_dots_g, ns, uz_dot_r, stride, 0.75,
+                            uz_x, uz_y, uz_w, uz_h,
+                            saddle_x_half, saddle_z_center, saddle_z_half)
     else:
         # Fallback: use 2-D scaled_main polylines if 3-D data unavailable.
         sample_hw = uz_src_hw * 2.0
@@ -776,21 +750,23 @@ def _draw_ultra_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
 
     # --- Extra-detail trajectory dots (only in ultra-zoom) ---
     if traj_extra_3d:
-        _uz_render_dots(traj_extra_3d, uz_dots_g, uz_dot_r, stride, 0.55)
+        _render_saddle_dots(traj_extra_3d, uz_dots_g, ns, uz_dot_r, stride, 0.55,
+                            uz_x, uz_y, uz_w, uz_h,
+                            saddle_x_half, saddle_z_center, saddle_z_half)
     elif scaled_extra:
         # Fallback: use 2-D scaled_extra polylines if 3-D data unavailable.
         sample_hw = uz_src_hw * 2.0
         sample_hh = uz_src_hh * 2.0
         extra_sw = str(round(0.02 * w_scale, 3))
 
-        def _to_uz_fb(px, py):
+        def _to_uz_fallback(px, py):
             return (uz_cx + (px - src_cx) * uz_magnify,
                     uz_cy + (py - src_cy) * uz_magnify)
 
         segment = []
         for px, py in scaled_extra:
             if abs(px - src_cx) <= sample_hw and abs(py - src_cy) <= sample_hh:
-                segment.append(_to_uz_fb(px, py))
+                segment.append(_to_uz_fallback(px, py))
             else:
                 if len(segment) >= 2:
                     _polyline(uz_dots_g, ns, segment,
