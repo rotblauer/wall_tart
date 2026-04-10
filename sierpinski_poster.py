@@ -30,7 +30,6 @@ from poster_utils import (
     BASE_HEIGHT_MM,
     BASE_WIDTH_MM,
     BG_COLOR,
-    CALLOUT_LINE_STYLE,
     COLUMN_CENTERS,
     CONTENT_TOP_MARGIN_FRAC,
     SERIF,
@@ -149,7 +148,8 @@ def _annotation_self_similarity(parent, ns, target_x, target_y,
                                 col_cx, anno_y, scale=1, theme=None):
     """Annotation: self-similarity callout (below the fractal)."""
     g = draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
-                               "Self-Similarity", scale, theme=theme)
+                               "Self-Similarity", scale, theme=theme,
+                               show_line=False)
     draw_annotation_body(g, ns, col_cx, anno_y, [
         "Every smaller triangle is an exact",
         "copy of the whole shape. Zoom in",
@@ -166,7 +166,8 @@ def _annotation_recursion(parent, ns, target_x, target_y,
     if tri_color is None:
         tri_color = TRIANGLE_COLOR
     g = draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
-                               "Recursion", scale, theme=theme)
+                               "Recursion", scale, theme=theme,
+                               show_line=False)
     draw_annotation_body(g, ns, col_cx, anno_y, [
         "Start with one triangle. Remove the",
         "centre to get three smaller copies.",
@@ -197,7 +198,8 @@ def _annotation_dimension(parent, ns, target_x, target_y,
                            col_cx, anno_y, scale=1, theme=None):
     """Annotation: fractional (Hausdorff) dimension callout (below fractal)."""
     g = draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
-                               "Fractional Dimension", scale, theme=theme)
+                               "Fractional Dimension", scale, theme=theme,
+                               show_line=False)
 
     dim_val = f"{math.log(3) / math.log(2):.4f}"
     draw_annotation_body(g, ns, col_cx, anno_y, [
