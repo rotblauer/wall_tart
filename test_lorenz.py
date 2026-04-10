@@ -274,13 +274,13 @@ class TestGeneratePoster:
         # 3 rects: background, border, source target box
         assert len(rects) == 3
 
-    def test_zoom_inset_panel_polylines_present(self):
-        """The zoom_inset group contains at least one magnified polyline."""
+    def test_zoom_inset_panel_dots_present(self):
+        """The zoom_inset group contains time-colored dots (circles)."""
         svg = generate_poster(steps=5000, width_mm=200, height_mm=300)
         ns = "http://www.w3.org/2000/svg"
         zoom = svg.find(f".//{{{ns}}}g[@id='zoom_inset']")
-        polylines = zoom.findall(f".//{{{ns}}}polyline")
-        assert len(polylines) >= 1
+        circles = zoom.findall(f".//{{{ns}}}circle")
+        assert len(circles) >= 1
 
     def test_zoom_inset_all_themes(self):
         """zoom_inset renders without error for all built-in themes."""
@@ -390,19 +390,19 @@ class TestGeneratePoster:
         # 3 rects: sub-box on first zoom, background, border
         assert len(rects) == 3
 
-    def test_ultra_zoom_polylines_present(self):
-        """The ultra_zoom_inset group has magnified polylines."""
+    def test_ultra_zoom_dots_present(self):
+        """The ultra_zoom_inset group has time-colored dots (circles)."""
         svg = generate_poster(steps=5000, width_mm=200, height_mm=300)
         ns = "http://www.w3.org/2000/svg"
         uz = svg.find(f".//{{{ns}}}g[@id='ultra_zoom_inset']")
-        polylines = uz.findall(f".//{{{ns}}}polyline")
-        assert len(polylines) >= 1
+        circles = uz.findall(f".//{{{ns}}}circle")
+        assert len(circles) >= 1
 
     def test_ultra_zoom_label_present(self):
-        """The ultra-zoom panel has a label mentioning 'outer layer'."""
+        """The ultra-zoom panel has a label mentioning 'x–z projection'."""
         svg = generate_poster(steps=1000, width_mm=200, height_mm=300)
         xml_str = ET.tostring(svg, encoding="unicode")
-        assert "into outer layer" in xml_str
+        assert "x\u2013z projection" in xml_str
 
     def test_ultra_zoom_below_first_zoom(self):
         """The ultra-zoom panel is positioned below the first zoom panel."""
@@ -440,8 +440,8 @@ class TestGeneratePoster:
                               width_mm=200, height_mm=300)
         assert svg.tag.endswith("svg")
 
-    def test_zoom_multiplier_increases_zoom_polylines(self):
-        """With zoom_multiplier>0, zoom panels should have more polylines."""
+    def test_zoom_multiplier_increases_zoom_dots(self):
+        """With zoom_multiplier>0, zoom panels should have more dots (circles)."""
         ns = "http://www.w3.org/2000/svg"
         svg_no_extra = generate_poster(steps=5000, zoom_multiplier=0,
                                        width_mm=200, height_mm=300)
@@ -449,9 +449,9 @@ class TestGeneratePoster:
                                          width_mm=200, height_mm=300)
         zoom_no = svg_no_extra.find(f".//{{{ns}}}g[@id='zoom_inset']")
         zoom_ex = svg_with_extra.find(f".//{{{ns}}}g[@id='zoom_inset']")
-        pl_no = len(zoom_no.findall(f".//{{{ns}}}polyline"))
-        pl_ex = len(zoom_ex.findall(f".//{{{ns}}}polyline"))
-        assert pl_ex >= pl_no
+        dots_no = len(zoom_no.findall(f".//{{{ns}}}circle"))
+        dots_ex = len(zoom_ex.findall(f".//{{{ns}}}circle"))
+        assert dots_ex >= dots_no
 
     def test_zoom_panels_within_poster_bounds(self):
         """Zoom panels should not extend beyond the poster edges."""
@@ -715,11 +715,11 @@ class TestProjectionAngles:
 # ---------------------------------------------------------------------------
 
 class TestExtraTrajectoryDistinction:
-    def test_zoom_label_includes_saddle_region(self):
-        """The zoom panel label mentions 'saddle region'."""
+    def test_zoom_label_includes_xz_projection(self):
+        """The zoom panel label mentions 'x–z projection'."""
         svg = generate_poster(steps=1000, width_mm=200, height_mm=300)
         xml_str = ET.tostring(svg, encoding="unicode")
-        assert "saddle region" in xml_str
+        assert "x\u2013z projection" in xml_str
 
 
 # ---------------------------------------------------------------------------
