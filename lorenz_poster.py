@@ -264,7 +264,7 @@ def _find_best_zoom_center(scaled_main, origin_x, origin_y, w_scale):
     at slightly different offsets, creating visible layers.
     """
     search_radius = 25.0 * w_scale
-    bin_size = 4.0 * w_scale
+    bin_size = 2.5 * w_scale
 
     bins_count: dict[tuple[int, int], int] = {}
     bins_sin2: dict[tuple[int, int], float] = {}
@@ -297,7 +297,7 @@ def _find_best_zoom_center(scaled_main, origin_x, origin_y, w_scale):
     best_score = -1.0
     best_key = None
     for key, count in bins_count.items():
-        if count < 20:
+        if count < 40:
             continue
         s2 = bins_sin2.get(key, 0.0)
         c2 = bins_cos2.get(key, 0.0)
@@ -314,10 +314,58 @@ def _find_best_zoom_center(scaled_main, origin_x, origin_y, w_scale):
             origin_y + (best_key[1] + 0.5) * bin_size)
 
 
+def _time_color(t_frac):
+    """Interpolate dark blue (#1a237e) → gold (#ffc107) based on *t_frac* ∈ [0, 1]."""
+    r = int(0x1a + (0xff - 0x1a) * t_frac)
+    g = int(0x23 + (0xc1 - 0x23) * t_frac)
+    b = int(0x7e + (0x07 - 0x7e) * t_frac)
+    return f"#{r:02x}{g:02x}{b:02x}"
+
+
+def _render_saddle_dots(traj_3d, group, ns, dot_r, stride_n, base_opacity,
+                        panel_x, panel_y, panel_w, panel_h,
+                        saddle_x_half, saddle_z_center, saddle_z_half):
+    """Filter 3-D trajectory for the saddle region, project x-z, and draw dots.
+
+    Points in the saddle region (|x| ≤ *saddle_x_half* and
+    |z − saddle_z_center| ≤ *saddle_z_half*) are collected, strided, and
+    rendered as time-coloured circles within the given panel rectangle.
+    """
+    filtered = []
+    for idx, (x3, y3, z3) in enumerate(traj_3d):
+        if abs(x3) <= saddle_x_half and abs(z3 - saddle_z_center) <= saddle_z_half:
+            filtered.append((idx, x3, z3))
+    if not filtered:
+        return
+    filtered = filtered[::stride_n]
+    if not filtered:
+        return
+    xs = [p[1] for p in filtered]
+    zs = [p[2] for p in filtered]
+    x_min, x_max = min(xs), max(xs)
+    z_min, z_max = min(zs), max(zs)
+    x_range = x_max - x_min if x_max != x_min else 1.0
+    z_range = z_max - z_min if z_max != z_min else 1.0
+    pad_frac = 0.05
+    pw = panel_w * (1 - 2 * pad_frac)
+    ph = panel_h * (1 - 2 * pad_frac)
+    px0 = panel_x + panel_w * pad_frac
+    py0 = panel_y + panel_h * pad_frac
+    total_pts = len(traj_3d)
+    r_str = str(dot_r)
+    for idx, x3, z3 in filtered:
+        sx = px0 + ((x3 - x_min) / x_range) * pw
+        sy = py0 + ((z3 - z_min) / z_range) * ph
+        t_frac = idx / max(total_pts - 1, 1)
+        _circle(group, ns, sx, sy, r_str,
+                fill=_time_color(t_frac), opacity=str(base_opacity))
+
+
 def _draw_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
                      center_x, center_y, avail_w, avail_h, min_top,
                      width_mm, attractor_color, origin_poster=None,
-                     theme=None, scaled_extra=None, preferred_y=None):
+                     theme=None, scaled_extra=None, preferred_y=None,
+                     traj_main_3d=None, traj_extra_3d=None):
     """Draw a zoom-inset panel highlighting the saddle / transition region.
 
     The saddle region near the 3-D origin (0, 0, 0) is where the two lobes
@@ -391,9 +439,6 @@ def _draw_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
 
     magnify = zoom_w / (2 * src_hw)     # ≈ 4.8 ×
 
-    # Round to one decimal for display in the label.
-    magnify_label = f"{magnify:.1f}\u00d7 magnified"
-
     # --- Add clipPath for the zoom panel to <defs> ---
     defs_el = svg.find(f"{{{ns}}}defs")
     if defs_el is None:
@@ -433,59 +478,82 @@ def _draw_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
     _rect(zoom_group, ns, zoom_x, zoom_y, zoom_w, zoom_h,
           fill=bg_color, stroke="none", opacity="0.92")
 
-    # --- Zoomed attractor lines (clipped to the panel) ---
-    # Sample region: extend to 2× the source-box half-dimensions so that
-    # trajectory segments entering/exiting the box are included and smoothly
-    # clipped by the clipPath (total sampled area = 4× source-box area).
-    sample_hw = src_hw * 2.0
-    sample_hh = src_hh * 2.0
-    zoom_lines_g = _group(zoom_group, ns, **{"clip-path": f"url(#{clip_id})"})
+    # --- Zoomed attractor dots — x-z projection for fractal sheet reveal ---
+    # Instead of re-using the main poster projection, filter the 3-D
+    # trajectory for points in the saddle region and locally project to x-z
+    # (angle_x=0, angle_z=0).  This separates fractal sheets clearly.
+    # Each dot is time-coloured (dark blue → gold) to show temporal layering.
+    zoom_dots_g = _group(zoom_group, ns, **{"clip-path": f"url(#{clip_id})"})
+    dot_r = round(0.35 * w_scale, 3)
+    stride = 3
 
-    # Ultra-thin stroke to reveal individual fractal sheets at this zoom level.
-    thin_sw = str(round(0.05 * w_scale, 3))
+    # Saddle filter bounds in 3-D space: |x| < threshold, z near 23 ± band.
+    saddle_x_half = 15.0
+    saddle_z_center = 23.0
+    saddle_z_half = 15.0
 
-    def _to_zoom(px, py):
-        return (zoom_cx + (px - src_cx) * magnify,
-                zoom_cy + (py - src_cy) * magnify)
+    if traj_main_3d:
+        _render_saddle_dots(traj_main_3d, zoom_dots_g, ns, dot_r, stride, 0.75,
+                            zoom_x, zoom_y, zoom_w, zoom_h,
+                            saddle_x_half, saddle_z_center, saddle_z_half)
+    else:
+        # Fallback: use 2-D scaled_main polylines if 3-D data unavailable.
+        sample_hw = src_hw * 2.0
+        sample_hh = src_hh * 2.0
+        thin_sw = str(round(0.05 * w_scale, 3))
 
-    segment = []
-    for px, py in scaled_main:
-        if abs(px - src_cx) <= sample_hw and abs(py - src_cy) <= sample_hh:
-            segment.append(_to_zoom(px, py))
-        else:
-            if len(segment) >= 2:
-                _polyline(zoom_lines_g, ns, segment,
-                          stroke=attractor_color, opacity="0.75",
-                          **{"stroke-width": thin_sw,
-                             "stroke-linejoin": "round",
-                             "stroke-linecap": "round"})
-            segment = []
-    if len(segment) >= 2:
-        _polyline(zoom_lines_g, ns, segment,
-                  stroke=attractor_color, opacity="0.75",
-                  **{"stroke-width": thin_sw,
-                     "stroke-linejoin": "round",
-                     "stroke-linecap": "round"})
+        def _to_zoom(px, py):
+            return (zoom_cx + (px - src_cx) * magnify,
+                    zoom_cy + (py - src_cy) * magnify)
 
-    # --- Extra-detail trajectory (only in zoom) ---
-    # Drawn at reduced opacity so it is subtly distinguishable from the
-    # main trajectory while still contributing fractal detail.
-    if scaled_extra:
-        extra_sw = str(round(0.04 * w_scale, 3))
         segment = []
-        for px, py in scaled_extra:
+        for px, py in scaled_main:
             if abs(px - src_cx) <= sample_hw and abs(py - src_cy) <= sample_hh:
                 segment.append(_to_zoom(px, py))
             else:
                 if len(segment) >= 2:
-                    _polyline(zoom_lines_g, ns, segment,
+                    _polyline(zoom_dots_g, ns, segment,
+                              stroke=attractor_color, opacity="0.75",
+                              **{"stroke-width": thin_sw,
+                                 "stroke-linejoin": "round",
+                                 "stroke-linecap": "round"})
+                segment = []
+        if len(segment) >= 2:
+            _polyline(zoom_dots_g, ns, segment,
+                      stroke=attractor_color, opacity="0.75",
+                      **{"stroke-width": thin_sw,
+                         "stroke-linejoin": "round",
+                         "stroke-linecap": "round"})
+
+    # --- Extra-detail trajectory dots (only in zoom) ---
+    if traj_extra_3d:
+        _render_saddle_dots(traj_extra_3d, zoom_dots_g, ns, dot_r, stride, 0.55,
+                            zoom_x, zoom_y, zoom_w, zoom_h,
+                            saddle_x_half, saddle_z_center, saddle_z_half)
+    elif scaled_extra:
+        # Fallback: use 2-D scaled_extra polylines if 3-D data unavailable.
+        sample_hw = src_hw * 2.0
+        sample_hh = src_hh * 2.0
+        extra_sw = str(round(0.04 * w_scale, 3))
+
+        def _to_zoom_fallback(px, py):
+            return (zoom_cx + (px - src_cx) * magnify,
+                    zoom_cy + (py - src_cy) * magnify)
+
+        segment = []
+        for px, py in scaled_extra:
+            if abs(px - src_cx) <= sample_hw and abs(py - src_cy) <= sample_hh:
+                segment.append(_to_zoom_fallback(px, py))
+            else:
+                if len(segment) >= 2:
+                    _polyline(zoom_dots_g, ns, segment,
                               stroke=attractor_color, opacity="0.45",
                               **{"stroke-width": extra_sw,
                                  "stroke-linejoin": "round",
                                  "stroke-linecap": "round"})
                 segment = []
         if len(segment) >= 2:
-            _polyline(zoom_lines_g, ns, segment,
+            _polyline(zoom_dots_g, ns, segment,
                       stroke=attractor_color, opacity="0.45",
                       **{"stroke-width": extra_sw,
                          "stroke-linejoin": "round",
@@ -496,9 +564,10 @@ def _draw_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
           fill="none", stroke=border_color,
           **{"stroke-width": str(round(0.5 * w_scale, 3))})
 
+    magnify_int = round(magnify)
     # --- Subtle label in bottom of zoom panel ---
     _text(zoom_group, ns, zoom_cx, zoom_y + zoom_h - 3.5 * h_scale,
-          f"{magnify_label}  \u2014  saddle region",
+          f"{magnify_int}\u00d7 zoom \u2014 saddle, x\u2013z projection",
           **{**ANNOTATION_STYLE,
              "fill": border_color,
              "font-size": str(round(2.8 * w_scale, 2)),
@@ -534,7 +603,8 @@ def _draw_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
 
 def _draw_ultra_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
                            zoom_info, width_mm, attractor_color,
-                           theme=None, scaled_extra=None):
+                           theme=None, scaled_extra=None,
+                           traj_main_3d=None, traj_extra_3d=None):
     """Draw a second-level ultra-zoom panel for deeper fractal structure.
 
     Zooms further into the *same* outer-turnaround-edge region targeted by
@@ -584,7 +654,6 @@ def _draw_ultra_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
     uz_cy = uz_y + uz_h / 2
 
     uz_magnify = uz_w / (2 * uz_src_hw)  # 36 / 4 = 9 ×
-    uz_magnify_label = f"{uz_magnify:.0f}\u00d7 into outer layer"
 
     # --- clipPath for ultra-zoom panel ---
     defs_el = svg.find(f"{{{ns}}}defs")
@@ -637,55 +706,77 @@ def _draw_ultra_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
     _rect(uz_group, ns, uz_x, uz_y, uz_w, uz_h,
           fill=bg_color, stroke="none", opacity="0.92")
 
-    # --- Zoomed attractor lines (clipped to panel) ---
-    sample_hw = uz_src_hw * 2.0
-    sample_hh = uz_src_hh * 2.0
-    uz_lines_g = _group(uz_group, ns, **{"clip-path": f"url(#{uz_clip_id})"})
+    # --- Zoomed attractor dots — x-z projection (same technique as zoom) ---
+    uz_dots_g = _group(uz_group, ns, **{"clip-path": f"url(#{uz_clip_id})"})
+    uz_dot_r = round(0.25 * w_scale, 3)
+    stride = 3
 
-    ultra_thin_sw = str(round(0.03 * w_scale, 3))
+    saddle_x_half = 8.0
+    saddle_z_center = 23.0
+    saddle_z_half = 8.0
 
-    def _to_uz(px, py):
-        return (uz_cx + (px - src_cx) * uz_magnify,
-                uz_cy + (py - src_cy) * uz_magnify)
+    if traj_main_3d:
+        _render_saddle_dots(traj_main_3d, uz_dots_g, ns, uz_dot_r, stride, 0.75,
+                            uz_x, uz_y, uz_w, uz_h,
+                            saddle_x_half, saddle_z_center, saddle_z_half)
+    else:
+        # Fallback: use 2-D scaled_main polylines if 3-D data unavailable.
+        sample_hw = uz_src_hw * 2.0
+        sample_hh = uz_src_hh * 2.0
+        ultra_thin_sw = str(round(0.03 * w_scale, 3))
 
-    segment = []
-    for px, py in scaled_main:
-        if abs(px - src_cx) <= sample_hw and abs(py - src_cy) <= sample_hh:
-            segment.append(_to_uz(px, py))
-        else:
-            if len(segment) >= 2:
-                _polyline(uz_lines_g, ns, segment,
-                          stroke=attractor_color, opacity="0.75",
-                          **{"stroke-width": ultra_thin_sw,
-                             "stroke-linejoin": "round",
-                             "stroke-linecap": "round"})
-            segment = []
-    if len(segment) >= 2:
-        _polyline(uz_lines_g, ns, segment,
-                  stroke=attractor_color, opacity="0.75",
-                  **{"stroke-width": ultra_thin_sw,
-                     "stroke-linejoin": "round",
-                     "stroke-linecap": "round"})
+        def _to_uz(px, py):
+            return (uz_cx + (px - src_cx) * uz_magnify,
+                    uz_cy + (py - src_cy) * uz_magnify)
 
-    # --- Extra-detail trajectory (only in ultra-zoom) ---
-    # Drawn at reduced opacity so it is subtly distinguishable from the
-    # main trajectory while still contributing fractal detail.
-    if scaled_extra:
-        extra_sw = str(round(0.02 * w_scale, 3))
         segment = []
-        for px, py in scaled_extra:
+        for px, py in scaled_main:
             if abs(px - src_cx) <= sample_hw and abs(py - src_cy) <= sample_hh:
                 segment.append(_to_uz(px, py))
             else:
                 if len(segment) >= 2:
-                    _polyline(uz_lines_g, ns, segment,
+                    _polyline(uz_dots_g, ns, segment,
+                              stroke=attractor_color, opacity="0.75",
+                              **{"stroke-width": ultra_thin_sw,
+                                 "stroke-linejoin": "round",
+                                 "stroke-linecap": "round"})
+                segment = []
+        if len(segment) >= 2:
+            _polyline(uz_dots_g, ns, segment,
+                      stroke=attractor_color, opacity="0.75",
+                      **{"stroke-width": ultra_thin_sw,
+                         "stroke-linejoin": "round",
+                         "stroke-linecap": "round"})
+
+    # --- Extra-detail trajectory dots (only in ultra-zoom) ---
+    if traj_extra_3d:
+        _render_saddle_dots(traj_extra_3d, uz_dots_g, ns, uz_dot_r, stride, 0.55,
+                            uz_x, uz_y, uz_w, uz_h,
+                            saddle_x_half, saddle_z_center, saddle_z_half)
+    elif scaled_extra:
+        # Fallback: use 2-D scaled_extra polylines if 3-D data unavailable.
+        sample_hw = uz_src_hw * 2.0
+        sample_hh = uz_src_hh * 2.0
+        extra_sw = str(round(0.02 * w_scale, 3))
+
+        def _to_uz_fallback(px, py):
+            return (uz_cx + (px - src_cx) * uz_magnify,
+                    uz_cy + (py - src_cy) * uz_magnify)
+
+        segment = []
+        for px, py in scaled_extra:
+            if abs(px - src_cx) <= sample_hw and abs(py - src_cy) <= sample_hh:
+                segment.append(_to_uz_fallback(px, py))
+            else:
+                if len(segment) >= 2:
+                    _polyline(uz_dots_g, ns, segment,
                               stroke=attractor_color, opacity="0.45",
                               **{"stroke-width": extra_sw,
                                  "stroke-linejoin": "round",
                                  "stroke-linecap": "round"})
                 segment = []
         if len(segment) >= 2:
-            _polyline(uz_lines_g, ns, segment,
+            _polyline(uz_dots_g, ns, segment,
                       stroke=attractor_color, opacity="0.45",
                       **{"stroke-width": extra_sw,
                          "stroke-linejoin": "round",
@@ -696,9 +787,10 @@ def _draw_ultra_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
           fill="none", stroke=border_color,
           **{"stroke-width": str(round(0.5 * w_scale, 3))})
 
+    uz_magnify_int = round(uz_magnify)
     # --- Label at bottom of ultra-zoom panel ---
     _text(uz_group, ns, uz_cx, uz_y + uz_h - 3.0 * h_scale,
-          uz_magnify_label,
+          f"{uz_magnify_int}\u00d7 zoom \u2014 x\u2013z projection",
           **{**ANNOTATION_STYLE,
              "fill": border_color,
              "font-size": str(round(2.4 * w_scale, 2)),
@@ -866,12 +958,14 @@ def _draw_poincare_inset(svg, ns, poincare_pts, w_scale, h_scale,
         plot_y0 = ps_y + ps_h * pad
 
         scatter_g = _group(ps_group, ns, **{"clip-path": f"url(#{clip_id})"})
-        dot_r = str(round(0.25 * w_scale, 3))
+        dot_r = str(round(0.12 * w_scale, 3))
+        n_pts = len(poincare_pts)
+        dot_opacity = str(round(max(0.15, min(0.55, 200.0 / n_pts)), 3))
         for px, py in poincare_pts:
             sx = plot_x0 + ((px - x_min) / x_range) * plot_w
             sy = plot_y0 + ((py - y_min) / y_range) * plot_h
             _circle(scatter_g, ns, sx, sy, dot_r,
-                    fill=attractor_color, opacity="0.55")
+                    fill=attractor_color, opacity=dot_opacity)
 
     # --- Border ---
     _rect(ps_group, ns, ps_x, ps_y, ps_w, ps_h,
@@ -1211,6 +1305,7 @@ def generate_poster(steps=200000, zoom_multiplier=2, width_mm=BASE_WIDTH_MM, hei
         center_x, center_y, avail_w, avail_h, min_top,
         width_mm, attractor_color, origin_poster=origin_poster, theme=theme,
         scaled_extra=scaled_extra, preferred_y=zoom_preferred_y,
+        traj_main_3d=traj_main, traj_extra_3d=traj_extra,
     )
 
     # --- Ultra-zoom panel (second-level zoom for deeper fractal structure) ---
@@ -1218,6 +1313,7 @@ def generate_poster(steps=200000, zoom_multiplier=2, width_mm=BASE_WIDTH_MM, hei
         svg, ns, scaled_main, w_scale, h_scale,
         zoom_info, width_mm, attractor_color, theme=theme,
         scaled_extra=scaled_extra,
+        traj_main_3d=traj_main, traj_extra_3d=traj_extra,
     )
 
     # --- Pre-compute annotation layout positions ---
@@ -1233,7 +1329,7 @@ def generate_poster(steps=200000, zoom_multiplier=2, width_mm=BASE_WIDTH_MM, hei
     # Right panel (col2–col3 gap): cross-section at z ≈ 27 (classic section)
     combined_traj = traj_main + traj_extra
     poincare_z27_pts = compute_poincare_section(combined_traj, z0=27.0, tol=0.5)
-    poincare_x0_pts = compute_poincare_section_x0(combined_traj, x0=0.0, tol=1.0)
+    poincare_x0_pts = compute_poincare_section_x0(combined_traj, x0=0.0, tol=0.5)
 
     _draw_poincare_inset(
         svg, ns, poincare_x0_pts, w_scale, h_scale,
