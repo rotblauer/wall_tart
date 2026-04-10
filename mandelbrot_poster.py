@@ -219,7 +219,8 @@ def _annotation_self_similarity(parent, ns, target_x, target_y,
                                 col_cx, anno_y, scale=1, theme=None):
     """Annotation: infinite self-similarity and zooming."""
     g = draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
-                               "Infinite Self-Similarity", scale, theme=theme)
+                               "Infinite Self-Similarity", scale, theme=theme,
+                               show_line=False)
     draw_annotation_body(g, ns, col_cx, anno_y, [
         "Zoom into the boundary of the",
         "Mandelbrot set and you will find",
@@ -235,7 +236,8 @@ def _annotation_escape_time(parent, ns, target_x, target_y,
                             col_cx, anno_y, scale=1, theme=None):
     """Annotation: escape-time colouring algorithm."""
     g = draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
-                               "Escape-Time Colouring", scale, theme=theme)
+                               "Escape-Time Colouring", scale, theme=theme,
+                               show_line=False)
     draw_annotation_body(g, ns, col_cx, anno_y, [
         "Each point is coloured by how many",
         "iterations it takes for |z| to",
@@ -251,7 +253,8 @@ def _annotation_julia_connection(parent, ns, target_x, target_y,
                                  col_cx, anno_y, scale=1, theme=None):
     """Annotation: connection between Mandelbrot and Julia sets."""
     g = draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
-                               "Julia Set Connection", scale, theme=theme)
+                               "Julia Set Connection", scale, theme=theme,
+                               show_line=False)
     draw_annotation_body(g, ns, col_cx, anno_y, [
         "Every point c in the complex plane",
         "defines a unique Julia set. Points",
@@ -477,9 +480,8 @@ def _draw_julia_inset(parent, ns, panel_x, panel_y, panel_w, panel_h,
                       clip_path_id=None):
     """Draw a Julia set inset panel on the Mandelbrot poster.
 
-    Renders the Julia grid inside a styled panel, places a small circular
-    marker at the corresponding *c* point on the main fractal, and connects
-    the two with a dashed line.
+    Renders the Julia grid inside a styled panel and places a small circular
+    marker at the corresponding *c* point on the main fractal.
 
     Parameters
     ----------
@@ -504,10 +506,7 @@ def _draw_julia_inset(parent, ns, panel_x, panel_y, panel_w, panel_h,
     w_scale, h_scale : float
         Poster scaling factors.
     line_stop_y : float or None
-        When set, the dashed connector line runs from the marker to
-        (*panel_cx*, *line_stop_y*) with a terminal circle, matching the
-        inline-zoom style used by the logistic-map poster.  When *None*,
-        the line connects to the nearest panel corner (overlay style).
+        Unused; retained for API compatibility.
     fade_edges : bool
         When True, cells with very low escape counts are rendered with
         reduced opacity and no solid panel background / border is drawn,
@@ -579,40 +578,6 @@ def _draw_julia_inset(parent, ns, panel_x, panel_y, panel_w, panel_h,
             round(0.6 * w_scale, 2),
             fill=border_color,
             **{"opacity": "0.85"})
-
-    # --- Dashed connector line ---
-    conn_style = {
-        "stroke": border_color,
-        "stroke-width": str(round(0.3 * w_scale, 3)),
-        "stroke-dasharray": "1.5,1.5",
-        "opacity": "0.40",
-    }
-    if line_stop_y is not None:
-        # Inline mode: straight line from marker to (panel centre x, stop y)
-        panel_cx = panel_x + panel_w / 2
-        _line(inset_group, ns,
-              round(marker_px, 2), round(marker_py, 2),
-              round(panel_cx, 2), round(line_stop_y, 2),
-              **conn_style)
-        # Terminal circle at the line endpoint
-        _circle(inset_group, ns,
-                round(panel_cx, 2), round(line_stop_y, 2),
-                round(0.8 * w_scale, 2),
-                fill=border_color, **{"opacity": "0.45"})
-    else:
-        # Original mode: to nearest panel corner
-        corners = [
-            (panel_x,           panel_y),
-            (panel_x + panel_w, panel_y),
-            (panel_x + panel_w, panel_y + panel_h),
-            (panel_x,           panel_y + panel_h),
-        ]
-        nearest = min(corners,
-                      key=lambda p: (p[0] - marker_px) ** 2 + (p[1] - marker_py) ** 2)
-        _line(inset_group, ns,
-              round(marker_px, 2), round(marker_py, 2),
-              round(nearest[0], 2), round(nearest[1], 2),
-              **conn_style)
 
     return inset_group
 
