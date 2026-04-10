@@ -661,9 +661,9 @@ class TestPoincareInsetPoster:
 
 class TestProjectionAngles:
     def test_default_angle_constants(self):
-        """Module-level angle constants have expected values."""
-        assert DEFAULT_ANGLE_X == -0.35
-        assert DEFAULT_ANGLE_Z == 0.85
+        """Module-level angle constants give the x-z projection."""
+        assert abs(DEFAULT_ANGLE_X - math.pi / 2) < 1e-9
+        assert DEFAULT_ANGLE_Z == 0.0
 
     def test_custom_angles_no_crash(self):
         """Custom projection angles produce a valid poster."""

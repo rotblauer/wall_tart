@@ -172,14 +172,18 @@ DIVERGED_COLOR = "#8B0000"   # red for diverged trajectory
 # ---------------------------------------------------------------------------
 # Default projection angles (radians)
 #
-# These angles control the 3-D → 2-D rotation used when drawing the
-# attractor.  Adjusting them changes the viewing perspective:
-#   angle_x  — rotation about the X-axis (tilts the butterfly up/down)
-#   angle_z  — rotation about the Z-axis (rotates the butterfly left/right)
+# The x-z projection (viewing along the y-axis) is the canonical
+# visualisation of the Lorenz butterfly.  With angle_x = π/2 and
+# angle_z = 0 the rotation matrix reduces to (px, py) = (x, −z),
+# placing x horizontal and z vertical (z increasing upward on the
+# poster, matching the conventional mathematical orientation).
+#
+# Custom angles can still be passed to generate_poster() for
+# alternative perspectives.
 # ---------------------------------------------------------------------------
 
-DEFAULT_ANGLE_X = -0.35
-DEFAULT_ANGLE_Z = 0.85
+DEFAULT_ANGLE_X = math.pi / 2
+DEFAULT_ANGLE_Z = 0.0
 
 
 # ---------------------------------------------------------------------------
@@ -1174,7 +1178,7 @@ def generate_poster(steps=200000, zoom_multiplier=2, width_mm=BASE_WIDTH_MM, hei
     raw_w = raw_max_x - raw_min_x if raw_max_x != raw_min_x else 1.0
     raw_h = raw_max_y - raw_min_y if raw_max_y != raw_min_y else 1.0
 
-    scale_factor = min(avail_w / raw_w, avail_h / raw_h) * 0.92
+    scale_factor = min(avail_w / raw_w, avail_h / raw_h) * 0.95
     center_x = width_mm / 2
     center_y = min_top + avail_h / 2
     raw_cx = (raw_min_x + raw_max_x) / 2
@@ -1195,19 +1199,50 @@ def generate_poster(steps=200000, zoom_multiplier=2, width_mm=BASE_WIDTH_MM, hei
     else:
         scaled_extra = []
 
-    # --- Main attractor visualisation ---
+    # --- Main attractor visualisation (depth-modulated back-to-front) ---
+    #
+    # Rendering the trajectory in depth-sorted order with y-based opacity
+    # creates a subtle 3-D perception in the x-z projection: segments
+    # that are "farther" from the viewer (low y) are drawn first and
+    # fainter, while "nearer" segments (high y) overlay them darker.
+    # Stroke-width also narrows for distant segments (aerial perspective).
     attractor_group = _group(svg, ns, id="attractor")
 
-    stroke_w = str(round(0.12 * w_scale, 3))
+    n_depth_segs = 60
+    depth_seg_len = max(1, len(scaled_main) // n_depth_segs)
 
-    n_segments = 5
-    seg_len = len(scaled_main) // n_segments
-    for i in range(n_segments):
-        start = i * seg_len
-        end = start + seg_len + 1 if i < n_segments - 1 else len(scaled_main)
-        _polyline(attractor_group, ns, scaled_main[start:end],
-                  stroke=attractor_color, opacity="0.4",
-                  **{"stroke-width": stroke_w,
+    # Collect y-depths from the 3-D trajectory for each rendering segment.
+    render_segments = []
+    for i in range(n_depth_segs):
+        start = i * depth_seg_len
+        end = (start + depth_seg_len + 1
+               if i < n_depth_segs - 1 else len(scaled_main))
+        seg_pts = scaled_main[start:end]
+        # Average y-coordinate from 3-D data gives the depth of this segment.
+        n_pts_seg = min(end, len(traj_main)) - start
+        if n_pts_seg > 0:
+            avg_y = sum(traj_main[j][1]
+                        for j in range(start, min(end, len(traj_main)))) / n_pts_seg
+        else:
+            avg_y = 0.0
+        render_segments.append((avg_y, seg_pts))
+
+    # Normalise depths to [0, 1] where 0 = farthest, 1 = nearest.
+    y_depths = [s[0] for s in render_segments]
+    y_min_d = min(y_depths) if y_depths else 0.0
+    y_max_d = max(y_depths) if y_depths else 1.0
+    y_range_d = y_max_d - y_min_d if y_max_d != y_min_d else 1.0
+
+    # Sort far-first (ascending y) for back-to-front painter's order.
+    render_segments.sort(key=lambda s: s[0])
+
+    for avg_y, pts in render_segments:
+        depth_frac = (avg_y - y_min_d) / y_range_d
+        opacity = round(0.18 + 0.40 * depth_frac, 3)
+        sw = str(round((0.06 + 0.08 * depth_frac) * w_scale, 3))
+        _polyline(attractor_group, ns, pts,
+                  stroke=attractor_color, opacity=str(opacity),
+                  **{"stroke-width": sw,
                      "stroke-linejoin": "round",
                      "stroke-linecap": "round"})
 
@@ -1220,31 +1255,34 @@ def generate_poster(steps=200000, zoom_multiplier=2, width_mm=BASE_WIDTH_MM, hei
             diverge_start = idx
             break
 
+    diverged_sw = str(round(0.10 * w_scale, 3))
     if diverge_start < len(scaled_div):
         _polyline(attractor_group, ns, scaled_div[diverge_start:],
                   stroke=diverged_color, opacity="0.25",
-                  **{"stroke-width": stroke_w,
+                  **{"stroke-width": diverged_sw,
                      "stroke-linejoin": "round",
                      "stroke-linecap": "round"})
 
     # --- Zoom inset panel (drawn before annotations so it sits in the right layer) ---
-    # The 3-D origin (0,0,0) projects to the saddle region where the two
-    # lobes meet — the ideal region for revealing fractal sheet structure.
-    origin_poster = _transform(0, 0)
+    # In the x-z projection the 3-D saddle region (x≈0, z≈27) sits at the
+    # junction of the two butterfly wings — the ideal spot for revealing
+    # fractal sheet structure.
+    saddle_proj = project_3d_to_2d(
+        [(0, 0, 27)], angle_x=angle_x, angle_z=angle_z,
+    )[0]
+    origin_poster = _transform(saddle_proj[0], saddle_proj[1])
 
     # Pre-compute attractor vertical extent so we can position the zoom
     # panels lower (closer to the attractor bottom) as requested.
     vis_ys = [p[1] for p in scaled_main]
     attractor_bottom = max(vis_ys)
 
-    # Approximate combined height of both zoom panels so the bottom panel
-    # aligns with the lower portion of the content area (max_bot).
+    # Approximate combined height of both zoom panels.
+    # In x-z projection the upper-right corner is a natural void (the
+    # butterfly is narrow at the top), so place zoom panels there.
     approx_zoom_h = min(70.0 * w_scale, avail_h * 0.4)
     approx_uz_h = min(46.0 * w_scale, approx_zoom_h * 0.85)
-    zoom_preferred_y = max(
-        min_top + 4.0 * h_scale,
-        min_top + avail_h - approx_zoom_h - approx_uz_h - 10 * h_scale,  # 10 mm gap below ultra-zoom
-    )
+    zoom_preferred_y = min_top + 4.0 * h_scale
 
     zoom_info = _draw_zoom_inset(
         svg, ns, scaled_main, w_scale, h_scale,
