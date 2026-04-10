@@ -37,6 +37,7 @@ from poster_utils import (
     TITLE_COLOR,
     _circle,
     _group,
+    _line,
     _multiline_text,
     _polygon,
     _rect,
@@ -122,6 +123,28 @@ TRIANGLE_COLOR = "#1C1C1C"  # near-black ink
 # Annotation builders
 # ---------------------------------------------------------------------------
 
+def _draw_right_arrow(g, ns, cx, cy, length, color, scale):
+    """Draw a right-pointing arrow centred at (cx, cy) using SVG primitives.
+
+    Uses a line shaft and a filled triangle arrowhead so rendering does not
+    depend on any font having the U+2192 glyph.
+    """
+    head_w = length * 0.40
+    head_h = length * 0.32
+    shaft_x1 = cx - length / 2
+    shaft_x2 = cx + length / 2 - head_w
+    mid_y = cy
+    sw = max(0.3, 0.3 * scale)
+    _line(g, ns, shaft_x1, mid_y, shaft_x2, mid_y,
+          stroke=color, **{"stroke-width": str(round(sw, 3))})
+    tip_x = cx + length / 2
+    _polygon(g, ns, [
+        (tip_x, mid_y),
+        (tip_x - head_w, mid_y - head_h / 2),
+        (tip_x - head_w, mid_y + head_h / 2),
+    ], fill=color)
+
+
 def _annotation_self_similarity(parent, ns, target_x, target_y,
                                 col_cx, anno_y, scale=1, theme=None):
     """Annotation: self-similarity callout (below the fractal)."""
@@ -162,8 +185,10 @@ def _annotation_recursion(parent, ns, target_x, target_y,
               **{**ANNOTATION_STYLE, "font-size": str(round(3 * scale, 2)),
                  "text-anchor": "middle"})
         if i < 2:
-            _text(g, ns, mini_cx + 8 * scale, mini_y, "\u2192",
-                  **{**ANNOTATION_STYLE, "font-size": str(round(5 * scale, 2))})
+            arrow_color = ANNOTATION_STYLE.get("fill", "#1C1C1C")
+            _draw_right_arrow(g, ns, mini_cx + 11 * scale,
+                              mini_y - 1.5 * scale,
+                              8 * scale, arrow_color, scale)
 
     return g
 
@@ -319,11 +344,11 @@ def _panel_area_paradox(parent, ns, col_cx, anno_y, scale=1, tri_color=None):
 
     formula_y = anno_y + 40 * scale
     _text(g, ns, col_cx, formula_y,
-          "Area(n) = (3/4)^n \u2192 0",
+          "Area(n) = (3/4)^n  ->  0",
           **{**ANNOTATION_STYLE, "font-size": str(round(4.2 * scale, 2)),
              "font-style": "italic", "text-anchor": "middle"})
     _text(g, ns, col_cx, formula_y + 7 * scale,
-          "Perimeter(n) \u2192 \u221E",
+          "Perimeter(n)  ->  inf",
           **{**ANNOTATION_STYLE, "font-size": str(round(4.2 * scale, 2)),
              "font-style": "italic", "text-anchor": "middle"})
 
