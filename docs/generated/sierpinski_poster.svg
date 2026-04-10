@@ -258,7 +258,6 @@
   <g id="annotations">
     <line x1="63.0" y1="425.56282941409637" x2="357.0" y2="425.56282941409637" stroke="#8B0000" stroke-width="0.3" opacity="0.5" />
     <g>
-      <line x1="63.0" y1="435.56282941409637" x2="210.0" y2="187.62494313803214" stroke="#8B0000" stroke-width="0.5" stroke-dasharray="2,1.5" marker-end="url(#arrowhead)" />
       <circle cx="63.0" cy="435.56282941409637" r="1.0" fill="#8B0000" />
       <text x="63.0" y="445.56282941409637" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#8B0000" font-size="5.0" text-anchor="middle">Self-Similarity</text>
       <text x="63.0" y="452.56282941409637" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
@@ -269,7 +268,6 @@
       </text>
     </g>
     <g>
-      <line x1="210.0" y1="435.56282941409637" x2="210.0" y2="301.59388627606427" stroke="#8B0000" stroke-width="0.5" stroke-dasharray="2,1.5" marker-end="url(#arrowhead)" />
       <circle cx="210.0" cy="435.56282941409637" r="1.0" fill="#8B0000" />
       <text x="210.0" y="445.56282941409637" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#8B0000" font-size="5.0" text-anchor="middle">Recursion</text>
       <text x="210.0" y="452.56282941409637" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
@@ -299,7 +297,6 @@
       <text x="232.0" y="488.56282941409637" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#1C1C1C" font-size="3.0" text-anchor="middle">depth 2</text>
     </g>
     <g>
-      <line x1="357.0" y1="435.56282941409637" x2="308.7" y2="358.5783578450803" stroke="#8B0000" stroke-width="0.5" stroke-dasharray="2,1.5" marker-end="url(#arrowhead)" />
       <circle cx="357.0" cy="435.56282941409637" r="1.0" fill="#8B0000" />
       <text x="357.0" y="445.56282941409637" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#8B0000" font-size="5.0" text-anchor="middle">Fractional Dimension</text>
       <text x="357.0" y="452.56282941409637" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
