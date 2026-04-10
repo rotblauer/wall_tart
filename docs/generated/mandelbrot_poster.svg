@@ -1032,7 +1032,6 @@
   <g id="annotations">
     <line x1="63.0" y1="427.79999999999995" x2="357.0" y2="427.79999999999995" stroke="#8B0000" stroke-width="0.3" opacity="0.5" />
     <g>
-      <line x1="63.0" y1="437.79999999999995" x2="113.04" y2="244.72799999999998" stroke="#8B0000" stroke-width="0.5" stroke-dasharray="2,1.5" marker-end="url(#arrowhead)" />
       <circle cx="63.0" cy="437.79999999999995" r="1.0" fill="#8B0000" />
       <text x="63.0" y="447.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#8B0000" font-size="5.0" text-anchor="middle">Infinite Self-Similarity</text>
       <text x="63.0" y="454.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
@@ -1045,7 +1044,6 @@
       </text>
     </g>
     <g>
-      <line x1="210.0" y1="437.79999999999995" x2="214.8" y2="270.51504545454543" stroke="#8B0000" stroke-width="0.5" stroke-dasharray="2,1.5" marker-end="url(#arrowhead)" />
       <circle cx="210.0" cy="437.79999999999995" r="1.0" fill="#8B0000" />
       <text x="210.0" y="447.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#8B0000" font-size="5.0" text-anchor="middle">Julia Set Connection</text>
       <text x="210.0" y="454.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
@@ -1058,7 +1056,6 @@
       </text>
     </g>
     <g>
-      <line x1="357.0" y1="437.79999999999995" x2="266.64" y2="344.0007272727272" stroke="#8B0000" stroke-width="0.5" stroke-dasharray="2,1.5" marker-end="url(#arrowhead)" />
       <circle cx="357.0" cy="437.79999999999995" r="1.0" fill="#8B0000" />
       <text x="357.0" y="447.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#8B0000" font-size="5.0" text-anchor="middle">Escape-Time Colouring</text>
       <text x="357.0" y="454.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
@@ -1294,8 +1291,6 @@
       <text x="136.5" y="498.75" font-family="'Playfair Display', Georgia, 'Times New Roman', serif" font-size="3.0" fill="#555555" text-anchor="middle" font-style="italic">c = −0.70 + 0.27i</text>
       <circle cx="214.8" cy="270.52" r="1.8" fill="none" stroke="#1C1C1C" stroke-width="0.5" opacity="0.85" />
       <circle cx="214.8" cy="270.52" r="0.6" fill="#1C1C1C" opacity="0.85" />
-      <line x1="214.8" y1="270.52" x2="136.5" y2="427.8" stroke="#1C1C1C" stroke-width="0.3" stroke-dasharray="1.5,1.5" opacity="0.40" />
-      <circle cx="136.5" cy="427.8" r="0.8" fill="#1C1C1C" opacity="0.45" />
     </g>
     <g>
       <g clip-path="url(#juliaClip1)">
@@ -1472,8 +1467,6 @@
       <text x="283.5" y="498.75" font-family="'Playfair Display', Georgia, 'Times New Roman', serif" font-size="3.0" fill="#555555" text-anchor="middle" font-style="italic">c = 0.355 + 0.355i</text>
       <circle cx="316.08" cy="278.61" r="1.8" fill="none" stroke="#1C1C1C" stroke-width="0.5" opacity="0.85" />
       <circle cx="316.08" cy="278.61" r="0.6" fill="#1C1C1C" opacity="0.85" />
-      <line x1="316.08" y1="278.61" x2="283.5" y2="427.8" stroke="#1C1C1C" stroke-width="0.3" stroke-dasharray="1.5,1.5" opacity="0.40" />
-      <circle cx="283.5" cy="427.8" r="0.8" fill="#1C1C1C" opacity="0.45" />
     </g>
     <g>
       <g clip-path="url(#juliaClip2)">
@@ -1650,8 +1643,6 @@
       <text x="136.5" y="565.75" font-family="'Playfair Display', Georgia, 'Times New Roman', serif" font-size="3.0" fill="#555555" text-anchor="middle" font-style="italic">c = −0.80 + 0.16i</text>
       <circle cx="205.2" cy="259.62" r="1.8" fill="none" stroke="#1C1C1C" stroke-width="0.5" opacity="0.85" />
       <circle cx="205.2" cy="259.62" r="0.6" fill="#1C1C1C" opacity="0.85" />
-      <line x1="205.2" y1="259.62" x2="136.5" y2="500.8" stroke="#1C1C1C" stroke-width="0.3" stroke-dasharray="1.5,1.5" opacity="0.40" />
-      <circle cx="136.5" cy="500.8" r="0.8" fill="#1C1C1C" opacity="0.45" />
     </g>
     <g>
       <g clip-path="url(#juliaClip3)">
@@ -1828,8 +1819,6 @@
       <text x="283.5" y="565.75" font-family="'Playfair Display', Georgia, 'Times New Roman', serif" font-size="3.0" fill="#555555" text-anchor="middle" font-style="italic">c = 0.285 + 0.01i</text>
       <circle cx="309.36" cy="245.68" r="1.8" fill="none" stroke="#1C1C1C" stroke-width="0.5" opacity="0.85" />
       <circle cx="309.36" cy="245.68" r="0.6" fill="#1C1C1C" opacity="0.85" />
-      <line x1="309.36" y1="245.68" x2="283.5" y2="500.8" stroke="#1C1C1C" stroke-width="0.3" stroke-dasharray="1.5,1.5" opacity="0.40" />
-      <circle cx="283.5" cy="500.8" r="0.8" fill="#1C1C1C" opacity="0.45" />
     </g>
   </g>
   <text x="210.0" y="576.0" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" font-size="4.0" fill="#555555" text-anchor="middle">Discovered by Benoît Mandelbrot in 1980, this set reveals nature’s hidden geometry.</text>
