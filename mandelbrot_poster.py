@@ -604,7 +604,7 @@ def generate_poster(resolution=80, max_iter=100,
         The root ``<svg>`` element.
     """
     t = get_theme(theme)
-    set_color = t["content_primary"]
+    set_color = t["bg_color"]
 
     sc = build_poster_scaffold(
         "The Mandelbrot & Julia Sets",
@@ -617,7 +617,7 @@ def generate_poster(resolution=80, max_iter=100,
     w_scale, h_scale, rule_y = sc["w_scale"], sc["h_scale"], sc["rule_y"]
 
     # --- Content area ---
-    ca = content_area(rule_y, width_mm, height_mm, margin_frac=0.10)
+    ca = content_area(rule_y, width_mm, height_mm, margin_frac=0.07)
     min_top, max_bot = ca["min_top"], ca["max_bot"]
     margin, avail_w, avail_h = ca["margin"], ca["avail_w"], ca["avail_h"]
 
@@ -626,7 +626,7 @@ def generate_poster(resolution=80, max_iter=100,
 
     # --- Compute Mandelbrot grid ---
     mb_x_min, mb_x_max = -2.5, 1.0
-    mb_y_min, mb_y_max = -1.1, 1.1
+    mb_y_min, mb_y_max = -1.35, 1.35
     mb_aspect = (mb_x_max - mb_x_min) / (mb_y_max - mb_y_min)
     grid_w = resolution
     grid_h = max(1, int(resolution / mb_aspect))
