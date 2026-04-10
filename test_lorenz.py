@@ -258,12 +258,12 @@ class TestGeneratePoster:
         assert float(rect.get("height")) > 0
 
     def test_zoom_inset_connector_lines_present(self):
-        """The zoom_inset group contains exactly 4 dashed connector lines."""
+        """The zoom_inset group contains no dashed connector lines (removed)."""
         svg = generate_poster(steps=1000, width_mm=200, height_mm=300)
         ns = "http://www.w3.org/2000/svg"
         zoom = svg.find(f".//{{{ns}}}g[@id='zoom_inset']")
         lines = zoom.findall(f"{{{ns}}}line")
-        assert len(lines) == 4
+        assert len(lines) == 0
 
     def test_zoom_inset_target_box_present(self):
         """The zoom_inset group contains the small source target rect."""
@@ -312,46 +312,17 @@ class TestGeneratePoster:
         )
 
     def test_zoom_annotation_leader_does_not_cross_connectors(self):
-        """The annotation leader to the zoom panel must not cross connector lines.
+        """Without connector lines, annotation leaders should not be blocked.
 
-        The annotation leader targets the bottom edge of the zoom panel (y =
-        zoom_y + zoom_h).  The connector lines link the source box to the
-        zoom panel *corners* (y = zoom_y for top corners).  Because the
-        leader terminates at or below zoom_y + zoom_h, it cannot cross the
-        connector lines that terminate at zoom_y.
+        Since dashed connector lines have been removed, this test simply
+        verifies that annotation leader lines can be found in the SVG and
+        that the zoom_inset group has no line elements.
         """
         svg = generate_poster(steps=5000, width_mm=200, height_mm=300)
         ns = "http://www.w3.org/2000/svg"
         zoom = svg.find(f".//{{{ns}}}g[@id='zoom_inset']")
-        # Connector lines terminate at zoom panel corners.
         lines = zoom.findall(f"{{{ns}}}line")
-        assert len(lines) == 4
-        # Find the zoom panel bottom-y (largest y2 among connector lines).
-        zoom_bottom_y = max(float(ln.get("y2")) for ln in lines)
-        # Find the zoom panel top-y (smallest y2 among connector lines).
-        zoom_top_y = min(float(ln.get("y2")) for ln in lines)
-        # The annotation leader lines originate in the annotation row (below
-        # the attractor) and point upward to their targets.
-        annotations = svg.find(f".//{{{ns}}}g[@id='annotations']")
-        anno_lines = annotations.findall(f".//{{{ns}}}line")
-        for aline in anno_lines:
-            target_y = float(aline.get("y2"))
-            origin_y = float(aline.get("y1"))
-            # Only check upward-pointing lines (from annotation row to target).
-            if origin_y <= target_y:
-                continue
-            # If this leader targets the zoom panel region (near zoom_bottom_y),
-            # it must NOT terminate above the panel top — that would indicate
-            # it crosses through the connector lines.
-            target_x = float(aline.get("x2"))
-            bg_rect = zoom.findall(f"{{{ns}}}rect")[0]
-            panel_left = float(bg_rect.get("x"))
-            panel_right = panel_left + float(bg_rect.get("width"))
-            if panel_left <= target_x <= panel_right:
-                assert target_y >= zoom_top_y, (
-                    f"Leader line targeting zoom panel terminates at y={target_y:.1f}, "
-                    f"which is above the zoom panel top y={zoom_top_y:.1f}"
-                )
+        assert len(lines) == 0
 
     # --- Ultra-zoom (second-level zoom) tests ---
 
@@ -374,12 +345,12 @@ class TestGeneratePoster:
         assert float(rect.get("height")) > 0
 
     def test_ultra_zoom_connector_lines_present(self):
-        """The ultra_zoom_inset group has exactly 2 connector lines."""
+        """The ultra_zoom_inset group has no connector lines (removed)."""
         svg = generate_poster(steps=1000, width_mm=200, height_mm=300)
         ns = "http://www.w3.org/2000/svg"
         uz = svg.find(f".//{{{ns}}}g[@id='ultra_zoom_inset']")
         lines = uz.findall(f"{{{ns}}}line")
-        assert len(lines) == 2
+        assert len(lines) == 0
 
     def test_ultra_zoom_sub_box_on_first_zoom(self):
         """The ultra_zoom_inset group contains a sub-box rect on the first zoom."""
@@ -399,10 +370,12 @@ class TestGeneratePoster:
         assert len(circles) >= 1
 
     def test_ultra_zoom_label_present(self):
-        """The ultra-zoom panel has a label mentioning 'x–z projection'."""
+        """The ultra-zoom panel has no caption label (removed)."""
         svg = generate_poster(steps=1000, width_mm=200, height_mm=300)
-        xml_str = ET.tostring(svg, encoding="unicode")
-        assert "x\u2013z projection" in xml_str
+        ns = "http://www.w3.org/2000/svg"
+        uz = svg.find(f".//{{{ns}}}g[@id='ultra_zoom_inset']")
+        texts = uz.findall(f".//{{{ns}}}text")
+        assert len(texts) == 0
 
     def test_ultra_zoom_below_first_zoom(self):
         """The ultra-zoom panel is positioned below the first zoom panel."""
@@ -716,10 +689,10 @@ class TestProjectionAngles:
 
 class TestExtraTrajectoryDistinction:
     def test_zoom_label_includes_xz_projection(self):
-        """The zoom panel label mentions 'x–z projection'."""
+        """The zoom panels have no 'x–z projection' caption label (removed)."""
         svg = generate_poster(steps=1000, width_mm=200, height_mm=300)
         xml_str = ET.tostring(svg, encoding="unicode")
-        assert "x\u2013z projection" in xml_str
+        assert "x\u2013z projection" not in xml_str
 
 
 # ---------------------------------------------------------------------------

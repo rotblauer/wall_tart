@@ -456,24 +456,6 @@ def _draw_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
     # --- Group that holds all zoom-inset elements ---
     zoom_group = _group(svg, ns, id="zoom_inset")
 
-    # --- Connector lines: source-box corners → zoom-panel corners ---
-    conn_style = {
-        "stroke": border_color,
-        "stroke-width": str(round(0.25 * w_scale, 3)),
-        "stroke-dasharray": "1.5,1.5",
-        "opacity": "0.35",
-    }
-    src_corners = [
-        (src_x1, src_y1), (src_x2, src_y1),
-        (src_x2, src_y2), (src_x1, src_y2),
-    ]
-    zoom_corners = [
-        (zoom_x, zoom_y), (zoom_x + zoom_w, zoom_y),
-        (zoom_x + zoom_w, zoom_y + zoom_h), (zoom_x, zoom_y + zoom_h),
-    ]
-    for (sx, sy), (zx, zy) in zip(src_corners, zoom_corners):
-        _line(zoom_group, ns, sx, sy, zx, zy, **conn_style)
-
     # --- Zoom panel background (covers underlying attractor lines) ---
     _rect(zoom_group, ns, zoom_x, zoom_y, zoom_w, zoom_h,
           fill=bg_color, stroke="none", opacity="0.92")
@@ -484,7 +466,7 @@ def _draw_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
     # (angle_x=0, angle_z=0).  This separates fractal sheets clearly.
     # Each dot is time-coloured (dark blue → gold) to show temporal layering.
     zoom_dots_g = _group(zoom_group, ns, **{"clip-path": f"url(#{clip_id})"})
-    dot_r = round(0.35 * w_scale, 3)
+    dot_r = round(0.22 * w_scale, 3)
     stride = 3
 
     # Saddle filter bounds in 3-D space: |x| < threshold, z near 23 ± band.
@@ -563,16 +545,6 @@ def _draw_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
     _rect(zoom_group, ns, zoom_x, zoom_y, zoom_w, zoom_h,
           fill="none", stroke=border_color,
           **{"stroke-width": str(round(0.5 * w_scale, 3))})
-
-    magnify_int = round(magnify)
-    # --- Subtle label in bottom of zoom panel ---
-    _text(zoom_group, ns, zoom_cx, zoom_y + zoom_h - 3.5 * h_scale,
-          f"{magnify_int}\u00d7 zoom \u2014 saddle, x\u2013z projection",
-          **{**ANNOTATION_STYLE,
-             "fill": border_color,
-             "font-size": str(round(2.8 * w_scale, 2)),
-             "text-anchor": "middle",
-             "opacity": "0.55"})
 
     # --- Source (target) box on the main attractor ---
     _rect(zoom_group, ns, src_x1, src_y1, 2 * src_hw, 2 * src_hh,
@@ -684,31 +656,13 @@ def _draw_ultra_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
              "stroke": border_color,
              "stroke-width": str(round(0.3 * w_scale, 3))})
 
-    # --- Connector lines: sub-box on first zoom → ultra-zoom panel ---
-    conn_style = {
-        "stroke": border_color,
-        "stroke-width": str(round(0.25 * w_scale, 3)),
-        "stroke-dasharray": "1.5,1.5",
-        "opacity": "0.35",
-    }
-    sub_corners = [
-        (sub_on_z1_x, sub_on_z1_y + 2 * sub_on_z1_hh),              # bottom-left
-        (sub_on_z1_x + 2 * sub_on_z1_hw, sub_on_z1_y + 2 * sub_on_z1_hh),  # bottom-right
-    ]
-    uz_top_corners = [
-        (uz_x, uz_y),              # top-left
-        (uz_x + uz_w, uz_y),       # top-right
-    ]
-    for (sx, sy), (zx, zy) in zip(sub_corners, uz_top_corners):
-        _line(uz_group, ns, sx, sy, zx, zy, **conn_style)
-
     # --- Ultra-zoom panel background ---
     _rect(uz_group, ns, uz_x, uz_y, uz_w, uz_h,
           fill=bg_color, stroke="none", opacity="0.92")
 
     # --- Zoomed attractor dots — x-z projection (same technique as zoom) ---
     uz_dots_g = _group(uz_group, ns, **{"clip-path": f"url(#{uz_clip_id})"})
-    uz_dot_r = round(0.25 * w_scale, 3)
+    uz_dot_r = round(0.17 * w_scale, 3)
     stride = 3
 
     saddle_x_half = 8.0
@@ -788,14 +742,6 @@ def _draw_ultra_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
           **{"stroke-width": str(round(0.5 * w_scale, 3))})
 
     uz_magnify_int = round(uz_magnify)
-    # --- Label at bottom of ultra-zoom panel ---
-    _text(uz_group, ns, uz_cx, uz_y + uz_h - 3.0 * h_scale,
-          f"{uz_magnify_int}\u00d7 zoom \u2014 x\u2013z projection",
-          **{**ANNOTATION_STYLE,
-             "fill": border_color,
-             "font-size": str(round(2.4 * w_scale, 2)),
-             "text-anchor": "middle",
-             "opacity": "0.55"})
 
 
 # ---------------------------------------------------------------------------
