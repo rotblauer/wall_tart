@@ -238,172 +238,35 @@ class TestGeneratePoster:
         polylines = attractor.findall(f"{{{ns}}}polyline")
         assert len(polylines) >= 2
 
-    def test_zoom_inset_group_present(self):
-        """A 'zoom_inset' group exists in the SVG."""
+    def test_zoom_inset_group_absent(self):
+        """The 'zoom_inset' group has been removed from the SVG."""
         svg = generate_poster(steps=1000, width_mm=200, height_mm=300)
         ns = "http://www.w3.org/2000/svg"
         zoom = svg.find(f".//{{{ns}}}g[@id='zoom_inset']")
-        assert zoom is not None
+        assert zoom is None
 
-    def test_zoom_inset_clip_path_present(self):
-        """A clipPath with id 'zoom_panel_clip' exists in <defs>."""
+    def test_zoom_inset_clip_path_absent(self):
+        """The 'zoom_panel_clip' clipPath has been removed from the SVG."""
         svg = generate_poster(steps=1000, width_mm=200, height_mm=300)
         ns = "http://www.w3.org/2000/svg"
         clip = svg.find(f".//{{{ns}}}clipPath[@id='zoom_panel_clip']")
-        assert clip is not None
-        # The clipPath must contain a rect that defines the zoom panel bounds.
-        rect = clip.find(f"{{{ns}}}rect")
-        assert rect is not None
-        assert float(rect.get("width")) > 0
-        assert float(rect.get("height")) > 0
-
-    def test_zoom_inset_connector_lines_present(self):
-        """The zoom_inset group contains no dashed connector lines (removed)."""
-        svg = generate_poster(steps=1000, width_mm=200, height_mm=300)
-        ns = "http://www.w3.org/2000/svg"
-        zoom = svg.find(f".//{{{ns}}}g[@id='zoom_inset']")
-        lines = zoom.findall(f"{{{ns}}}line")
-        assert len(lines) == 0
-
-    def test_zoom_inset_target_box_present(self):
-        """The zoom_inset group contains the small source target rect."""
-        svg = generate_poster(steps=1000, width_mm=200, height_mm=300)
-        ns = "http://www.w3.org/2000/svg"
-        zoom = svg.find(f".//{{{ns}}}g[@id='zoom_inset']")
-        rects = zoom.findall(f"{{{ns}}}rect")
-        # 3 rects: background, border, source target box
-        assert len(rects) == 3
-
-    def test_zoom_inset_panel_dots_present(self):
-        """The zoom_inset group contains time-colored dots (circles)."""
-        svg = generate_poster(steps=5000, width_mm=200, height_mm=300)
-        ns = "http://www.w3.org/2000/svg"
-        zoom = svg.find(f".//{{{ns}}}g[@id='zoom_inset']")
-        circles = zoom.findall(f".//{{{ns}}}circle")
-        assert len(circles) >= 1
-
-    def test_zoom_inset_all_themes(self):
-        """zoom_inset renders without error for all built-in themes."""
-        from poster_utils import AVAILABLE_THEMES
-        for theme in AVAILABLE_THEMES:
-            svg = generate_poster(steps=1000, width_mm=200, height_mm=300,
-                                  theme=theme)
-            ns = "http://www.w3.org/2000/svg"
-            zoom = svg.find(f".//{{{ns}}}g[@id='zoom_inset']")
-            assert zoom is not None, f"zoom_inset missing for theme '{theme}'"
-
-    def test_zoom_target_box_near_saddle_region(self):
-        """The zoom target box must be near the saddle / transition region."""
-        svg = generate_poster(steps=5000, width_mm=200, height_mm=300)
-        ns = "http://www.w3.org/2000/svg"
-        zoom = svg.find(f".//{{{ns}}}g[@id='zoom_inset']")
-        rects = zoom.findall(f"{{{ns}}}rect")
-        # The 3rd rect is the source target box on the main attractor.
-        target_box = rects[2]
-        box_x = float(target_box.get("x"))
-        box_w = float(target_box.get("width"))
-        box_cx = box_x + box_w / 2
-        # The saddle region is near the attractor centre (width_mm / 2 = 100).
-        # Allow a generous margin — the density×parallelism search may land
-        # slightly off-centre.
-        assert abs(box_cx - 100.0) < 30.0, (
-            f"Zoom target box centre {box_cx:.1f} should be near the attractor "
-            f"centre (100 ± 30)"
-        )
-
-    def test_zoom_annotation_leader_does_not_cross_connectors(self):
-        """Without connector lines, annotation leaders should not be blocked.
-
-        Since dashed connector lines have been removed, this test simply
-        verifies that annotation leader lines can be found in the SVG and
-        that the zoom_inset group has no line elements.
-        """
-        svg = generate_poster(steps=5000, width_mm=200, height_mm=300)
-        ns = "http://www.w3.org/2000/svg"
-        zoom = svg.find(f".//{{{ns}}}g[@id='zoom_inset']")
-        lines = zoom.findall(f"{{{ns}}}line")
-        assert len(lines) == 0
+        assert clip is None
 
     # --- Ultra-zoom (second-level zoom) tests ---
 
-    def test_ultra_zoom_group_present(self):
-        """An 'ultra_zoom_inset' group exists in the SVG."""
+    def test_ultra_zoom_group_absent(self):
+        """The 'ultra_zoom_inset' group has been removed from the SVG."""
         svg = generate_poster(steps=1000, width_mm=200, height_mm=300)
         ns = "http://www.w3.org/2000/svg"
         uz = svg.find(f".//{{{ns}}}g[@id='ultra_zoom_inset']")
-        assert uz is not None
+        assert uz is None
 
-    def test_ultra_zoom_clip_path_present(self):
-        """A clipPath with id 'ultra_zoom_clip' exists in <defs>."""
+    def test_ultra_zoom_clip_path_absent(self):
+        """The 'ultra_zoom_clip' clipPath has been removed from the SVG."""
         svg = generate_poster(steps=1000, width_mm=200, height_mm=300)
         ns = "http://www.w3.org/2000/svg"
         clip = svg.find(f".//{{{ns}}}clipPath[@id='ultra_zoom_clip']")
-        assert clip is not None
-        rect = clip.find(f"{{{ns}}}rect")
-        assert rect is not None
-        assert float(rect.get("width")) > 0
-        assert float(rect.get("height")) > 0
-
-    def test_ultra_zoom_connector_lines_present(self):
-        """The ultra_zoom_inset group has no connector lines (removed)."""
-        svg = generate_poster(steps=1000, width_mm=200, height_mm=300)
-        ns = "http://www.w3.org/2000/svg"
-        uz = svg.find(f".//{{{ns}}}g[@id='ultra_zoom_inset']")
-        lines = uz.findall(f"{{{ns}}}line")
-        assert len(lines) == 0
-
-    def test_ultra_zoom_sub_box_on_first_zoom(self):
-        """The ultra_zoom_inset group contains a sub-box rect on the first zoom."""
-        svg = generate_poster(steps=1000, width_mm=200, height_mm=300)
-        ns = "http://www.w3.org/2000/svg"
-        uz = svg.find(f".//{{{ns}}}g[@id='ultra_zoom_inset']")
-        rects = uz.findall(f"{{{ns}}}rect")
-        # 3 rects: sub-box on first zoom, background, border
-        assert len(rects) == 3
-
-    def test_ultra_zoom_dots_present(self):
-        """The ultra_zoom_inset group has time-colored dots (circles)."""
-        svg = generate_poster(steps=5000, width_mm=200, height_mm=300)
-        ns = "http://www.w3.org/2000/svg"
-        uz = svg.find(f".//{{{ns}}}g[@id='ultra_zoom_inset']")
-        circles = uz.findall(f".//{{{ns}}}circle")
-        assert len(circles) >= 1
-
-    def test_ultra_zoom_label_present(self):
-        """The ultra-zoom panel has no caption label (removed)."""
-        svg = generate_poster(steps=1000, width_mm=200, height_mm=300)
-        ns = "http://www.w3.org/2000/svg"
-        uz = svg.find(f".//{{{ns}}}g[@id='ultra_zoom_inset']")
-        texts = uz.findall(f".//{{{ns}}}text")
-        assert len(texts) == 0
-
-    def test_ultra_zoom_below_first_zoom(self):
-        """The ultra-zoom panel is positioned below the first zoom panel."""
-        svg = generate_poster(steps=5000, width_mm=200, height_mm=300)
-        ns = "http://www.w3.org/2000/svg"
-        zoom = svg.find(f".//{{{ns}}}g[@id='zoom_inset']")
-        z1_bg = zoom.findall(f"{{{ns}}}rect")[0]
-        z1_bottom = float(z1_bg.get("y")) + float(z1_bg.get("height"))
-
-        uz = svg.find(f".//{{{ns}}}g[@id='ultra_zoom_inset']")
-        # Rects in ultra_zoom_inset: [0] sub-box on zoom1, [1] background, [2] border.
-        uz_bg = uz.findall(f"{{{ns}}}rect")[1]
-        uz_top = float(uz_bg.get("y"))
-
-        assert uz_top > z1_bottom, (
-            f"Ultra-zoom top ({uz_top:.1f}) should be below first zoom "
-            f"bottom ({z1_bottom:.1f})"
-        )
-
-    def test_ultra_zoom_all_themes(self):
-        """ultra_zoom_inset renders without error for all built-in themes."""
-        from poster_utils import AVAILABLE_THEMES
-        for theme in AVAILABLE_THEMES:
-            svg = generate_poster(steps=1000, width_mm=200, height_mm=300,
-                                  theme=theme)
-            ns = "http://www.w3.org/2000/svg"
-            uz = svg.find(f".//{{{ns}}}g[@id='ultra_zoom_inset']")
-            assert uz is not None, f"ultra_zoom_inset missing for theme '{theme}'"
+        assert clip is None
 
     # --- Extra-detail trajectory tests ---
 
@@ -412,51 +275,6 @@ class TestGeneratePoster:
         svg = generate_poster(steps=1000, zoom_multiplier=0,
                               width_mm=200, height_mm=300)
         assert svg.tag.endswith("svg")
-
-    def test_zoom_multiplier_increases_zoom_dots(self):
-        """With zoom_multiplier>0, zoom panels should have more dots (circles)."""
-        ns = "http://www.w3.org/2000/svg"
-        svg_no_extra = generate_poster(steps=5000, zoom_multiplier=0,
-                                       width_mm=200, height_mm=300)
-        svg_with_extra = generate_poster(steps=5000, zoom_multiplier=1,
-                                         width_mm=200, height_mm=300)
-        zoom_no = svg_no_extra.find(f".//{{{ns}}}g[@id='zoom_inset']")
-        zoom_ex = svg_with_extra.find(f".//{{{ns}}}g[@id='zoom_inset']")
-        dots_no = len(zoom_no.findall(f".//{{{ns}}}circle"))
-        dots_ex = len(zoom_ex.findall(f".//{{{ns}}}circle"))
-        assert dots_ex >= dots_no
-
-    def test_zoom_panels_within_poster_bounds(self):
-        """Zoom panels should not extend beyond the poster edges."""
-        for w, h in [(200, 300), (100, 150), (420, 594)]:
-            svg = generate_poster(steps=1000, width_mm=w, height_mm=h)
-            ns = "http://www.w3.org/2000/svg"
-            clip = svg.find(f".//{{{ns}}}clipPath[@id='zoom_panel_clip']")
-            rect = clip.find(f"{{{ns}}}rect")
-            rx = float(rect.get("x"))
-            ry = float(rect.get("y"))
-            rw = float(rect.get("width"))
-            rh = float(rect.get("height"))
-            assert rx >= 0, f"Zoom panel left edge {rx} < 0 for {w}x{h}"
-            assert rx + rw <= w, f"Zoom panel right edge {rx+rw} > {w} for {w}x{h}"
-            assert ry >= 0, f"Zoom panel top edge {ry} < 0 for {w}x{h}"
-            assert ry + rh <= h, f"Zoom panel bottom edge {ry+rh} > {h} for {w}x{h}"
-
-    def test_ultra_zoom_panels_within_poster_bounds(self):
-        """Ultra-zoom panels should not extend beyond the poster edges."""
-        for w, h in [(200, 300), (100, 150), (420, 594)]:
-            svg = generate_poster(steps=1000, width_mm=w, height_mm=h)
-            ns = "http://www.w3.org/2000/svg"
-            clip = svg.find(f".//{{{ns}}}clipPath[@id='ultra_zoom_clip']")
-            rect = clip.find(f"{{{ns}}}rect")
-            rx = float(rect.get("x"))
-            ry = float(rect.get("y"))
-            rw = float(rect.get("width"))
-            rh = float(rect.get("height"))
-            assert rx >= 0, f"Ultra zoom left edge {rx} < 0 for {w}x{h}"
-            assert rx + rw <= w, f"Ultra zoom right edge {rx+rw} > {w} for {w}x{h}"
-            assert ry >= 0, f"Ultra zoom top edge {ry} < 0 for {w}x{h}"
-            assert ry + rh <= h, f"Ultra zoom bottom edge {ry+rh} > {h} for {w}x{h}"
 
 
 # ---------------------------------------------------------------------------
@@ -569,14 +387,14 @@ class TestPoincareInsetPoster:
         assert "z \u2248 27" in xml_str
         assert "x \u2248 0" in xml_str
 
-    def test_ultra_zoom_still_present_with_poincare(self):
-        """ultra_zoom_inset, poincare_z27_inset, and poincare_x0_inset all exist."""
+    def test_ultra_zoom_absent_with_poincare(self):
+        """ultra_zoom_inset is absent; poincare_z27_inset and poincare_x0_inset exist."""
         svg = generate_poster(steps=5000, width_mm=200, height_mm=300)
         ns = "http://www.w3.org/2000/svg"
         uz = svg.find(f".//{{{ns}}}g[@id='ultra_zoom_inset']")
         pz = svg.find(f".//{{{ns}}}g[@id='poincare_z27_inset']")
         px = svg.find(f".//{{{ns}}}g[@id='poincare_x0_inset']")
-        assert uz is not None
+        assert uz is None
         assert pz is not None
         assert px is not None
 
@@ -688,18 +506,12 @@ class TestProjectionAngles:
 # ---------------------------------------------------------------------------
 
 class TestExtraTrajectoryDistinction:
-    def test_zoom_label_includes_xz_projection(self):
-        """The zoom panels have no 'x–z projection' caption label.
-
-        The string may still appear in the footer's secondary line, but
-        *not* as a zoom-panel caption.
-        """
+    def test_zoom_label_xz_projection_not_present(self):
+        """The zoom panels have been removed; no zoom_inset group exists."""
         svg = generate_poster(steps=1000, width_mm=200, height_mm=300)
         ns = "http://www.w3.org/2000/svg"
         zoom = svg.find(f".//{{{ns}}}g[@id='zoom_inset']")
-        zoom_texts = [t.text or "" for t in zoom.findall(f".//{{{ns}}}text")]
-        for txt in zoom_texts:
-            assert "x\u2013z projection" not in txt
+        assert zoom is None
 
 
 # ---------------------------------------------------------------------------

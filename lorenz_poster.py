@@ -1264,46 +1264,11 @@ def generate_poster(steps=200000, zoom_multiplier=2, width_mm=BASE_WIDTH_MM, hei
                      "stroke-linejoin": "round",
                      "stroke-linecap": "round"})
 
-    # --- Zoom inset panel (drawn before annotations so it sits in the right layer) ---
-    # In the x-z projection the 3-D saddle region (x≈0, z≈27) sits at the
-    # junction of the two butterfly wings — the ideal spot for revealing
-    # fractal sheet structure.
-    saddle_proj = project_3d_to_2d(
-        [(0, 0, 27)], angle_x=angle_x, angle_z=angle_z,
-    )[0]
-    origin_poster = _transform(saddle_proj[0], saddle_proj[1])
-
-    # Pre-compute attractor vertical extent so we can position the zoom
-    # panels lower (closer to the attractor bottom) as requested.
-    vis_ys = [p[1] for p in scaled_main]
-    attractor_bottom = max(vis_ys)
-
-    # Approximate combined height of both zoom panels.
-    # In x-z projection the upper-right corner is a natural void (the
-    # butterfly is narrow at the top), so place zoom panels there.
-    approx_zoom_h = min(70.0 * w_scale, avail_h * 0.4)
-    approx_uz_h = min(46.0 * w_scale, approx_zoom_h * 0.85)
-    zoom_preferred_y = min_top + 4.0 * h_scale
-
-    zoom_info = _draw_zoom_inset(
-        svg, ns, scaled_main, w_scale, h_scale,
-        center_x, center_y, avail_w, avail_h, min_top,
-        width_mm, attractor_color, origin_poster=origin_poster, theme=theme,
-        scaled_extra=scaled_extra, preferred_y=zoom_preferred_y,
-        traj_main_3d=traj_main, traj_extra_3d=traj_extra,
-    )
-
-    # --- Ultra-zoom panel (second-level zoom for deeper fractal structure) ---
-    _draw_ultra_zoom_inset(
-        svg, ns, scaled_main, w_scale, h_scale,
-        zoom_info, width_mm, attractor_color, theme=theme,
-        scaled_extra=scaled_extra,
-        traj_main_3d=traj_main, traj_extra_3d=traj_extra,
-    )
-
     # --- Pre-compute annotation layout positions ---
     # Needed both to position the Poincaré panels (inline in the annotation
     # row) and to draw the annotation text below them.
+    vis_ys = [p[1] for p in scaled_main]
+    attractor_bottom = max(vis_ys)
     anno_sep_y = attractor_bottom + 10 * h_scale
     anno_y = anno_sep_y + 18 * h_scale
 
@@ -1356,11 +1321,14 @@ def generate_poster(steps=200000, zoom_multiplier=2, width_mm=BASE_WIDTH_MM, hei
     wing_target_x = scaled_main[left_idx][0]
     wing_target_y = scaled_main[left_idx][1]
 
-    # 'Infinite Complexity' points to the zoom source box (saddle region).
+    # 'Infinite Complexity' points to the saddle region centre.
     # Using the source centre gives it an x-coordinate near poster centre
     # so it naturally occupies the middle column.
-    src_cx = zoom_info["src_cx"]
-    src_cy = zoom_info["src_cy"]
+    saddle_proj = project_3d_to_2d(
+        [(0, 0, 27)], angle_x=angle_x, angle_z=angle_z,
+    )[0]
+    origin_poster = _transform(saddle_proj[0], saddle_proj[1])
+    src_cx, src_cy = _find_best_zoom_center(scaled_main, origin_poster[0], origin_poster[1], w_scale)
 
     # Explicit column placement:
     #   col1 (left)   → "The Two Wings"        (leftmost attractor point)
