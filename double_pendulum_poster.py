@@ -194,6 +194,294 @@ TRAJECTORY_COLOR_3 = "#2E5090"  # blue
 
 
 # ---------------------------------------------------------------------------
+# Inset figure data helpers
+# ---------------------------------------------------------------------------
+
+def compute_lyapunov_separation(traj_a, traj_b):
+    """Compute the 4-D Euclidean separation between two trajectories.
+
+    At each time step the distance between the two state vectors
+    (theta1, omega1, theta2, omega2) is returned.  When plotted on a
+    logarithmic y-axis this reveals the initial exponential divergence
+    (positive Lyapunov exponent) followed by saturation once the
+    trajectories have spread across the attractor.
+
+    Parameters
+    ----------
+    traj_a, traj_b : list[tuple[float, float, float, float]]
+        Trajectories of the same length, each produced by
+        :func:`integrate_double_pendulum`.
+
+    Returns
+    -------
+    list[float]
+        Euclidean separation at each time step (same length as the
+        shorter of the two trajectories).
+    """
+    return [
+        math.sqrt(sum((a - b) ** 2 for a, b in zip(sa, sb)))
+        for sa, sb in zip(traj_a, traj_b)
+    ]
+
+
+def compute_phase_space_portrait(trajectory):
+    """Extract the (θ₁, ω₁) phase-space projection from a trajectory.
+
+    Parameters
+    ----------
+    trajectory : list[tuple[float, float, float, float]]
+        Sequence of (theta1, omega1, theta2, omega2) states.
+
+    Returns
+    -------
+    list[tuple[float, float]]
+        Phase-space points (theta1, omega1).
+    """
+    return [(s[0], s[1]) for s in trajectory]
+
+
+def compute_poincare_section_dp(trajectory):
+    """Collect (θ₁, θ₂) points at downward ω₁ = 0 crossings.
+
+    The Poincaré section slices through the phase space at the surface
+    ω₁ = 0.  Only downward crossings (ω₁ going from positive to
+    non-positive) are recorded, giving a stroboscopic map that reveals
+    the fractal structure of the attractor.
+
+    Parameters
+    ----------
+    trajectory : list[tuple[float, float, float, float]]
+        Sequence of (theta1, omega1, theta2, omega2) states.
+
+    Returns
+    -------
+    list[tuple[float, float]]
+        (theta1, theta2) at each downward ω₁ zero-crossing.
+    """
+    pts = []
+    for i in range(1, len(trajectory)):
+        prev, curr = trajectory[i - 1], trajectory[i]
+        if prev[1] > 0 and curr[1] <= 0:
+            pts.append((curr[0], curr[2]))
+    return pts
+
+
+# ---------------------------------------------------------------------------
+# Inset figure drawing helpers
+# ---------------------------------------------------------------------------
+
+def _draw_phase_space_inset(svg, ns, phase_pts, w_scale, h_scale,
+                             anno_y, anno_sep_y, col_left_cx, col_right_cx,
+                             traj_color, clip_id="phase_space_clip",
+                             group_id="phase_space_inset", theme=None):
+    """Draw a θ₁–ω₁ phase-space portrait inset in an annotation-row gap.
+
+    The panel is centred in the horizontal gap between *col_left_cx* and
+    *col_right_cx* at the same vertical level as the annotation text.  A
+    short dashed leader line rises from the panel top to the annotation
+    separator, following the pattern established by the Lorenz poster's
+    Poincaré panels.
+
+    Parameters
+    ----------
+    phase_pts : list[tuple[float, float]]
+        (theta1, omega1) pairs from :func:`compute_phase_space_portrait`.
+    anno_y : float
+        Y-coordinate of the top of the annotation text row (mm).
+    anno_sep_y : float
+        Y-coordinate of the annotation separator line (leader terminus).
+    col_left_cx, col_right_cx : float
+        Centre x-coordinates of the flanking annotation columns (mm).
+    traj_color : str
+        Stroke colour for the phase-space polyline.
+    clip_id, group_id : str
+        Unique SVG id strings for the clipPath and group elements.
+    theme : str or None
+        Poster theme name.
+    """
+    t = get_theme(theme)
+    border_color = t["border_color"]
+    bg_color = t["bg_color"]
+
+    col_gap = col_right_cx - col_left_cx
+    ps_w = min(col_gap * 0.40, 44.0 * w_scale)
+    ps_h = ps_w
+    ps_cx = (col_left_cx + col_right_cx) / 2
+    ps_cy = anno_y + 1.0 * h_scale + ps_h / 2
+    ps_x = ps_cx - ps_w / 2
+    ps_y = ps_cy - ps_h / 2
+
+    defs_el = svg.find(f"{{{ns}}}defs")
+    if defs_el is None:
+        defs_el = ET.SubElement(svg, f"{{{ns}}}defs")
+    clip_el = ET.SubElement(defs_el, f"{{{ns}}}clipPath", attrib={"id": clip_id})
+    ET.SubElement(clip_el, f"{{{ns}}}rect", attrib={
+        "x": str(round(ps_x, 4)),
+        "y": str(round(ps_y, 4)),
+        "width": str(round(ps_w, 4)),
+        "height": str(round(ps_h, 4)),
+    })
+
+    ps_group = _group(svg, ns, id=group_id)
+
+    _line(ps_group, ns,
+          ps_cx, ps_y,
+          ps_cx, anno_sep_y,
+          **{"stroke": border_color,
+             "stroke-width": str(round(0.25 * w_scale, 3)),
+             "stroke-dasharray": "1.5,1.5",
+             "opacity": "0.5"})
+    _circle(ps_group, ns,
+            round(ps_cx, 2), round(anno_sep_y, 2),
+            round(0.8 * w_scale, 3),
+            fill=border_color, opacity="0.45")
+
+    _rect(ps_group, ns, ps_x, ps_y, ps_w, ps_h,
+          fill=bg_color, stroke="none", opacity="0.92")
+
+    if phase_pts:
+        px_vals = [p[0] for p in phase_pts]
+        py_vals = [p[1] for p in phase_pts]
+        x_min, x_max = min(px_vals), max(px_vals)
+        y_min, y_max = min(py_vals), max(py_vals)
+        x_range = x_max - x_min if x_max != x_min else 1.0
+        y_range = y_max - y_min if y_max != y_min else 1.0
+
+        pad = 0.05
+        plot_w = ps_w * (1 - 2 * pad)
+        plot_h = ps_h * (1 - 2 * pad)
+        plot_x0 = ps_x + ps_w * pad
+        plot_y0 = ps_y + ps_h * pad
+
+        line_pts = [
+            (plot_x0 + (px - x_min) / x_range * plot_w,
+             plot_y0 + plot_h - (py - y_min) / y_range * plot_h)
+            for px, py in phase_pts
+        ]
+        line_g = _group(ps_group, ns, **{"clip-path": f"url(#{clip_id})"})
+        _polyline(line_g, ns, line_pts,
+                  stroke=traj_color, opacity="0.55",
+                  **{"stroke-width": str(round(0.15 * w_scale, 3)),
+                     "stroke-linejoin": "round",
+                     "stroke-linecap": "round"})
+
+    _rect(ps_group, ns, ps_x, ps_y, ps_w, ps_h,
+          fill="none", stroke=border_color,
+          **{"stroke-width": str(round(0.5 * w_scale, 3))})
+
+    _text(ps_group, ns, ps_cx, ps_y + ps_h + 3.5 * h_scale,
+          "Phase portrait (\u03b81, \u03c91)",
+          **{**ANNOTATION_STYLE,
+             "fill": border_color,
+             "font-size": str(round(2.8 * w_scale, 2)),
+             "text-anchor": "middle",
+             "opacity": "0.65"})
+
+
+def _draw_poincare_inset_dp(svg, ns, poincare_pts, w_scale, h_scale,
+                             anno_y, anno_sep_y, col_left_cx, col_right_cx,
+                             dot_color, clip_id="poincare_dp_clip",
+                             group_id="poincare_dp_inset", theme=None):
+    """Draw a Poincaré section (θ₁, θ₂ at ω₁ = 0) inset in an annotation-row gap.
+
+    Downward ω₁ zero-crossings reveal the fractal structure of the
+    attractor projected onto the (θ₁, θ₂) plane.  The panel is placed
+    and styled identically to :func:`_draw_phase_space_inset`.
+
+    Parameters
+    ----------
+    poincare_pts : list[tuple[float, float]]
+        (theta1, theta2) crossing points from
+        :func:`compute_poincare_section_dp`.
+    anno_y : float
+        Y-coordinate of the top of the annotation text row (mm).
+    anno_sep_y : float
+        Y-coordinate of the annotation separator line (leader terminus).
+    col_left_cx, col_right_cx : float
+        Centre x-coordinates of the flanking annotation columns (mm).
+    dot_color : str
+        Fill colour for the scatter dots.
+    clip_id, group_id : str
+        Unique SVG id strings for the clipPath and group elements.
+    theme : str or None
+        Poster theme name.
+    """
+    t = get_theme(theme)
+    border_color = t["border_color"]
+    bg_color = t["bg_color"]
+
+    col_gap = col_right_cx - col_left_cx
+    ps_w = min(col_gap * 0.40, 44.0 * w_scale)
+    ps_h = ps_w
+    ps_cx = (col_left_cx + col_right_cx) / 2
+    ps_cy = anno_y + 1.0 * h_scale + ps_h / 2
+    ps_x = ps_cx - ps_w / 2
+    ps_y = ps_cy - ps_h / 2
+
+    defs_el = svg.find(f"{{{ns}}}defs")
+    if defs_el is None:
+        defs_el = ET.SubElement(svg, f"{{{ns}}}defs")
+    clip_el = ET.SubElement(defs_el, f"{{{ns}}}clipPath", attrib={"id": clip_id})
+    ET.SubElement(clip_el, f"{{{ns}}}rect", attrib={
+        "x": str(round(ps_x, 4)),
+        "y": str(round(ps_y, 4)),
+        "width": str(round(ps_w, 4)),
+        "height": str(round(ps_h, 4)),
+    })
+
+    ps_group = _group(svg, ns, id=group_id)
+
+    _line(ps_group, ns,
+          ps_cx, ps_y,
+          ps_cx, anno_sep_y,
+          **{"stroke": border_color,
+             "stroke-width": str(round(0.25 * w_scale, 3)),
+             "stroke-dasharray": "1.5,1.5",
+             "opacity": "0.5"})
+    _circle(ps_group, ns,
+            round(ps_cx, 2), round(anno_sep_y, 2),
+            round(0.8 * w_scale, 3),
+            fill=border_color, opacity="0.45")
+
+    _rect(ps_group, ns, ps_x, ps_y, ps_w, ps_h,
+          fill=bg_color, stroke="none", opacity="0.92")
+
+    if poincare_pts:
+        px_vals = [p[0] for p in poincare_pts]
+        py_vals = [p[1] for p in poincare_pts]
+        x_min, x_max = min(px_vals), max(px_vals)
+        y_min, y_max = min(py_vals), max(py_vals)
+        x_range = x_max - x_min if x_max != x_min else 1.0
+        y_range = y_max - y_min if y_max != y_min else 1.0
+
+        pad = 0.05
+        plot_w = ps_w * (1 - 2 * pad)
+        plot_h = ps_h * (1 - 2 * pad)
+        plot_x0 = ps_x + ps_w * pad
+        plot_y0 = ps_y + ps_h * pad
+
+        scatter_g = _group(ps_group, ns, **{"clip-path": f"url(#{clip_id})"})
+        dot_r = str(round(0.35 * w_scale, 3))
+        for px, py in poincare_pts:
+            sx = plot_x0 + (px - x_min) / x_range * plot_w
+            sy = plot_y0 + plot_h - (py - y_min) / y_range * plot_h
+            _circle(scatter_g, ns, sx, sy, dot_r,
+                    fill=dot_color, opacity="0.60")
+
+    _rect(ps_group, ns, ps_x, ps_y, ps_w, ps_h,
+          fill="none", stroke=border_color,
+          **{"stroke-width": str(round(0.5 * w_scale, 3))})
+
+    _text(ps_group, ns, ps_cx, ps_y + ps_h + 3.5 * h_scale,
+          "Poincar\u00e9 section (\u03b81, \u03b82 at \u03c91 = 0)",
+          **{**ANNOTATION_STYLE,
+             "fill": border_color,
+             "font-size": str(round(2.8 * w_scale, 2)),
+             "text-anchor": "middle",
+             "opacity": "0.65"})
+
+
+# ---------------------------------------------------------------------------
 # Annotation builders
 # ---------------------------------------------------------------------------
 
@@ -290,8 +578,23 @@ def _panel_equations(parent, ns, col_cx, anno_y, scale=1):
     return g
 
 
-def _panel_chaos_vs_random(parent, ns, col_cx, anno_y, scale=1):
-    """Panel: distinction between chaotic and random."""
+def _panel_chaos_vs_random(parent, ns, col_cx, anno_y, scale=1,
+                           sep_t=None, theme=None):
+    """Panel: distinction between chaotic and random.
+
+    When *sep_t* is supplied (list of 4-D state-space separations from
+    :func:`compute_lyapunov_separation`) a small log-scale divergence
+    plot is embedded below the body text, illustrating the exponential
+    error growth that defines deterministic chaos.
+
+    Parameters
+    ----------
+    sep_t : list[float] or None
+        Separation values over time.  If ``None`` the panel shows only text.
+    theme : str or None
+        Poster theme name (used for the mini-plot colours).
+    """
+    t = get_theme(theme)
     g = _group(parent, ns)
 
     _text(g, ns, col_cx, anno_y + 2 * scale,
@@ -299,22 +602,88 @@ def _panel_chaos_vs_random(parent, ns, col_cx, anno_y, scale=1):
           **{**ANNOTATION_STYLE, "font-size": str(round(5 * scale, 2)),
              "fill": ACCENT_COLOR, "text-anchor": "middle"})
 
-    lines = [
-        "The double pendulum obeys Newton\u2019s",
-        "laws exactly \u2014 nothing is random.",
-        "Given perfect initial conditions,",
-        "the future is fully determined.",
-        "But in practice, immeasurably tiny",
-        "errors grow exponentially, making",
-        "long-term prediction impossible.",
-        "This is deterministic chaos.",
-    ]
+    if sep_t is not None:
+        # Shorter text block to leave room for the divergence mini-plot.
+        lines = [
+            "The double pendulum obeys Newton\u2019s",
+            "laws exactly \u2014 nothing is random.",
+            "Given perfect initial conditions,",
+            "the future is fully determined.",
+            "But tiny errors grow exponentially,",
+            "making long-term prediction impossible.",
+        ]
+    else:
+        lines = [
+            "The double pendulum obeys Newton\u2019s",
+            "laws exactly \u2014 nothing is random.",
+            "Given perfect initial conditions,",
+            "the future is fully determined.",
+            "But in practice, immeasurably tiny",
+            "errors grow exponentially, making",
+            "long-term prediction impossible.",
+            "This is deterministic chaos.",
+        ]
     _multiline_text(
         g, ns, col_cx, anno_y + 9 * scale,
         lines, line_height=5 * scale,
         **{**ANNOTATION_STYLE, "font-size": str(round(3.8 * scale, 2)),
            "text-anchor": "middle"},
     )
+
+    if sep_t is not None and len(sep_t) > 1:
+        # --- Mini log-scale Lyapunov divergence plot ---
+        border_color = t["border_color"]
+        bg_color = t["bg_color"]
+        accent_color = t["accent_color"]
+
+        plot_w = 56 * scale
+        plot_h = 20 * scale
+        plot_x = col_cx - plot_w / 2
+        # Start the plot below the 6-line body text
+        # (header 7 + gap 2 + 6×5 text = 39 units → add 3 margin → 42)
+        plot_y = anno_y + 42 * scale
+
+        _rect(g, ns, plot_x, plot_y, plot_w, plot_h,
+              fill=bg_color, stroke="none", opacity="0.85")
+
+        # Subsample to keep SVG size small
+        step = max(1, len(sep_t) // 200)
+        indices = list(range(0, len(sep_t), step))
+        log_vals = [math.log10(max(sep_t[i], 1e-15)) for i in indices]
+
+        l_min = min(log_vals)
+        l_max = max(log_vals)
+        l_range = l_max - l_min if l_max != l_min else 1.0
+        n = len(indices)
+
+        pad = 0.06
+        inner_w = plot_w * (1 - 2 * pad)
+        inner_h = plot_h * (1 - 2 * pad)
+        inner_x0 = plot_x + plot_w * pad
+        inner_y0 = plot_y + plot_h * pad
+
+        line_pts = [
+            (inner_x0 + (k / (n - 1)) * inner_w,
+             inner_y0 + inner_h - (log_vals[k] - l_min) / l_range * inner_h)
+            for k in range(n)
+        ]
+        _polyline(g, ns, line_pts,
+                  stroke=accent_color, opacity="0.80",
+                  **{"stroke-width": str(round(0.40 * scale, 3)),
+                     "stroke-linejoin": "round",
+                     "stroke-linecap": "round"})
+
+        _rect(g, ns, plot_x, plot_y, plot_w, plot_h,
+              fill="none", stroke=border_color,
+              **{"stroke-width": str(round(0.40 * scale, 3)), "opacity": "0.65"})
+
+        _text(g, ns, col_cx, plot_y + plot_h + 4 * scale,
+              "log(\u0394state) vs time \u2014 exponential divergence",
+              **{**ANNOTATION_STYLE,
+                 "fill": border_color,
+                 "font-size": str(round(2.8 * scale, 2)),
+                 "text-anchor": "middle",
+                 "opacity": "0.65"})
 
     return g
 
@@ -436,6 +805,12 @@ def generate_poster(steps=10000, width_mm=BASE_WIDTH_MM,
         for tips in tip_sets
     ]
 
+    # --- Compute inset figure data ---
+    sep_t = compute_lyapunov_separation(trajectories[0], trajectories[1])
+    # Phase space: subsample every 5 points (sufficient to show the portrait)
+    phase_pts = compute_phase_space_portrait(trajectories[0])[::5]
+    poincare_pts = compute_poincare_section_dp(trajectories[0])
+
     # --- Draw trajectory traces ---
     traj_group = _group(svg, ns, id="trajectories")
 
@@ -450,16 +825,32 @@ def generate_poster(steps=10000, width_mm=BASE_WIDTH_MM,
                      "stroke-linejoin": "round",
                      "stroke-linecap": "round"})
 
+    # --- Pre-compute annotation layout positions ---
+    # Needed by the inset panels (which must be drawn before the annotation
+    # text group so they appear behind the annotations in the SVG layer order).
+    anno_sep_y = max_bot + 12 * h_scale
+    anno_y = anno_sep_y + 18 * h_scale
+    col1_cx, col2_cx, col3_cx = [width_mm * f for f in COLUMN_CENTERS]
+
+    # --- Phase-space portrait inset (col1–col2 gap) ---
+    _draw_phase_space_inset(
+        svg, ns, phase_pts, w_scale, h_scale,
+        anno_y, anno_sep_y, col1_cx, col2_cx,
+        traj_color_1, theme=theme,
+    )
+
+    # --- Poincaré section inset (col2–col3 gap) ---
+    _draw_poincare_inset_dp(
+        svg, ns, poincare_pts, w_scale, h_scale,
+        anno_y, anno_sep_y, col2_cx, col3_cx,
+        traj_color_2, theme=theme,
+    )
+
     # --- Annotations ---
     anno_group = _group(svg, ns, id="annotations")
 
-    anno_sep_y = max_bot + 12 * h_scale
     draw_row_separator(anno_group, ns, width_mm, anno_sep_y, w_scale,
                        opacity="0.5", theme=theme)
-
-    anno_y = anno_sep_y + 18 * h_scale
-
-    col1_cx, col2_cx, col3_cx = [width_mm * f for f in COLUMN_CENTERS]
 
     # Arrow targets on the trajectories
     mid_idx = len(scaled_sets[0]) // 3
@@ -492,7 +883,8 @@ def generate_poster(steps=10000, width_mm=BASE_WIDTH_MM,
     row2_y = row2_sep_y + 12 * w_scale
 
     _panel_equations(edu_group, ns, col1_cx, row2_y, w_scale)
-    _panel_chaos_vs_random(edu_group, ns, col2_cx, row2_y, w_scale)
+    _panel_chaos_vs_random(edu_group, ns, col2_cx, row2_y, w_scale,
+                           sep_t=sep_t, theme=theme)
     _panel_physical_systems(edu_group, ns, col3_cx, row2_y, w_scale)
 
     finalize_poster(
