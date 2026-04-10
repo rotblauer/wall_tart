@@ -9,6 +9,9 @@ import xml.etree.ElementTree as ET
 import pytest
 
 from double_pendulum_poster import (
+    compute_lyapunov_separation,
+    compute_phase_space_portrait,
+    compute_poincare_section_dp,
     double_pendulum_derivatives,
     generate_poster,
     integrate_double_pendulum,
@@ -234,3 +237,158 @@ class TestWritePng:
             assert header == b"\x89PNG\r\n\x1a\n"
         finally:
             os.unlink(path)
+
+
+# ---------------------------------------------------------------------------
+# Lyapunov separation
+# ---------------------------------------------------------------------------
+
+class TestComputeLyapunovSeparation:
+    def test_same_trajectory_gives_zero(self):
+        traj = integrate_double_pendulum((1.0, 0.0, 1.0, 0.0), steps=50)
+        sep = compute_lyapunov_separation(traj, traj)
+        assert all(s == 0.0 for s in sep)
+
+    def test_length_equals_shorter_trajectory(self):
+        traj_a = integrate_double_pendulum((1.0, 0.0, 1.0, 0.0), steps=100)
+        traj_b = integrate_double_pendulum((1.0 + 1e-5, 0.0, 1.0, 0.0), steps=100)
+        sep = compute_lyapunov_separation(traj_a, traj_b)
+        assert len(sep) == 101
+
+    def test_initial_separation_matches_state_difference(self):
+        delta = 1e-5
+        traj_a = integrate_double_pendulum((1.0, 0.0, 1.0, 0.0), steps=10)
+        traj_b = integrate_double_pendulum((1.0 + delta, 0.0, 1.0, 0.0), steps=10)
+        sep = compute_lyapunov_separation(traj_a, traj_b)
+        assert abs(sep[0] - delta) < 1e-12
+
+    def test_all_values_non_negative(self):
+        traj_a = integrate_double_pendulum((1.0, 0.0, 0.5, 0.0), steps=100)
+        traj_b = integrate_double_pendulum((1.0 + 1e-5, 0.0, 0.5, 0.0), steps=100)
+        sep = compute_lyapunov_separation(traj_a, traj_b)
+        assert all(s >= 0.0 for s in sep)
+
+    def test_separation_grows_over_time(self):
+        """Chaotic trajectories starting nearby should diverge over many steps."""
+        traj_a = integrate_double_pendulum((math.pi / 2, 0.0, math.pi / 2, 0.0),
+                                           steps=2000, dt=0.005)
+        traj_b = integrate_double_pendulum((math.pi / 2 + 1e-5, 0.0, math.pi / 2, 0.0),
+                                           steps=2000, dt=0.005)
+        sep = compute_lyapunov_separation(traj_a, traj_b)
+        assert sep[-1] > sep[0]
+
+
+# ---------------------------------------------------------------------------
+# Phase-space portrait
+# ---------------------------------------------------------------------------
+
+class TestComputePhaseSpacePortrait:
+    def test_returns_pairs(self):
+        traj = integrate_double_pendulum((1.0, 0.0, 1.0, 0.0), steps=50)
+        pts = compute_phase_space_portrait(traj)
+        assert len(pts) == len(traj)
+        for pt in pts:
+            assert len(pt) == 2
+
+    def test_first_point_matches_initial_state(self):
+        initial = (math.pi / 4, 0.5, math.pi / 6, -0.3)
+        traj = integrate_double_pendulum(initial, steps=10)
+        pts = compute_phase_space_portrait(traj)
+        assert pts[0][0] == initial[0]   # theta1
+        assert pts[0][1] == initial[1]   # omega1
+
+    def test_values_are_floats(self):
+        traj = integrate_double_pendulum((1.0, 0.0, 1.0, 0.0), steps=20)
+        pts = compute_phase_space_portrait(traj)
+        for theta, omega in pts:
+            assert isinstance(theta, float)
+            assert isinstance(omega, float)
+
+
+# ---------------------------------------------------------------------------
+# Poincaré section
+# ---------------------------------------------------------------------------
+
+class TestComputePoincareSectionDp:
+    def test_returns_pairs(self):
+        traj = integrate_double_pendulum((math.pi / 2, 0.0, math.pi / 2, 0.0),
+                                         steps=1000, dt=0.005)
+        pts = compute_poincare_section_dp(traj)
+        for pt in pts:
+            assert len(pt) == 2
+
+    def test_no_crossings_for_trivial_trajectory(self):
+        """A trajectory that stays at omega1=0 has no downward crossings."""
+        # Use a very short integration near equilibrium — omega1 never crosses 0
+        traj = [(0.0, 0.0, 0.0, 0.0)] * 10
+        pts = compute_poincare_section_dp(traj)
+        assert pts == []
+
+    def test_detects_downward_crossing(self):
+        """Explicit omega1 sign change from positive to non-positive is caught."""
+        traj = [
+            (1.0, 0.5, 1.0, 0.0),   # omega1 > 0
+            (1.0, 0.0, 1.0, 0.0),   # omega1 crosses to 0 → crossing recorded
+            (1.0, -0.5, 1.0, 0.0),  # omega1 < 0  → NOT a downward crossing start
+            (1.0, 0.3, 1.0, 0.0),   # omega1 > 0 again
+            (1.0, -0.1, 1.0, 0.0),  # omega1 → negative → second crossing
+        ]
+        pts = compute_poincare_section_dp(traj)
+        # Crossings at indices 1 and 4
+        assert len(pts) == 2
+        assert pts[0] == (1.0, 1.0)   # (theta1, theta2) at index 1
+        assert pts[1] == (1.0, 1.0)   # (theta1, theta2) at index 4
+
+    def test_upward_crossings_ignored(self):
+        """Only downward (positive→non-positive) zero crossings are included."""
+        traj = [
+            (0.5, -0.5, 0.5, 0.0),  # omega1 < 0
+            (0.5, 0.5, 0.5, 0.0),   # upward crossing — should NOT appear
+        ]
+        pts = compute_poincare_section_dp(traj)
+        assert pts == []
+
+
+# ---------------------------------------------------------------------------
+# Inset groups in generated SVG
+# ---------------------------------------------------------------------------
+
+class TestInsetGroupsInPoster:
+    def test_phase_space_inset_group_present(self):
+        svg = generate_poster(steps=200, width_mm=200, height_mm=300)
+        ns = "http://www.w3.org/2000/svg"
+        grp = svg.find(f".//{{{ns}}}g[@id='phase_space_inset']")
+        assert grp is not None
+
+    def test_poincare_dp_inset_group_present(self):
+        svg = generate_poster(steps=200, width_mm=200, height_mm=300)
+        ns = "http://www.w3.org/2000/svg"
+        grp = svg.find(f".//{{{ns}}}g[@id='poincare_dp_inset']")
+        assert grp is not None
+
+    def test_phase_space_clip_path_present(self):
+        svg = generate_poster(steps=200, width_mm=200, height_mm=300)
+        ns = "http://www.w3.org/2000/svg"
+        clip = svg.find(f".//{{{ns}}}clipPath[@id='phase_space_clip']")
+        assert clip is not None
+
+    def test_poincare_dp_clip_path_present(self):
+        svg = generate_poster(steps=200, width_mm=200, height_mm=300)
+        ns = "http://www.w3.org/2000/svg"
+        clip = svg.find(f".//{{{ns}}}clipPath[@id='poincare_dp_clip']")
+        assert clip is not None
+
+    def test_lyapunov_label_text_present(self):
+        svg = generate_poster(steps=200, width_mm=200, height_mm=300)
+        xml_str = ET.tostring(svg, encoding="unicode")
+        assert "exponential divergence" in xml_str
+
+    def test_phase_portrait_label_present(self):
+        svg = generate_poster(steps=200, width_mm=200, height_mm=300)
+        xml_str = ET.tostring(svg, encoding="unicode")
+        assert "Phase portrait" in xml_str
+
+    def test_poincare_label_present(self):
+        svg = generate_poster(steps=200, width_mm=200, height_mm=300)
+        xml_str = ET.tostring(svg, encoding="unicode")
+        assert "Poincar" in xml_str
