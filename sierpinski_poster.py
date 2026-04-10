@@ -363,7 +363,7 @@ def generate_poster(depth=7, width_mm=BASE_WIDTH_MM, height_mm=BASE_HEIGHT_MM,
     w_scale, h_scale, rule_y = sc["w_scale"], sc["h_scale"], sc["rule_y"]
 
     # --- Main fractal ---
-    ca = content_area(rule_y, width_mm, height_mm, margin_frac=0.12)
+    ca = content_area(rule_y, width_mm, height_mm, margin_frac=0.03)
     min_top, max_bot = ca["min_top"], ca["max_bot"]
     margin = ca["margin"]
 
