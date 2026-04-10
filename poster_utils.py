@@ -704,11 +704,17 @@ def finalize_poster(svg, ns, width_mm, height_mm, w_scale, h_scale,
 # ---------------------------------------------------------------------------
 
 def draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
-                           title, scale, theme=None):
+                           title, scale, theme=None, show_line=True):
     """Draw the common annotation callout elements.
 
     Creates a ``<g>`` group, draws the arrow line from the callout origin
     to the target point, a small accent circle, and the annotation title.
+
+    Parameters
+    ----------
+    show_line : bool
+        When False, skip drawing the dashed callout line (and its arrowhead)
+        to the target point.  The accent circle and title are still rendered.
 
     Returns the group element so the caller can append body content.
     """
@@ -727,7 +733,8 @@ def draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
     g = _group(parent, ns)
 
     arrow_y = anno_y - 8 * scale
-    _line(g, ns, col_cx, arrow_y, target_x, target_y, **callout)
+    if show_line:
+        _line(g, ns, col_cx, arrow_y, target_x, target_y, **callout)
     _circle(g, ns, col_cx, arrow_y, 1 * scale, fill=t["accent_color"])
 
     _text(g, ns, col_cx, anno_y + 2 * scale, title,
