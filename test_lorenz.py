@@ -661,9 +661,9 @@ class TestPoincareInsetPoster:
 
 class TestProjectionAngles:
     def test_default_angle_constants(self):
-        """Module-level angle constants have expected values."""
-        assert DEFAULT_ANGLE_X == -0.35
-        assert DEFAULT_ANGLE_Z == 0.85
+        """Module-level angle constants give the x-z projection."""
+        assert abs(DEFAULT_ANGLE_X - math.pi / 2) < 1e-9
+        assert DEFAULT_ANGLE_Z == 0.0
 
     def test_custom_angles_no_crash(self):
         """Custom projection angles produce a valid poster."""
@@ -689,10 +689,17 @@ class TestProjectionAngles:
 
 class TestExtraTrajectoryDistinction:
     def test_zoom_label_includes_xz_projection(self):
-        """The zoom panels have no 'x–z projection' caption label (removed)."""
+        """The zoom panels have no 'x–z projection' caption label.
+
+        The string may still appear in the footer's secondary line, but
+        *not* as a zoom-panel caption.
+        """
         svg = generate_poster(steps=1000, width_mm=200, height_mm=300)
-        xml_str = ET.tostring(svg, encoding="unicode")
-        assert "x\u2013z projection" not in xml_str
+        ns = "http://www.w3.org/2000/svg"
+        zoom = svg.find(f".//{{{ns}}}g[@id='zoom_inset']")
+        zoom_texts = [t.text or "" for t in zoom.findall(f".//{{{ns}}}text")]
+        for txt in zoom_texts:
+            assert "x\u2013z projection" not in txt
 
 
 # ---------------------------------------------------------------------------
