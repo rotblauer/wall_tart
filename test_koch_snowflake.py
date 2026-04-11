@@ -53,8 +53,11 @@ class TestKochCurvePoints:
         # depth=1: points are [p1, a, peak, c]; endpoint p2 excluded
         pts = koch_curve_points((0, 0), (3, 0), 1)
         peak = pts[2]
-        assert abs(peak[0] - 1.5) < 1e-9            # peak is horizontally centred
-        assert peak[1] < 0                            # above baseline (outward)
+        assert abs(peak[0] - 1.5) < 1e-9, "peak x should be 1.5 (horizontally centred)"
+        assert peak[1] < 0, (
+            f"peak y={peak[1]:.4f} is not negative; bump points downward (inward), "
+            "indicating an anti-snowflake rather than a Koch snowflake."
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -87,8 +90,6 @@ class TestKochSnowflakePoints:
         """At depth>=1 the Koch bumps add area, so the enclosed area of the
         snowflake must exceed the area of the base triangle (depth 0).
         Verified via the shoelace formula."""
-        import math as _math
-
         def shoelace(pts):
             n = len(pts)
             area = 0.0
