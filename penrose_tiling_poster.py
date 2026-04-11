@@ -177,7 +177,8 @@ def _annotation_aperiodic(parent, ns, target_x, target_y,
                           col_cx, anno_y, scale=1, theme=None):
     """Annotation: the tiling never repeats."""
     g = draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
-                               "Aperiodic Order", scale, theme=theme)
+                               "Aperiodic Order", scale, theme=theme,
+                               show_line=False)
     draw_annotation_body(g, ns, col_cx, anno_y, [
         "A Penrose tiling fills the plane",
         "completely, yet no finite patch can",
@@ -193,7 +194,8 @@ def _annotation_symmetry(parent, ns, target_x, target_y,
                          col_cx, anno_y, scale=1, theme=None):
     """Annotation: five-fold rotational symmetry."""
     g = draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
-                               "Five-Fold Symmetry", scale, theme=theme)
+                               "Five-Fold Symmetry", scale, theme=theme,
+                               show_line=False)
     draw_annotation_body(g, ns, col_cx, anno_y, [
         "Classical crystallography proved that",
         "periodic tilings cannot have five-fold",
@@ -209,7 +211,8 @@ def _annotation_golden_ratio(parent, ns, target_x, target_y,
                              col_cx, anno_y, scale=1, theme=None):
     """Annotation: the golden ratio φ pervades the construction."""
     g = draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
-                               "The Golden Ratio", scale, theme=theme)
+                               "The Golden Ratio", scale, theme=theme,
+                               show_line=False)
     draw_annotation_body(g, ns, col_cx, anno_y, [
         "The golden ratio \u03c6 = (1+\u221a5)/2 governs",
         "every aspect of the tiling: triangle",

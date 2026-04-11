@@ -242,7 +242,8 @@ def _annotation_infinite_complexity(parent, ns, target_x, target_y,
     different slicing planes.
     """
     g = draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
-                               "Infinite Complexity", scale, theme=theme)
+                               "Infinite Complexity", scale, theme=theme,
+                               show_line=False)
     draw_annotation_body(g, ns, col_cx, anno_y, [
         "The line never intersects itself,",
         "despite being trapped in a bounded",
