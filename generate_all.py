@@ -5,10 +5,11 @@ Unified Poster Generator — generate all wall_tart posters in one command.
 Usage:
     python generate_all.py [OPTIONS]
 
-Generates all ten posters (Sierpiński Triangle, Lorenz Attractor, Logistic
+Generates all twelve posters (Sierpiński Triangle, Lorenz Attractor, Logistic
 Map, Mandelbrot Set, Double Pendulum, Cellular Automata, Fourier
-Epicycles, Turing Patterns, Penrose Tiling, and Harmonograph) with shared
-common arguments and optional poster-specific parameters.
+Epicycles, Turing Patterns, Penrose Tiling, Harmonograph, Hat Monotile,
+and Koch Snowflake) with shared common arguments and optional
+poster-specific parameters.
 
 Examples:
     # Generate all posters with defaults (SVG, A2 size)
@@ -19,6 +20,9 @@ Examples:
 
     # Generate only the Sierpiński poster at high depth
     python generate_all.py --posters sierpinski --sierpinski-depth 9
+
+    # Skip specific posters
+    python generate_all.py --no-mandelbrot --no-lorenz
 
     # Custom size with credit lines
     python generate_all.py --width 594 --height 841 \\
@@ -50,11 +54,14 @@ from fourier_epicycles_poster import generate_poster as generate_fourier_epicycl
 from turing_patterns_poster import generate_poster as generate_turing_patterns
 from penrose_tiling_poster import generate_poster as generate_penrose_tiling
 from harmonograph_poster import generate_poster as generate_harmonograph
+from hat_tiling_poster import generate_poster as generate_hat_tiling
+from koch_snowflake_poster import generate_poster as generate_koch_snowflake
 
 
 POSTER_NAMES = ("sierpinski", "lorenz", "logistic", "mandelbrot",
                 "double_pendulum", "cellular_automata", "fourier_epicycles",
-                "turing_patterns", "penrose_tiling", "harmonograph")
+                "turing_patterns", "penrose_tiling", "harmonograph",
+                "hat_tiling", "koch_snowflake")
 
 
 def build_arg_parser():
@@ -79,9 +86,19 @@ def build_arg_parser():
             "Which posters to generate (default: all). "
             "Choices: sierpinski, lorenz, logistic, mandelbrot, "
             "double_pendulum, cellular_automata, fourier_epicycles, "
-            "turing_patterns, penrose_tiling, harmonograph."
+            "turing_patterns, penrose_tiling, harmonograph, "
+            "hat_tiling, koch_snowflake."
         ),
     )
+
+    # --- Skip flags: --no-<poster> to exclude individual posters ---
+    skip = parser.add_argument_group("skip options")
+    for name in POSTER_NAMES:
+        skip.add_argument(
+            f"--no-{name.replace('_', '-')}", action="store_true",
+            dest=f"no_{name}",
+            help=f"Skip the {name.replace('_', ' ')} poster.",
+        )
 
     # --- Common output arguments ---
     common = parser.add_argument_group("common output options")
@@ -206,6 +223,20 @@ def build_arg_parser():
         help="Simulation steps (default: 10000).",
     )
 
+    hat = parser.add_argument_group("Hat Monotile options")
+    hat.add_argument(
+        "--hat-iterations", type=int, default=3,
+        dest="hat_iterations",
+        help="Number of cluster expansion iterations (default: 3).",
+    )
+
+    koch = parser.add_argument_group("Koch Snowflake options")
+    koch.add_argument(
+        "--koch-depth", type=int, default=5,
+        dest="koch_depth",
+        help="Koch curve recursion depth (default: 5).",
+    )
+
     return parser
 
 
@@ -313,12 +344,34 @@ def main(argv=None):
                 f"(steps={args.harmonograph_steps:,})"
             ),
         },
+        "hat_tiling": {
+            "generate": generate_hat_tiling,
+            "kwargs": {"iterations": args.hat_iterations},
+            "filename": "hat_tiling_poster",
+            "label": (
+                f"Hat Monotile "
+                f"(iterations={args.hat_iterations})"
+            ),
+        },
+        "koch_snowflake": {
+            "generate": generate_koch_snowflake,
+            "kwargs": {"depth": args.koch_depth},
+            "filename": "koch_snowflake_poster",
+            "label": (
+                f"Koch Snowflake "
+                f"(depth={args.koch_depth})"
+            ),
+        },
     }
+
+    # Apply --no-<poster> skip flags
+    selected = [name for name in args.posters
+                if not getattr(args, f"no_{name}", False)]
 
     total = 0
     for theme in themes:
         suffix = f"_{theme}" if len(themes) > 1 else ""
-        for name in args.posters:
+        for name in selected:
             info = posters[name]
             filepath = os.path.join(
                 args.output_dir,
