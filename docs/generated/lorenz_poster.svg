@@ -2423,7 +2423,6 @@
       </text>
     </g>
     <g>
-      <line x1="210.0" y1="427.24639999999994" x2="206.90771649368617" y2="226.68356221413842" stroke="#8B0000" stroke-width="0.5" stroke-dasharray="2,1.5" marker-end="url(#arrowhead)" />
       <circle cx="210.0" cy="427.24639999999994" r="1.0" fill="#8B0000" />
       <text x="210.0" y="437.24639999999994" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#8B0000" font-size="5.0" text-anchor="middle">Infinite Complexity</text>
       <text x="210.0" y="444.24639999999994" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#1C1C1C" font-size="3.8" text-anchor="middle">

@@ -355,7 +355,6 @@
   <g id="annotations">
     <line x1="63.0" y1="427.79999999999995" x2="357.0" y2="427.79999999999995" stroke="#8B0000" stroke-width="0.3" opacity="0.5" />
     <g>
-      <line x1="63.0" y1="437.79999999999995" x2="63.0" y2="284.628" stroke="#8B0000" stroke-width="0.5" stroke-dasharray="2,1.5" marker-end="url(#arrowhead)" />
       <circle cx="63.0" cy="437.79999999999995" r="1.0" fill="#8B0000" />
       <text x="63.0" y="447.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#8B0000" font-size="5.0" text-anchor="middle">Aperiodic Order</text>
       <text x="63.0" y="454.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
@@ -368,7 +367,6 @@
       </text>
     </g>
     <g>
-      <line x1="210.0" y1="437.79999999999995" x2="210.0" y2="284.628" stroke="#8B0000" stroke-width="0.5" stroke-dasharray="2,1.5" marker-end="url(#arrowhead)" />
       <circle cx="210.0" cy="437.79999999999995" r="1.0" fill="#8B0000" />
       <text x="210.0" y="447.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#8B0000" font-size="5.0" text-anchor="middle">Five-Fold Symmetry</text>
       <text x="210.0" y="454.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
@@ -381,7 +379,6 @@
       </text>
     </g>
     <g>
-      <line x1="357.0" y1="437.79999999999995" x2="357.0" y2="284.628" stroke="#8B0000" stroke-width="0.5" stroke-dasharray="2,1.5" marker-end="url(#arrowhead)" />
       <circle cx="357.0" cy="437.79999999999995" r="1.0" fill="#8B0000" />
       <text x="357.0" y="447.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#8B0000" font-size="5.0" text-anchor="middle">The Golden Ratio</text>
       <text x="357.0" y="454.79999999999995" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" fill="#1C1C1C" font-size="3.8" text-anchor="middle">
