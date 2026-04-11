@@ -15,6 +15,8 @@ on:
       - "penrose_tiling_poster.py"
       - "fourier_epicycles_poster.py"
       - "harmonograph_poster.py"
+      - "hat_tiling_poster.py"
+      - "koch_snowflake_poster.py"
       - "generate_all.py"
       - ".github/workflows/update-readme-images.yml"
   workflow_dispatch:
@@ -68,12 +70,18 @@ jobs:
           python harmonograph_poster.py \
             --steps 5000 \
             --output docs/generated/harmonograph_poster.svg
+          python hat_tiling_poster.py \
+            --iterations 2 \
+            --output docs/generated/hat_tiling_poster.svg
+          python koch_snowflake_poster.py \
+            --depth 4 \
+            --output docs/generated/koch_snowflake_poster.svg
 
       - name: Commit updated images
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add docs/generated/sierpinski_poster.svg docs/generated/lorenz_poster.svg docs/generated/logistic_map_poster.svg docs/generated/mandelbrot_poster.svg docs/generated/double_pendulum_poster.svg docs/generated/cellular_automata_poster.svg docs/generated/turing_patterns_poster.svg docs/generated/penrose_tiling_poster.svg docs/generated/fourier_epicycles_poster.svg docs/generated/harmonograph_poster.svg
+          git add docs/generated/sierpinski_poster.svg docs/generated/lorenz_poster.svg docs/generated/logistic_map_poster.svg docs/generated/mandelbrot_poster.svg docs/generated/double_pendulum_poster.svg docs/generated/cellular_automata_poster.svg docs/generated/turing_patterns_poster.svg docs/generated/penrose_tiling_poster.svg docs/generated/fourier_epicycles_poster.svg docs/generated/harmonograph_poster.svg docs/generated/hat_tiling_poster.svg docs/generated/koch_snowflake_poster.svg
           git diff --staged --quiet && echo "No changes to commit" \
             || git commit -m "chore: regenerate poster previews [skip ci]"
           git push

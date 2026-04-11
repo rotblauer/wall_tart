@@ -472,6 +472,102 @@ This creates **`harmonograph_poster.svg`** — an A2-sized (420 × 594 mm) annot
 
 ---
 
+## 🎩 Hat Monotile Poster
+
+![hat-preview](docs/generated/hat_tiling_poster.svg)
+
+### Quick Start
+
+```bash
+# Generate the Hat Monotile poster (no dependencies needed)
+python hat_tiling_poster.py
+```
+
+This creates **`hat_tiling_poster.svg`** — an A2-sized (420 × 594 mm) annotated poster of the Hat aperiodic monotile discovered by David Smith et al. in 2023.
+
+### Features
+
+- **Mathematically accurate Hat tiles** — the 13-sided polykite that tiles the plane aperiodically.
+- **Two-colour rendering** distinguishes reflected tiles from unreflected ones.
+- **Museum-style annotations** with leader-line callouts:
+  | Annotation | Description |
+  |---|---|
+  | **The Einstein Tile** | The Hat is the first true "einstein" — a single shape that tiles the plane only aperiodically. |
+  | **Aperiodic Order** | The tiling fills the plane completely yet never repeats periodically. |
+  | **A Simple Shape** | A 13-sided polygon built from 8 kites on a triangular grid. |
+- **Educational panels** — a second row of mathematical context:
+  | Panel | Description |
+  |---|---|
+  | **How the Hat Tiles** | Hierarchical cluster expansion builds the infinite tiling. |
+  | **The Discovery** | David Smith, a hobbyist, discovered the shape in late 2022; the proof was published in 2023. |
+  | **Mathematical Significance** | Settled the long-standing einstein problem and inspired the reflectionless Spectre tile. |
+
+### Options
+
+| Flag | Default | Description |
+|---|---|---|
+| `--iterations N` | `3` | Number of cluster expansion iterations. |
+| `--output FILE` | `hat_tiling_poster.<fmt>` | Output file path. |
+| `--format FMT` | `svg` | Output format: `svg`, `pdf`, or `png`. |
+| `--width MM` | `420` | Poster width in millimetres (A2 default). |
+| `--height MM` | `594` | Poster height in millimetres (A2 default). |
+| `--designed-by TEXT` | *(none)* | Designer credit. |
+| `--designed-for TEXT` | *(none)* | Client / purpose credit. |
+
+---
+
+## ❄️ Koch Snowflake Poster
+
+![koch-preview](docs/generated/koch_snowflake_poster.svg)
+
+### Quick Start
+
+```bash
+# Generate the Koch Snowflake poster (no dependencies needed)
+python koch_snowflake_poster.py
+```
+
+This creates **`koch_snowflake_poster.svg`** — an A2-sized (420 × 594 mm) annotated poster of the Koch Snowflake fractal.
+
+### Features
+
+- **Mathematically accurate Koch snowflake** — recursive subdivision of an equilateral triangle.
+- **Museum-style annotations** with leader-line callouts:
+  | Annotation | Description |
+  |---|---|
+  | **Infinite Perimeter** | Each iteration multiplies the perimeter by 4/3, growing without bound. |
+  | **Self-Similarity** | Every portion of the boundary is an exact scaled copy of the whole Koch curve. |
+  | **Fractional Dimension** | Hausdorff dimension log(4)/log(3) ≈ 1.2619 — between a line and a surface. |
+- **Educational panels** — a second row of mathematical connections:
+  | Panel | Description |
+  |---|---|
+  | **The Construction** | Visual step-by-step from depth 0 → 1 → 2, showing the segment replacement rule. |
+  | **Area Paradox** | Infinite perimeter encloses finite area — converges to 8/5 of the original triangle. |
+  | **Snowflake Variations** | Anti-snowflake (inward bumps), single Koch curve, higher-order variants. |
+
+### Options
+
+| Flag | Default | Description |
+|---|---|---|
+| `--depth N` | `5` | Koch curve recursion depth. |
+| `--output FILE` | `koch_snowflake_poster.<fmt>` | Output file path. |
+| `--format FMT` | `svg` | Output format: `svg`, `pdf`, or `png`. |
+| `--width MM` | `420` | Poster width in millimetres (A2 default). |
+| `--height MM` | `594` | Poster height in millimetres (A2 default). |
+| `--designed-by TEXT` | *(none)* | Designer credit. |
+| `--designed-for TEXT` | *(none)* | Client / purpose credit. |
+
+### Depth vs. Point Count
+
+| Depth | Sides | Notes |
+|---|---|---|
+| 2 | 48 | Quick preview |
+| 4 | 768 | Good detail |
+| 5 | 3,072 | Default — fine detail |
+| 7 | 49,152 | Very high detail; larger file |
+
+---
+
 ## Common Information
 
 ### Requirements
@@ -556,12 +652,18 @@ python generate_all.py \
   --penrose-subdivisions 6 \
   --fourier-num-circles 64 \
   --harmonograph-steps 20000 \
+  --hat-iterations 4 \
+  --koch-depth 6 \
   --output-dir ./output
+
+# Skip specific posters instead of listing the ones you want
+python generate_all.py --no-mandelbrot --no-lorenz
 ```
 
 | Flag | Default | Description |
 |---|---|---|
-| `--posters NAME [NAME ...]` | all | Which posters: `sierpinski`, `lorenz`, `logistic`, `mandelbrot`, `double_pendulum`, `cellular_automata`, `turing_patterns`, `penrose_tiling`, `fourier_epicycles`, `harmonograph`. |
+| `--posters NAME [NAME ...]` | all | Which posters: `sierpinski`, `lorenz`, `logistic`, `mandelbrot`, `double_pendulum`, `cellular_automata`, `turing_patterns`, `penrose_tiling`, `fourier_epicycles`, `harmonograph`, `hat_tiling`, `koch_snowflake`. |
+| `--no-<poster>` | *(off)* | Skip a specific poster, e.g. `--no-mandelbrot`, `--no-lorenz`. |
 | `--output-dir DIR` | `.` | Directory for output files. |
 | `--format FMT` | `svg` | Output format: `svg`, `pdf`, or `png`. |
 | `--dpi N` | `150` | Resolution for PNG output. |
@@ -582,12 +684,14 @@ python generate_all.py \
 | `--penrose-subdivisions N` | `5` | Penrose Tiling subdivision steps. |
 | `--fourier-num-circles N` | `32` | Fourier Epicycles circle count. |
 | `--harmonograph-steps N` | `10000` | Harmonograph simulation steps. |
+| `--hat-iterations N` | `3` | Hat Monotile cluster expansion iterations. |
+| `--koch-depth N` | `5` | Koch Snowflake recursion depth. |
 
 ### Running Tests
 
 ```bash
 pip install pytest
-pytest test_poster_utils.py test_sierpinski.py test_lorenz.py test_logistic_map.py test_mandelbrot.py test_double_pendulum.py test_cellular_automata.py test_generate_all.py test_turing_patterns.py test_penrose_tiling.py test_fourier_epicycles.py test_harmonograph.py -v
+pytest test_poster_utils.py test_sierpinski.py test_lorenz.py test_logistic_map.py test_mandelbrot.py test_double_pendulum.py test_cellular_automata.py test_generate_all.py test_turing_patterns.py test_penrose_tiling.py test_fourier_epicycles.py test_harmonograph.py test_hat_tiling.py test_koch_snowflake.py -v
 ```
 
 ### Docker
@@ -648,12 +752,12 @@ docker run -v "$(pwd)/output:/app/output" \
 The repository includes two workflows:
 
 **`ci.yml`** — runs on every push and pull request to `main`:
-1. Runs the full test suite (`test_poster_utils.py`, `test_sierpinski.py`, `test_lorenz.py`, `test_logistic_map.py`, `test_mandelbrot.py`, `test_double_pendulum.py`, `test_cellular_automata.py`, `test_turing_patterns.py`, `test_penrose_tiling.py`, `test_fourier_epicycles.py`, `test_harmonograph.py`, and `test_generate_all.py`) with `pytest`.
+1. Runs the full test suite (`test_poster_utils.py`, `test_sierpinski.py`, `test_lorenz.py`, `test_logistic_map.py`, `test_mandelbrot.py`, `test_double_pendulum.py`, `test_cellular_automata.py`, `test_turing_patterns.py`, `test_penrose_tiling.py`, `test_fourier_epicycles.py`, `test_harmonograph.py`, `test_hat_tiling.py`, `test_koch_snowflake.py`, and `test_generate_all.py`) with `pytest`.
 2. Builds the Docker image.
 3. Generates sample posters and uploads them as build artifacts.
 
 **`update-readme-images.yml`** — runs on every push to `main` that touches the poster generators, `poster_utils.py`, `generate_all.py`, or the workflow itself (and can be triggered manually via `workflow_dispatch`):
-1. Regenerates `docs/generated/sierpinski_poster.svg`, `docs/generated/lorenz_poster.svg`, `docs/generated/logistic_map_poster.svg`, `docs/generated/mandelbrot_poster.svg`, `docs/generated/double_pendulum_poster.svg`, `docs/generated/cellular_automata_poster.svg`, `docs/generated/turing_patterns_poster.svg`, `docs/generated/penrose_tiling_poster.svg`, `docs/generated/fourier_epicycles_poster.svg`, and `docs/generated/harmonograph_poster.svg`.
+1. Regenerates `docs/generated/sierpinski_poster.svg`, `docs/generated/lorenz_poster.svg`, `docs/generated/logistic_map_poster.svg`, `docs/generated/mandelbrot_poster.svg`, `docs/generated/double_pendulum_poster.svg`, `docs/generated/cellular_automata_poster.svg`, `docs/generated/turing_patterns_poster.svg`, `docs/generated/penrose_tiling_poster.svg`, `docs/generated/fourier_epicycles_poster.svg`, `docs/generated/harmonograph_poster.svg`, `docs/generated/hat_tiling_poster.svg`, and `docs/generated/koch_snowflake_poster.svg`.
 2. Commits and pushes the updated images back to `main` so the README always shows the current output.
 
 ### How It Works

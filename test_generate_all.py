@@ -103,6 +103,35 @@ class TestBuildArgParser:
         args = parser.parse_args([])
         assert args.harmonograph_steps == 10000
 
+    def test_hat_iterations_default(self):
+        parser = build_arg_parser()
+        args = parser.parse_args([])
+        assert args.hat_iterations == 3
+
+    def test_koch_depth_default(self):
+        parser = build_arg_parser()
+        args = parser.parse_args([])
+        assert args.koch_depth == 5
+
+    def test_no_skip_flags_default(self):
+        parser = build_arg_parser()
+        args = parser.parse_args([])
+        for name in POSTER_NAMES:
+            assert getattr(args, f"no_{name}") is False
+
+    def test_skip_mandelbrot(self):
+        parser = build_arg_parser()
+        args = parser.parse_args(["--no-mandelbrot"])
+        assert args.no_mandelbrot is True
+        assert args.no_sierpinski is False
+
+    def test_skip_multiple(self):
+        parser = build_arg_parser()
+        args = parser.parse_args(["--no-lorenz", "--no-mandelbrot"])
+        assert args.no_lorenz is True
+        assert args.no_mandelbrot is True
+        assert args.no_sierpinski is False
+
     def test_custom_output_dir(self):
         parser = build_arg_parser()
         args = parser.parse_args(["--output-dir", "/tmp/out"])
@@ -126,6 +155,8 @@ class TestMain:
                 "--turing-steps", "10",
                 "--penrose-subdivisions", "2",
                 "--harmonograph-steps", "500",
+                "--hat-iterations", "1",
+                "--koch-depth", "2",
             ])
             assert os.path.exists(os.path.join(tmpdir, "sierpinski_poster.svg"))
             assert os.path.exists(os.path.join(tmpdir, "lorenz_poster.svg"))
@@ -137,6 +168,8 @@ class TestMain:
             assert os.path.exists(os.path.join(tmpdir, "turing_patterns_poster.svg"))
             assert os.path.exists(os.path.join(tmpdir, "penrose_tiling_poster.svg"))
             assert os.path.exists(os.path.join(tmpdir, "harmonograph_poster.svg"))
+            assert os.path.exists(os.path.join(tmpdir, "hat_tiling_poster.svg"))
+            assert os.path.exists(os.path.join(tmpdir, "koch_snowflake_poster.svg"))
 
     def test_generates_single_poster(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -237,3 +270,37 @@ class TestMain:
                 tree = ET.parse(path)
                 root = tree.getroot()
                 assert root.tag.endswith("svg")
+
+    def test_skip_flag_excludes_poster(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            main([
+                "--output-dir", tmpdir,
+                "--sierpinski-depth", "2",
+                "--lorenz-steps", "500",
+                "--logistic-r-count", "20",
+                "--mandelbrot-resolution", "10",
+                "--mandelbrot-max-iter", "10",
+                "--pendulum-steps", "500",
+                "--automata-generations", "10",
+                "--fourier-num-circles", "5",
+                "--turing-grid-size", "8",
+                "--turing-steps", "10",
+                "--penrose-subdivisions", "2",
+                "--harmonograph-steps", "500",
+                "--hat-iterations", "1",
+                "--koch-depth", "2",
+                "--no-mandelbrot",
+                "--no-lorenz",
+            ])
+            assert os.path.exists(os.path.join(tmpdir, "sierpinski_poster.svg"))
+            assert not os.path.exists(os.path.join(tmpdir, "mandelbrot_poster.svg"))
+            assert not os.path.exists(os.path.join(tmpdir, "lorenz_poster.svg"))
+            assert os.path.exists(os.path.join(tmpdir, "logistic_map_poster.svg"))
+
+    def test_skip_all_generates_nothing(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            skip_flags = [f"--no-{name.replace('_', '-')}"
+                          for name in POSTER_NAMES]
+            main(["--output-dir", tmpdir] + skip_flags)
+            svg_files = [f for f in os.listdir(tmpdir) if f.endswith(".svg")]
+            assert len(svg_files) == 0
