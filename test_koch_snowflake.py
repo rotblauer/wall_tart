@@ -47,6 +47,15 @@ class TestKochCurvePoints:
         assert abs(pts[0][0] - p1[0]) < 1e-9
         assert abs(pts[0][1] - p1[1]) < 1e-9
 
+    def test_bump_points_outward_for_horizontal_segment(self):
+        """For a left-to-right horizontal segment the Koch bump must be above
+        the baseline (negative y in SVG coords), i.e. pointing outward."""
+        # depth=1: points are [p1, a, peak, c]; endpoint p2 excluded
+        pts = koch_curve_points((0, 0), (3, 0), 1)
+        peak = pts[2]
+        assert abs(peak[0] - 1.5) < 1e-9            # peak is horizontally centred
+        assert peak[1] < 0                            # above baseline (outward)
+
 
 # ---------------------------------------------------------------------------
 # koch_snowflake_points
@@ -73,6 +82,29 @@ class TestKochSnowflakePoints:
         assert isinstance(pts, list)
         for p in pts:
             assert len(p) == 2
+
+    def test_bumps_extend_beyond_circumradius(self):
+        """At depth>=1 the Koch bumps add area, so the enclosed area of the
+        snowflake must exceed the area of the base triangle (depth 0).
+        Verified via the shoelace formula."""
+        import math as _math
+
+        def shoelace(pts):
+            n = len(pts)
+            area = 0.0
+            for i in range(n):
+                x1, y1 = pts[i]
+                x2, y2 = pts[(i + 1) % n]
+                area += x1 * y2 - x2 * y1
+            return abs(area) / 2.0
+
+        radius = 100.0
+        area0 = shoelace(koch_snowflake_points(0, 0, radius, 0))
+        area1 = shoelace(koch_snowflake_points(0, 0, radius, 1))
+        assert area1 > area0, (
+            f"Depth-1 area ({area1:.2f}) is not larger than depth-0 area "
+            f"({area0:.2f}); bumps may be pointing inward (anti-snowflake)."
+        )
 
 
 # ---------------------------------------------------------------------------

@@ -83,9 +83,10 @@ def koch_curve_points(p1, p2, depth):
     c = (x1 + 2 * dx / 3, y1 + 2 * dy / 3)
 
     # Peak of the equilateral triangle on the middle third.
-    # Rotate the vector (dx/3, dy/3) by -60° around point A.
-    bx = a[0] + dx / 6 - dy * math.sqrt(3) / 6
-    by = a[1] + dy / 6 + dx * math.sqrt(3) / 6
+    # Rotate the vector (dx/3, dy/3) by +60° around point A so the bump
+    # points outward (away from the triangle interior).
+    bx = a[0] + dx / 6 + dy * math.sqrt(3) / 6
+    by = a[1] + dy / 6 - dx * math.sqrt(3) / 6
     b = (bx, by)
 
     pts = []
