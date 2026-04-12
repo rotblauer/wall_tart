@@ -284,33 +284,42 @@ class TestGeneratePoster:
 class TestComputePoincareSection:
     def test_returns_list(self):
         traj = integrate_lorenz(steps=5000)
-        section = compute_poincare_section(traj, z0=27.0, tol=0.5)
+        section = compute_poincare_section(traj, z0=27.0)
         assert isinstance(section, list)
 
     def test_points_are_2d(self):
         traj = integrate_lorenz(steps=5000)
-        section = compute_poincare_section(traj, z0=27.0, tol=0.5)
+        section = compute_poincare_section(traj, z0=27.0)
         for pt in section:
             assert len(pt) == 2
 
     def test_nonempty_for_default_params(self):
         """With enough steps near the attractor, the section should be nonempty."""
         traj = integrate_lorenz(steps=20000)
-        section = compute_poincare_section(traj, z0=27.0, tol=0.5)
+        section = compute_poincare_section(traj, z0=27.0)
         assert len(section) > 0
 
     def test_empty_for_short_trajectory(self):
-        """A very short trajectory from (1,1,1) may never reach z ≈ 27."""
+        """A very short trajectory from (1,1,1) may never reach z = 27."""
         traj = integrate_lorenz(steps=10, dt=0.001)
-        section = compute_poincare_section(traj, z0=27.0, tol=0.01)
+        section = compute_poincare_section(traj, z0=27.0)
         assert isinstance(section, list)
 
-    def test_tight_tolerance(self):
-        """Tighter tolerance should yield fewer or equal points."""
-        traj = integrate_lorenz(steps=10000)
-        wide = compute_poincare_section(traj, z0=27.0, tol=1.0)
-        tight = compute_poincare_section(traj, z0=27.0, tol=0.1)
-        assert len(tight) <= len(wide)
+    def test_one_crossing_per_passage(self):
+        """Each monotone passage through z0 should yield exactly one point."""
+        # Construct a simple synthetic trajectory that crosses z=5 exactly twice
+        traj = [(0, 0, 3), (1, 1, 7), (2, 2, 3)]
+        section = compute_poincare_section(traj, z0=5.0)
+        assert len(section) == 2
+
+    def test_crossing_uses_interpolation(self):
+        """Crossing points should be linearly interpolated, not raw samples."""
+        traj = [(0, 0, 4), (10, 10, 6)]
+        section = compute_poincare_section(traj, z0=5.0)
+        assert len(section) == 1
+        x, y = section[0]
+        assert abs(x - 5.0) < 1e-9
+        assert abs(y - 5.0) < 1e-9
 
 
 # ---------------------------------------------------------------------------
@@ -320,27 +329,35 @@ class TestComputePoincareSection:
 class TestComputePoincareSectionX0:
     def test_returns_list(self):
         traj = integrate_lorenz(steps=5000)
-        section = compute_poincare_section_x0(traj, x0=0.0, tol=1.0)
+        section = compute_poincare_section_x0(traj, x0=0.0)
         assert isinstance(section, list)
 
     def test_points_are_2d(self):
         traj = integrate_lorenz(steps=5000)
-        section = compute_poincare_section_x0(traj, x0=0.0, tol=1.0)
+        section = compute_poincare_section_x0(traj, x0=0.0)
         for pt in section:
             assert len(pt) == 2
 
     def test_nonempty_for_default_params(self):
         """With enough steps near the attractor, the x=0 section should be nonempty."""
         traj = integrate_lorenz(steps=20000)
-        section = compute_poincare_section_x0(traj, x0=0.0, tol=1.0)
+        section = compute_poincare_section_x0(traj, x0=0.0)
         assert len(section) > 0
 
-    def test_tight_tolerance_yields_fewer_points(self):
-        """Tighter x tolerance should yield fewer or equal points."""
-        traj = integrate_lorenz(steps=10000)
-        wide = compute_poincare_section_x0(traj, x0=0.0, tol=2.0)
-        tight = compute_poincare_section_x0(traj, x0=0.0, tol=0.1)
-        assert len(tight) <= len(wide)
+    def test_one_crossing_per_passage(self):
+        """Each monotone passage through x0 should yield exactly one point."""
+        traj = [(-2, 0, 10), (2, 4, 20), (-2, 8, 30)]
+        section = compute_poincare_section_x0(traj, x0=0.0)
+        assert len(section) == 2
+
+    def test_crossing_uses_interpolation(self):
+        """Crossing points should be linearly interpolated, not raw samples."""
+        traj = [(-4, 0, 10), (6, 10, 30)]
+        section = compute_poincare_section_x0(traj, x0=0.0)
+        assert len(section) == 1
+        y, z = section[0]
+        assert abs(y - 4.0) < 1e-9
+        assert abs(z - 18.0) < 1e-9
 
 
 class TestPoincareInsetPoster:
@@ -384,8 +401,8 @@ class TestPoincareInsetPoster:
         """Both Poincaré section labels are in the SVG."""
         svg = generate_poster(steps=5000, width_mm=200, height_mm=300)
         xml_str = ET.tostring(svg, encoding="unicode")
-        assert "z \u2248 27" in xml_str
-        assert "x \u2248 0" in xml_str
+        assert "z = 27" in xml_str
+        assert "x = 0" in xml_str
 
     def test_ultra_zoom_absent_with_poincare(self):
         """ultra_zoom_inset is absent; poincare_z27_inset and poincare_x0_inset exist."""

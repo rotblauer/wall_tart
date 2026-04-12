@@ -237,9 +237,10 @@ def _annotation_infinite_complexity(parent, ns, target_x, target_y,
     """Annotation: the fractal nature of the strange attractor.
 
     The callout line points to the zoom source box (saddle region) on the
-    attractor.  Two Poincaré section panels flank this text — x ≈ 0 on the
-    left and z ≈ 27 on the right — exposing the fractal structure from
-    different slicing planes.
+    attractor.  Two Poincaré section panels flank this text — x = 0 on the
+    left and z = 27 on the right — exposing the fractal structure from
+    different slicing planes.  Each crossing is found by true zero-crossing
+    detection with linear interpolation.
     """
     g = draw_annotation_header(parent, ns, col_cx, anno_y, target_x, target_y,
                                "Infinite Complexity", scale, theme=theme,
@@ -754,64 +755,80 @@ def _draw_ultra_zoom_inset(svg, ns, scaled_main, w_scale, h_scale,
 # Poincaré section helpers
 # ---------------------------------------------------------------------------
 
-def compute_poincare_section(trajectory, z0=27.0, tol=0.5):
-    """Collect (x, y) points where the trajectory crosses z ≈ z0.
+def compute_poincare_section(trajectory, z0=27.0):
+    """Compute (x, y) crossing points where the trajectory intersects z = z0.
 
-    The Poincaré section is a standard tool for visualising fractal
-    structure in the Lorenz attractor.  By slicing through a fixed
-    z-plane the continuous 3-D flow is reduced to a 2-D point cloud
-    whose structure reveals the attractor's fractal layers.
+    Uses true zero-crossing detection: consecutive trajectory points that
+    bracket *z0* (i.e. ``(zₙ − z0)·(zₙ₊₁ − z0) < 0``) identify a
+    transversal crossing, and linear interpolation gives the precise (x, y)
+    coordinates on the z = z0 plane.  Each passage through the plane
+    contributes exactly one point, eliminating the oversampling inherent in
+    a fixed-width band filter.
+
+    This is the standard method in dynamical-systems analysis (see
+    Strogatz, *Nonlinear Dynamics and Chaos*, §9.2).
 
     Parameters
     ----------
     trajectory : list[tuple[float, float, float]]
         3-D trajectory from :func:`integrate_lorenz`.
     z0 : float
-        The z-value at which to take the cross-section (default 27,
-        near the top of the attractor where the lobes meet).
-    tol : float
-        Half-width of the z-band: points with ``|z - z0| < tol``
-        are included.
+        The z-value of the cross-section plane (default 27, near the
+        top of the attractor where the lobes meet).
 
     Returns
     -------
     list[tuple[float, float]]
-        The (x, y) coordinates of each crossing point.
+        The (x, y) coordinates of each interpolated crossing point.
     """
     section = []
-    for x, y, z in trajectory:
-        if abs(z - z0) < tol:
-            section.append((x, y))
+    for i in range(len(trajectory) - 1):
+        x0, y0, z_prev = trajectory[i]
+        x1, y1, z_next = trajectory[i + 1]
+        dz0 = z_prev - z0
+        dz1 = z_next - z0
+        if dz0 * dz1 < 0:
+            # Linear interpolation fraction
+            t = dz0 / (dz0 - dz1)
+            x_cross = x0 + t * (x1 - x0)
+            y_cross = y0 + t * (y1 - y0)
+            section.append((x_cross, y_cross))
     return section
 
 
-def compute_poincare_section_x0(trajectory, x0=0.0, tol=1.0):
-    """Collect (y, z) points where the trajectory crosses x ≈ x0.
+def compute_poincare_section_x0(trajectory, x0=0.0):
+    """Compute (y, z) crossing points where the trajectory intersects x = x0.
 
-    A cross-section through the x = 0 plane cuts across both wings of the
-    Lorenz butterfly, revealing a different fractal layering to the z = 27
-    section.  The (y, z) scatter plot shows the attractor's structure in
-    the plane perpendicular to the x-axis.
+    Uses true zero-crossing detection: consecutive trajectory points that
+    bracket *x0* (i.e. ``(xₙ − x0)·(xₙ₊₁ − x0) < 0``) identify a
+    transversal crossing, and linear interpolation gives the precise (y, z)
+    coordinates on the x = x0 plane.  Each passage through the plane
+    contributes exactly one point.
 
     Parameters
     ----------
     trajectory : list[tuple[float, float, float]]
         3-D trajectory from :func:`integrate_lorenz`.
     x0 : float
-        The x-value at which to take the cross-section (default 0).
-    tol : float
-        Half-width of the x-band (default 1.0 — wider than the z-section
-        tolerance because x changes faster near the wing transitions).
+        The x-value of the cross-section plane (default 0).
 
     Returns
     -------
     list[tuple[float, float]]
-        The (y, z) coordinates of each crossing point.
+        The (y, z) coordinates of each interpolated crossing point.
     """
     section = []
-    for x, y, z in trajectory:
-        if abs(x - x0) < tol:
-            section.append((y, z))
+    for i in range(len(trajectory) - 1):
+        x_prev, y0, z0 = trajectory[i]
+        x_next, y1, z1 = trajectory[i + 1]
+        dx0 = x_prev - x0
+        dx1 = x_next - x0
+        if dx0 * dx1 < 0:
+            # Linear interpolation fraction
+            t = dx0 / (dx0 - dx1)
+            y_cross = y0 + t * (y1 - y0)
+            z_cross = z0 + t * (z1 - z0)
+            section.append((y_cross, z_cross))
     return section
 
 
@@ -1276,11 +1293,12 @@ def generate_poster(steps=200000, zoom_multiplier=2, width_mm=BASE_WIDTH_MM, hei
     col1_cx, col2_cx, col3_cx = [width_mm * f for f in COLUMN_CENTERS]
 
     # --- Poincaré section panels: two inline panels flanking IC annotation ---
-    # Left panel  (col1–col2 gap): cross-section at x ≈ 0 (shows y–z structure)
-    # Right panel (col2–col3 gap): cross-section at z ≈ 27 (classic section)
+    # Left panel  (col1–col2 gap): cross-section at x = 0 (shows y–z structure)
+    # Right panel (col2–col3 gap): cross-section at z = 27 (classic section)
+    # Uses true zero-crossing detection with linear interpolation.
     combined_traj = traj_main + traj_extra
-    poincare_z27_pts = compute_poincare_section(combined_traj, z0=27.0, tol=0.5)
-    poincare_x0_pts = compute_poincare_section_x0(combined_traj, x0=0.0, tol=0.5)
+    poincare_z27_pts = compute_poincare_section(combined_traj, z0=27.0)
+    poincare_x0_pts = compute_poincare_section_x0(combined_traj, x0=0.0)
 
     _draw_poincare_inset(
         svg, ns, poincare_x0_pts, w_scale, h_scale,
@@ -1288,7 +1306,7 @@ def generate_poster(steps=200000, zoom_multiplier=2, width_mm=BASE_WIDTH_MM, hei
         attractor_color,
         clip_id="poincare_x0_clip",
         group_id="poincare_x0_inset",
-        label="Poincar\u00e9 section (x \u2248 0)",
+        label="Poincar\u00e9 section (x = 0)",
         theme=theme,
     )
     _draw_poincare_inset(
@@ -1297,7 +1315,7 @@ def generate_poster(steps=200000, zoom_multiplier=2, width_mm=BASE_WIDTH_MM, hei
         attractor_color,
         clip_id="poincare_z27_clip",
         group_id="poincare_z27_inset",
-        label="Poincar\u00e9 section (z \u2248 27)",
+        label="Poincar\u00e9 section (z = 27)",
         theme=theme,
     )
 
