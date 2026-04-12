@@ -116,12 +116,12 @@ _SUBST_HAT_VERTICES = [_hex_to_cart(a, b) for a, b in _SUBST_HAT_GRID_COORDS]
 # Precompute centroids for both shapes — used when mapping substitution
 # positions onto the canonical polygon.
 _SUBST_CENTROID = (
-    sum(x for x, _ in _SUBST_HAT_VERTICES) / 13,
-    sum(y for _, y in _SUBST_HAT_VERTICES) / 13,
+    sum(x for x, _ in _SUBST_HAT_VERTICES) / len(_SUBST_HAT_VERTICES),
+    sum(y for _, y in _SUBST_HAT_VERTICES) / len(_SUBST_HAT_VERTICES),
 )
 _CANON_CENTROID = (
-    sum(x for x, _ in HAT_VERTICES) / 13,
-    sum(y for _, y in HAT_VERTICES) / 13,
+    sum(x for x, _ in HAT_VERTICES) / len(HAT_VERTICES),
+    sum(y for _, y in HAT_VERTICES) / len(HAT_VERTICES),
 )
 
 
