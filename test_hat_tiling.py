@@ -11,10 +11,12 @@ import pytest
 from hat_tiling_poster import (
     HAT_VERTICES,
     _HAT_GRID_COORDS,
+    _SUBST_HAT_VERTICES,
     _centroid,
     _draw_canonical_hat_legend,
     _hex_to_cart,
     _point_in_polygon,
+    _trans_pt,
     _transform_hat,
     generate_hat_tiling,
     generate_poster,
@@ -32,25 +34,25 @@ from poster_utils import write_png, write_svg, _group
 _SQRT3 = math.sqrt(3)
 _CANONICAL_CARTESIAN = [
     (0.0,          0.0          ),   # 1  (0, 0)
-    (-1.5,        -_SQRT3 / 2   ),   # 2  (-1, -1)
-    (-1.0,        -_SQRT3       ),   # 3  (0, -2)
-    (1.0,         -_SQRT3       ),   # 4  (2, -2)
-    (1.5,         -_SQRT3 / 2   ),   # 5  (2, -1)
-    (3.0,         -_SQRT3       ),   # 6  (4, -2)
-    (4.5,         -_SQRT3 / 2   ),   # 7  (5, -1)
-    (4.0,          0.0          ),   # 8  (4, 0)
-    (3.0,          0.0          ),   # 9  (3, 0)
-    (3.0,          _SQRT3       ),   # 10 (2, 2)
-    (1.5,          3*_SQRT3 / 2 ),   # 11 (0, 3)
-    (1.0,          _SQRT3       ),   # 12 (0, 2)
-    (0.0,          _SQRT3       ),   # 13 (-1, 2)
+    (1.0,          0.0          ),   # 2  (1, 0)
+    (2.0,          0.0          ),   # 3  (2, 0)
+    (3.0,          0.0          ),   # 4  (3, 0)
+    (3.5,          _SQRT3 / 2   ),   # 5  (3, 1)
+    (2.5,          _SQRT3 / 2   ),   # 6  (2, 1)
+    (3.0,          _SQRT3       ),   # 7  (2, 2)
+    (2.0,          _SQRT3       ),   # 8  (1, 2)
+    (2.5,          3*_SQRT3 / 2 ),   # 9  (1, 3)
+    (1.5,          3*_SQRT3 / 2 ),   # 10 (0, 3)
+    (1.0,          _SQRT3       ),   # 11 (0, 2)
+    (0.0,          _SQRT3       ),   # 12 (-1, 2)
+    (-0.5,         _SQRT3 / 2   ),   # 13 (-1, 1)
 ]
 
 _CANONICAL_GRID = [
-    (0, 0), (-1, -1), (0, -2), (2, -2),
-    (2, -1), (4, -2), (5, -1), (4, 0),
-    (3, 0), (2, 2), (0, 3), (0, 2),
-    (-1, 2),
+    (0, 0), (1, 0), (2, 0), (3, 0),
+    (3, 1), (2, 1), (2, 2), (1, 2),
+    (1, 3), (0, 3), (0, 2), (-1, 2),
+    (-1, 1),
 ]
 
 
@@ -85,28 +87,28 @@ class TestCanonicalHatVertices:
         assert math.isclose(y, _SQRT3 / 2, abs_tol=1e-9)
 
     def test_vertex_5_cartesian(self):
-        """Spot-check: vertex 5 at grid (2,-1) → Cartesian (1.5, -sqrt(3)/2)."""
+        """Spot-check: vertex 5 at grid (3,1) → Cartesian (3.5, sqrt(3)/2)."""
         x, y = HAT_VERTICES[4]
-        assert math.isclose(x, 1.5, abs_tol=1e-9)
-        assert math.isclose(y, -_SQRT3 / 2, abs_tol=1e-9)
+        assert math.isclose(x, 3.5, abs_tol=1e-9)
+        assert math.isclose(y, _SQRT3 / 2, abs_tol=1e-9)
 
     def test_vertex_11_cartesian(self):
-        """Spot-check: vertex 11 at grid (0,3) → Cartesian (1.5, 3*sqrt(3)/2)."""
+        """Spot-check: vertex 11 at grid (0,2) → Cartesian (1.0, sqrt(3))."""
         x, y = HAT_VERTICES[10]
-        assert math.isclose(x, 1.5, abs_tol=1e-9)
-        assert math.isclose(y, 3 * _SQRT3 / 2, abs_tol=1e-9)
-
-    def test_vertex_12_cartesian(self):
-        """Spot-check: vertex 12 at grid (0,2) → Cartesian (1, sqrt(3))."""
-        x, y = HAT_VERTICES[11]
         assert math.isclose(x, 1.0, abs_tol=1e-9)
         assert math.isclose(y, _SQRT3, abs_tol=1e-9)
 
-    def test_vertex_13_cartesian(self):
-        """Spot-check: vertex 13 at grid (-1,2) → Cartesian (0, sqrt(3))."""
-        x, y = HAT_VERTICES[12]
+    def test_vertex_12_cartesian(self):
+        """Spot-check: vertex 12 at grid (-1,2) → Cartesian (0, sqrt(3))."""
+        x, y = HAT_VERTICES[11]
         assert math.isclose(x, 0.0, abs_tol=1e-9)
         assert math.isclose(y, _SQRT3, abs_tol=1e-9)
+
+    def test_vertex_13_cartesian(self):
+        """Spot-check: vertex 13 at grid (-1,1) → Cartesian (-0.5, sqrt(3)/2)."""
+        x, y = HAT_VERTICES[12]
+        assert math.isclose(x, -0.5, abs_tol=1e-9)
+        assert math.isclose(y, _SQRT3 / 2, abs_tol=1e-9)
 
 
 # ---------------------------------------------------------------------------
@@ -154,7 +156,7 @@ class TestCanonicalHatLegend:
         texts = root.findall(f".//{{{svg_ns}}}text")
         text_content = " ".join(t.text or "" for t in texts)
         assert "(0,0)" in text_content
-        assert "(5,-1)" in text_content
+        assert "(-1,1)" in text_content
 
     def test_legend_rendered_in_poster(self):
         svg = generate_poster(iterations=1, width_mm=200, height_mm=300,
@@ -184,7 +186,8 @@ class TestGenerateHatTiling:
         tiles = generate_hat_tiling(1)
         for item in tiles:
             assert isinstance(item, (list, tuple))
-            assert len(item) >= 3
+            # Full affine (a, b, tx, d, e, ty, reflected)
+            assert len(item) == 7
             # Last element should be a bool (reflected flag)
             assert isinstance(item[-1], bool)
 
@@ -199,12 +202,17 @@ class TestGenerateHatTiling:
         assert len(tiles) > 0
 
     def test_no_tile_overlaps(self):
-        """No tile centroid should fall inside another tile."""
+        """No tile centroid should fall inside another tile.
+
+        Uses the internal substitution vertices for this geometry test
+        because the substitution was computed for that shape.
+        """
         tiles = generate_hat_tiling(1)
-        all_verts = [
-            _transform_hat(HAT_VERTICES, a, tx, ty, reflect=r)
-            for a, tx, ty, r in tiles
-        ]
+        all_verts = []
+        for a_m, b_m, tx, d_m, e_m, ty, refl in tiles:
+            verts = [_trans_pt((a_m, b_m, tx, d_m, e_m, ty), v)
+                     for v in _SUBST_HAT_VERTICES]
+            all_verts.append(verts)
         for i, vi in enumerate(all_verts):
             ci = _centroid(vi)
             for j, vj in enumerate(all_verts):
@@ -215,12 +223,16 @@ class TestGenerateHatTiling:
                 )
 
     def test_tiles_share_edges(self):
-        """Adjacent tiles should share proper edges (reversed direction)."""
+        """Adjacent tiles should share proper edges (reversed direction).
+
+        Uses internal substitution vertices for precise edge matching.
+        """
         tiles = generate_hat_tiling(1)
-        all_verts = [
-            _transform_hat(HAT_VERTICES, a, tx, ty, reflect=r)
-            for a, tx, ty, r in tiles
-        ]
+        all_verts = []
+        for a_m, b_m, tx, d_m, e_m, ty, refl in tiles:
+            verts = [_trans_pt((a_m, b_m, tx, d_m, e_m, ty), v)
+                     for v in _SUBST_HAT_VERTICES]
+            all_verts.append(verts)
         total_shared = 0
         for i in range(min(5, len(all_verts))):
             for j in range(i + 1, len(all_verts)):
@@ -238,7 +250,12 @@ class TestGenerateHatTiling:
     def test_multiple_tile_orientations(self):
         """Tiling should use more than 2 orientations (canonical uses 6)."""
         tiles = generate_hat_tiling(1)
-        angles = {round(math.degrees(a) % 360, 0) for a, _, _, _ in tiles}
+        angles = set()
+        for a_m, _b, _tx, d_m, _e, _ty, _r in tiles:
+            s = math.hypot(a_m, d_m)
+            if s > 0:
+                angle = round(math.degrees(math.atan2(d_m / s, a_m / s)) % 360, 0)
+                angles.add(angle)
         assert len(angles) >= 3, (
             f"Only {len(angles)} orientation(s) found: {sorted(angles)}"
         )
@@ -246,7 +263,7 @@ class TestGenerateHatTiling:
     def test_reflected_ratio_reasonable(self):
         """Reflected tiles should be a minority (~1/7 in canonical tiling)."""
         tiles = generate_hat_tiling(2)
-        n_reflected = sum(1 for _, _, _, r in tiles if r)
+        n_reflected = sum(1 for *_, r in tiles if r)
         ratio = n_reflected / len(tiles)
         # Should be in range [5%, 40%] (canonical is ~14%)
         assert 0.05 < ratio < 0.40, (
