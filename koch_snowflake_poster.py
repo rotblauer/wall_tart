@@ -164,7 +164,7 @@ def _annotation_infinite_perimeter(parent, ns, target_x, target_y,
     draw_annotation_body(g, ns, col_cx, anno_y, [
         "Each iteration multiplies the",
         "perimeter by 4/3. After n steps,",
-        "P = 3s\u00b7(4/3)\u207f. As n \u2192 \u221e the",
+        "P = 3s\u00b7(4/3)\u207f. As n grows, the",
         "perimeter grows without bound,",
         "yet the curve never crosses itself.",
     ], scale, theme=theme)
@@ -288,10 +288,24 @@ def _panel_area_paradox(parent, ns, col_cx, anno_y, scale=1,
           "A = (2s\u00b2\u221a3) / 5",
           **{**ANNOTATION_STYLE, "font-size": str(round(4.2 * scale, 2)),
              "font-style": "italic", "text-anchor": "middle"})
-    _text(g, ns, col_cx, formula_y + 7 * scale,
-          "Perimeter(n) = 3s\u00b7(4/3)\u207f \u2192 \u221e",
-          **{**ANNOTATION_STYLE, "font-size": str(round(4.2 * scale, 2)),
-             "font-style": "italic", "text-anchor": "middle"})
+    # Render "Perimeter(n) = 3s·(4/3)ⁿ → ∞" using an SVG-path arrow so the
+    # rendered PNG does not depend on the font having the U+2192 glyph.
+    peri_y = formula_y + 7 * scale
+    arrow_len = 6 * scale
+    arrow_cx = col_cx
+    arrow_cy = peri_y - 1.5 * scale
+    text_gap = 1 * scale
+    formula_style = {**ANNOTATION_STYLE,
+                     "font-size": str(round(4.2 * scale, 2)),
+                     "font-style": "italic"}
+    _text(g, ns, arrow_cx - arrow_len / 2 - text_gap, peri_y,
+          "Perimeter(n) = 3s\u00b7(4/3)\u207f",
+          **{**formula_style, "text-anchor": "end"})
+    arrow_color = ANNOTATION_STYLE.get("fill", "#1C1C1C")
+    _draw_right_arrow(g, ns, arrow_cx, arrow_cy, arrow_len, arrow_color, scale)
+    _text(g, ns, arrow_cx + arrow_len / 2 + text_gap, peri_y,
+          "\u221e",
+          **{**formula_style, "text-anchor": "start"})
 
     # Mini snowflakes at increasing depth
     demo_y = anno_y + 55 * scale
