@@ -11,8 +11,11 @@ import pytest
 from hat_tiling_poster import (
     HAT_VERTICES,
     _HAT_GRID_COORDS,
+    _centroid,
     _draw_canonical_hat_legend,
     _hex_to_cart,
+    _point_in_polygon,
+    _transform_hat,
     generate_hat_tiling,
     generate_poster,
     render_hat_tiles,
@@ -194,6 +197,61 @@ class TestGenerateHatTiling:
         tiles = generate_hat_tiling(0)
         assert isinstance(tiles, list)
         assert len(tiles) > 0
+
+    def test_no_tile_overlaps(self):
+        """No tile centroid should fall inside another tile."""
+        tiles = generate_hat_tiling(1)
+        all_verts = [
+            _transform_hat(HAT_VERTICES, a, tx, ty, reflect=r)
+            for a, tx, ty, r in tiles
+        ]
+        for i, vi in enumerate(all_verts):
+            ci = _centroid(vi)
+            for j, vj in enumerate(all_verts):
+                if i == j:
+                    continue
+                assert not _point_in_polygon(ci[0], ci[1], vj), (
+                    f"Tile {i} centroid inside tile {j}"
+                )
+
+    def test_tiles_share_edges(self):
+        """Adjacent tiles should share proper edges (reversed direction)."""
+        tiles = generate_hat_tiling(1)
+        all_verts = [
+            _transform_hat(HAT_VERTICES, a, tx, ty, reflect=r)
+            for a, tx, ty, r in tiles
+        ]
+        total_shared = 0
+        for i in range(min(5, len(all_verts))):
+            for j in range(i + 1, len(all_verts)):
+                for ei in range(13):
+                    v1a, v2a = all_verts[i][ei], all_verts[i][(ei + 1) % 13]
+                    for ej in range(13):
+                        v1b, v2b = all_verts[j][ej], all_verts[j][(ej + 1) % 13]
+                        if (abs(v1a[0] - v2b[0]) < 1e-4
+                                and abs(v1a[1] - v2b[1]) < 1e-4
+                                and abs(v2a[0] - v1b[0]) < 1e-4
+                                and abs(v2a[1] - v1b[1]) < 1e-4):
+                            total_shared += 1
+        assert total_shared > 0, "No shared edges found"
+
+    def test_multiple_tile_orientations(self):
+        """Tiling should use more than 2 orientations (canonical uses 6)."""
+        tiles = generate_hat_tiling(1)
+        angles = {round(math.degrees(a) % 360, 0) for a, _, _, _ in tiles}
+        assert len(angles) >= 3, (
+            f"Only {len(angles)} orientation(s) found: {sorted(angles)}"
+        )
+
+    def test_reflected_ratio_reasonable(self):
+        """Reflected tiles should be a minority (~1/7 in canonical tiling)."""
+        tiles = generate_hat_tiling(2)
+        n_reflected = sum(1 for _, _, _, r in tiles if r)
+        ratio = n_reflected / len(tiles)
+        # Should be roughly 10-25% (canonical is ~14%)
+        assert 0.05 < ratio < 0.40, (
+            f"Reflected ratio {ratio:.3f} is outside [0.05, 0.40]"
+        )
 
 
 # ---------------------------------------------------------------------------
