@@ -72,14 +72,29 @@ def _hex_to_cart(a, b):
     return (a * _E1[0] + b * _E2[0], a * _E1[1] + b * _E2[1])
 
 
-# The Hat polygon: 13 vertices on the kite grid.
-# Coordinates from the Smith et al. (2023) paper, expressed in the
-# triangular grid basis and converted to Cartesian.
+# The Hat polygon: canonical 13 vertices on the triangular grid.
+# Coordinates from Smith et al. (2023), arXiv:2303.10798, Figure 1 / Table S1.
+# Basis: a = (1, 0), b = (1/2, sqrt(3)/2).
+#
+# Index  (a,  b)   Cartesian (x, y)
+#   1    (0,  0)   (0,      0     )
+#   2    (1,  0)   (1,      0     )
+#   3    (2,  0)   (2,      0     )
+#   4    (3,  1)   (3.5,    0.866 )
+#   5    (3,  2)   (4,      1.732 )
+#   6    (2,  3)   (3.5,    2.598 )
+#   7    (1,  3)   (2.5,    2.598 )
+#   8    (0,  2)   (1,      1.732 )
+#   9    (-1, 2)   (0,      1.732 )
+#  10    (-2, 1)   (-1.5,   0.866 )
+#  11    (-2, 0)   (-2,     0     )
+#  12    (-1,-1)   (-1.5,  -0.866 )
+#  13    (0, -1)   (-0.5,  -0.866 )
 _HAT_GRID_COORDS = [
     (0, 0), (1, 0), (2, 0), (3, 1),
-    (2, 2), (2, 3), (1, 3), (0, 3),
-    (0, 2), (-1, 2), (-1, 1), (0, 1),
-    (1, 1),
+    (3, 2), (2, 3), (1, 3), (0, 2),
+    (-1, 2), (-2, 1), (-2, 0), (-1, -1),
+    (0, -1),
 ]
 
 HAT_VERTICES = [_hex_to_cart(a, b) for a, b in _HAT_GRID_COORDS]
@@ -277,6 +292,161 @@ def render_hat_tiles(tiles, cx, cy, scale, clip_w, clip_h):
                 cy - half_h <= my <= cy + half_h):
             result.append((rendered, reflected))
     return result
+
+
+# ---------------------------------------------------------------------------
+# Canonical Hat legend (13-vertex construction diagram)
+# ---------------------------------------------------------------------------
+
+def _draw_canonical_hat_legend(parent, ns, cx, cy, size, theme=None):
+    """Draw a single canonical Hat with labeled vertices and grid reference.
+
+    Renders the Hat polygon at position (cx, cy) scaled to *size* mm, with
+    each of the 13 canonical vertices numbered and annotated with their
+    triangular-grid coordinates (a, b).  A faint triangular-grid backdrop is
+    also drawn to show the geometric construction.
+
+    Parameters
+    ----------
+    parent : xml.etree.ElementTree.Element
+        SVG parent element to attach the diagram to.
+    ns : str
+        SVG namespace string.
+    cx, cy : float
+        Centre of the diagram in SVG user units (mm).
+    size : float
+        Approximate diameter of the diagram in mm.
+    theme : str or None
+        Colour theme name.
+    """
+    t = get_theme(theme)
+    g = _group(parent, ns, id="canonical-hat-legend")
+
+    # Scale: fit the Hat bounding box inside *size* mm.
+    xs = [x for x, _ in HAT_VERTICES]
+    ys = [y for _, y in HAT_VERTICES]
+    hat_span = max(max(xs) - min(xs), max(ys) - min(ys))
+    sc = size / hat_span * 0.82        # a little padding
+    ox = cx - (max(xs) + min(xs)) / 2 * sc
+    oy = cy - (max(ys) + min(ys)) / 2 * sc
+
+    def to_svg(x, y):
+        """Convert Hat-space coords to SVG coords (y flipped for screen)."""
+        return ox + x * sc, oy - y * sc
+
+    # --- Background grid (faint triangular grid lines) ---
+    grid_g = _group(g, ns, id="hat-legend-grid")
+    grid_color = t.get("border_color", "#888888")
+    grid_kw = {"stroke": grid_color, "stroke-opacity": "0.18",
+                "stroke-width": str(round(0.22, 3))}
+
+    # Draw a small portion of the triangular lattice as reference
+    a_range = range(-3, 6)
+    b_range = range(-2, 5)
+    for b in b_range:
+        # Horizontal-ish lines (constant b)
+        pts = [(a, b) for a in a_range]
+        for i in range(len(pts) - 1):
+            x0, y0 = to_svg(*_hex_to_cart(*pts[i]))
+            x1, y1 = to_svg(*_hex_to_cart(*pts[i + 1]))
+            _line(grid_g, ns, x0, y0, x1, y1, **grid_kw)
+    for a in a_range:
+        # Diagonal lines (constant a)
+        pts = [(a, b) for b in b_range]
+        for i in range(len(pts) - 1):
+            x0, y0 = to_svg(*_hex_to_cart(*pts[i]))
+            x1, y1 = to_svg(*_hex_to_cart(*pts[i + 1]))
+            _line(grid_g, ns, x0, y0, x1, y1, **grid_kw)
+    for diff in range(min(a_range) + min(b_range), max(a_range) + max(b_range) + 1):
+        # Third family: a + b = const
+        pts = [(a, diff - a) for a in a_range
+               if min(b_range) <= diff - a <= max(b_range)]
+        for i in range(len(pts) - 1):
+            x0, y0 = to_svg(*_hex_to_cart(*pts[i]))
+            x1, y1 = to_svg(*_hex_to_cart(*pts[i + 1]))
+            _line(grid_g, ns, x0, y0, x1, y1, **grid_kw)
+
+    # --- Hat polygon fill ---
+    poly_pts = [to_svg(x, y) for x, y in HAT_VERTICES]
+    _polygon(g, ns, poly_pts,
+             fill=t["content_primary"],
+             opacity="0.55",
+             stroke=t.get("border_color", "#1C1C1C"),
+             **{"stroke-width": str(round(0.35, 3)), "stroke-opacity": "0.85"})
+
+    # --- Vertex dots and labels ---
+    dot_r = size * 0.018
+    label_offset = size * 0.055
+    label_kw = {
+        "font-family": SERIF,
+        "font-size": str(round(size * 0.065, 2)),
+        "fill": t.get("title_color", "#1C1C1C"),
+        "text-anchor": "middle",
+    }
+    coord_kw = {
+        "font-family": SERIF,
+        "font-size": str(round(size * 0.048, 2)),
+        "fill": t.get("text_color", "#444444"),
+        "text-anchor": "middle",
+    }
+
+    for idx, ((ga, gb), (hx, hy)) in enumerate(
+            zip(_HAT_GRID_COORDS, HAT_VERTICES)):
+        sx, sy = to_svg(hx, hy)
+        _circle(g, ns, sx, sy, dot_r,
+                fill=t.get("accent_color", ACCENT_COLOR),
+                stroke="none")
+
+        # Nudge label outward from centroid
+        mx = sum(p[0] for p in poly_pts) / len(poly_pts)
+        my = sum(p[1] for p in poly_pts) / len(poly_pts)
+        dx, dy = sx - mx, sy - my
+        dist = math.hypot(dx, dy) or 1.0
+        lx = sx + dx / dist * label_offset
+        ly = sy + dy / dist * label_offset - dot_r * 0.5
+
+        # Vertex index (1-based)
+        _text(g, ns, lx, ly, str(idx + 1), **label_kw)
+        # Grid coordinates below
+        _text(g, ns, lx, ly + size * 0.072,
+              f"({ga},{gb})", **coord_kw)
+
+    # --- Legend title ---
+    _text(g, ns, cx, oy - max(ys) * sc - size * 0.12,
+          "Canonical 13-Vertex Hat Construction",
+          **{**label_kw,
+             "font-size": str(round(size * 0.075, 2)),
+             "fill": t.get("accent_color", ACCENT_COLOR)})
+
+    # --- Legend key: reflected vs unreflected colour swatches ---
+    swatch_y = oy - min(ys) * sc + size * 0.10
+    swatch_w, swatch_h = size * 0.12, size * 0.065
+    swatch_kw = {
+        "font-family": SERIF,
+        "font-size": str(round(size * 0.06, 2)),
+        "fill": t.get("text_color", "#444444"),
+        "dominant-baseline": "middle",
+    }
+    # Unreflected swatch
+    ux = cx - size * 0.28
+    _rect(g, ns, ux - swatch_w / 2, swatch_y - swatch_h / 2,
+          swatch_w, swatch_h,
+          fill=t["content_primary"], opacity="0.75",
+          stroke=t.get("border_color", "#1C1C1C"),
+          **{"stroke-width": "0.25"})
+    _text(g, ns, ux + swatch_w * 0.85, swatch_y,
+          "Unreflected", **swatch_kw)
+    # Reflected swatch
+    rx = cx + size * 0.10
+    _rect(g, ns, rx - swatch_w / 2, swatch_y - swatch_h / 2,
+          swatch_w, swatch_h,
+          fill=t["content_secondary"], opacity="0.75",
+          stroke=t.get("border_color", "#1C1C1C"),
+          **{"stroke-width": "0.25"})
+    _text(g, ns, rx + swatch_w * 0.85, swatch_y,
+          "Reflected", **swatch_kw)
+
+    return g
 
 
 # ---------------------------------------------------------------------------
@@ -500,6 +670,14 @@ def generate_poster(iterations=3, width_mm=BASE_WIDTH_MM,
                  stroke=stroke_color,
                  **{"stroke-width": str(round(0.15 * w_scale, 3)),
                     "stroke-opacity": "0.3"})
+
+    # --- Canonical Hat legend inset (upper-right content area) ---
+    legend_group = _group(svg, ns, id="canonical-hat-legend-inset")
+    legend_size = min(avail_w, avail_h) * 0.28
+    legend_cx = width_mm - legend_size * 0.52
+    legend_cy = min_top + legend_size * 0.55
+    _draw_canonical_hat_legend(legend_group, ns, legend_cx, legend_cy,
+                               legend_size, theme=theme)
 
     # --- Annotations ---
     anno_group = _group(svg, ns, id="annotations")
