@@ -24,6 +24,7 @@ Options:
 
 import argparse
 import math
+from collections import deque
 
 from poster_utils import (
     ACCENT_COLOR,
@@ -134,114 +135,142 @@ def _transform_hat(vertices, angle, tx, ty, scale=1.0, reflect=False):
 
 
 # ---------------------------------------------------------------------------
-# Hat tiling via hierarchical cluster expansion
+# Hat tiling via edge-matching BFS growth
 # ---------------------------------------------------------------------------
 
 # Each tile is stored as (angle, tx, ty, reflected).
-# We build clusters by placing Hats around a central Hat using the
-# known packing relationships on the triangular grid.
+# We grow the tiling outward from a single seed tile by matching edges
+# with neighbours.  Every Hat placement is edge-to-edge on the
+# triangular grid, guaranteeing a gap-free, overlap-free tiling.
+# The Hat's key property (Smith et al., 2023) ensures that any valid
+# edge-to-edge tiling is necessarily aperiodic.
 
-def _rotation(n):
-    """Return n * 60° in radians."""
-    return n * math.pi / 3.0
+# Pre-classify Hat edges by length for efficient matching.
+# Short edges (length 1):  indices 0,1,3,4,5,7,9,10,11,12
+# Long  edges (length √3): indices 2,6,8
+_SHORT_EDGES = []
+_LONG_EDGES = []
 
-
-def _make_seed_cluster():
-    """Create the initial cluster: a central Hat surrounded by six neighbours.
-
-    This 7-tile "flower" is the fundamental repeating motif of the Hat
-    tiling.  The central tile is unreflected; surrounding tiles alternate
-    between reflected and unreflected with appropriate 60° rotations and
-    offsets derived from the triangular grid geometry.
-
-    Returns
-    -------
-    list[tuple[float, float, float, bool]]
-        Each element is ``(angle, tx, ty, reflected)``.
-    """
-    tiles = []
-    # Central hat (unreflected)
-    tiles.append((0.0, 0.0, 0.0, False))
-
-    # Width / height of a single Hat in Cartesian coords (for spacing)
-    # The Hat spans roughly 3 units wide and 3*sqrt(3)/2 tall in the grid.
-    hw = 3.0 + 0.5 * 3.0  # ≈ 4.5 in x
-    hh = 3.0 * _SQRT3 / 2.0  # ≈ 2.598 in y
-
-    # Six surrounding tiles placed with 60° rotational offsets
-    offsets = [
-        (_rotation(0), 2.5, _SQRT3 * 0.5, True),
-        (_rotation(1), 1.0, _SQRT3 * 2.0, False),
-        (_rotation(2), -1.5, _SQRT3 * 1.5, True),
-        (_rotation(3), -2.5, -_SQRT3 * 0.5, False),
-        (_rotation(1), -1.0, -_SQRT3 * 2.0, True),
-        (_rotation(0), 1.5, -_SQRT3 * 1.5, False),
-    ]
-    for angle, ox, oy, refl in offsets:
-        tiles.append((angle, ox, oy, refl))
-
-    return tiles
+for _i in range(13):
+    _v1 = HAT_VERTICES[_i]
+    _v2 = HAT_VERTICES[(_i + 1) % 13]
+    _elen = math.hypot(_v2[0] - _v1[0], _v2[1] - _v1[1])
+    if _elen < 1.5:
+        _SHORT_EDGES.append(_i)
+    else:
+        _LONG_EDGES.append(_i)
 
 
-def _expand_cluster(tiles, generation):
-    """Expand a cluster of tiles by replicating around a hexagonal grid.
+def _find_neighbor(ref_verts, edge_i, reflected_B, edge_j):
+    """Compute a candidate neighbour placement that shares one edge.
 
-    Each expansion places copies of the current cluster at the six
-    vertices of a larger hexagonal ring, with appropriate rotations,
-    producing a tiling that grows outward.  Tiles that overlap the centre
-    are deduplicated by rounding positions to a grid.
+    Given a placed tile (via its world-coordinate vertices *ref_verts*),
+    compute the angle and position of a new tile whose edge *edge_j*
+    (reversed) aligns exactly with edge *edge_i* of the placed tile.
 
     Parameters
     ----------
-    tiles : list[tuple[float, float, float, bool]]
-        Current set of tile descriptors.
-    generation : int
-        Current generation number (determines ring radius).
+    ref_verts : list[tuple[float, float]]
+        The 13 world-coordinate vertices of the placed (reference) tile.
+    edge_i : int
+        Edge index on the reference tile (0–12).
+    reflected_B : bool
+        Whether the candidate neighbour is reflected.
+    edge_j : int
+        Edge index on the candidate tile (0–12).
 
     Returns
     -------
-    list[tuple[float, float, float, bool]]
-        Expanded tile set.
+    tuple[float, float, float] or None
+        ``(angle, tx, ty)`` for the candidate tile, or *None* if the
+        edges are incompatible (different length).
     """
-    # Expansion radius grows with each generation
-    radius = (3.0 + 1.5) * (generation + 1)
+    vi = ref_verts[edge_i]
+    vi_next = ref_verts[(edge_i + 1) % 13]
 
-    new_tiles = list(tiles)
-    seen = set()
-    for angle, tx, ty, refl in tiles:
-        key = (round(tx, 2), round(ty, 2), round(angle, 4), refl)
-        seen.add(key)
+    # Reversed edge direction (target direction for neighbour's edge)
+    dx_rev = vi[0] - vi_next[0]
+    dy_rev = vi[1] - vi_next[1]
+    len_rev = math.hypot(dx_rev, dy_rev)
 
-    for k in range(6):
-        rot = _rotation(k)
-        cx = radius * math.cos(rot + math.pi / 6.0)
-        cy = radius * math.sin(rot + math.pi / 6.0)
-        for angle, tx, ty, refl in tiles:
-            na = angle + rot
-            # Rotate existing offset around origin, then translate
-            cos_r = math.cos(rot)
-            sin_r = math.sin(rot)
-            ntx = tx * cos_r - ty * sin_r + cx
-            nty = tx * sin_r + ty * cos_r + cy
-            key = (round(ntx, 2), round(nty, 2), round(na % (2 * math.pi), 4), refl)
-            if key not in seen:
-                seen.add(key)
-                new_tiles.append((na, ntx, nty, refl))
+    # Edge j of the base Hat in local coordinates (possibly reflected)
+    vj = HAT_VERTICES[edge_j]
+    vj_next = HAT_VERTICES[(edge_j + 1) % 13]
 
-    return new_tiles
+    if reflected_B:
+        vj = (vj[0], -vj[1])
+        vj_next = (vj_next[0], -vj_next[1])
+
+    dx_B = vj_next[0] - vj[0]
+    dy_B = vj_next[1] - vj[1]
+    len_B = math.hypot(dx_B, dy_B)
+
+    # Only same-length edges can match
+    if abs(len_B - len_rev) > 1e-6:
+        return None
+
+    # Rotation: Rot(θ) · d_B = d_rev
+    # θ = atan2(d_rev_y · d_B_x − d_rev_x · d_B_y,
+    #           d_rev_x · d_B_x + d_rev_y · d_B_y)
+    dot_val = dx_rev * dx_B + dy_rev * dy_B
+    cross_val = dy_rev * dx_B - dx_rev * dy_B
+    theta = math.atan2(cross_val, dot_val)
+
+    cos_t = math.cos(theta)
+    sin_t = math.sin(theta)
+
+    # Translation: world position of vertex j equals vi_next
+    rx = vj[0] * cos_t - vj[1] * sin_t
+    ry = vj[0] * sin_t + vj[1] * cos_t
+    tx = vi_next[0] - rx
+    ty = vi_next[1] - ry
+
+    # Sanity check: vertex (j+1)%13 should equal vi
+    rx2 = vj_next[0] * cos_t - vj_next[1] * sin_t
+    ry2 = vj_next[0] * sin_t + vj_next[1] * cos_t
+    if abs(rx2 + tx - vi[0]) > 1e-4 or abs(ry2 + ty - vi[1]) > 1e-4:
+        return None
+
+    return (theta, tx, ty)
+
+
+def _centroid(verts):
+    """Return the centroid of a list of vertices."""
+    n = len(verts)
+    return (sum(v[0] for v in verts) / n,
+            sum(v[1] for v in verts) / n)
+
+
+def _point_in_polygon(px, py, polygon):
+    """Ray-casting point-in-polygon test."""
+    n = len(polygon)
+    inside = False
+    j = n - 1
+    for i in range(n):
+        xi, yi = polygon[i]
+        xj, yj = polygon[j]
+        if ((yi > py) != (yj > py)) and \
+                (px < (xj - xi) * (py - yi) / (yj - yi) + xi):
+            inside = not inside
+        j = i
+    return inside
 
 
 def generate_hat_tiling(iterations, progress=None):
     """Generate a Hat tiling as a list of tile descriptors.
 
-    Starts from a seed cluster and expands it *iterations* times.
+    Grows an edge-to-edge Hat tiling outward from a single seed tile
+    using breadth-first edge matching.  The number of tiles scales
+    roughly as ``7 ** iterations``.
 
     Parameters
     ----------
     iterations : int
-        Number of expansion iterations (default: 3).
+        Controls the number of tiles generated (default: 3).
+        Tile count scales as ``6 ** (iterations + 1)``:
+        0 → ~7, 1 → ~36, 2 → ~216, 3 → ~1296.
     progress : ProgressReporter or None
-        Optional progress reporter updated once per iteration.
+        Optional progress reporter (total should equal *iterations*).
 
     Returns
     -------
@@ -249,11 +278,111 @@ def generate_hat_tiling(iterations, progress=None):
         Each element is ``(angle, tx, ty, reflected)`` describing one
         Hat tile placement.
     """
-    tiles = _make_seed_cluster()
-    for i in range(iterations):
-        tiles = _expand_cluster(tiles, i)
-        if progress is not None:
-            progress.update(i + 1)
+    # Target tile count scales with iterations
+    max_tiles = max(7, int(6 ** (min(iterations, 5) + 1.0)))
+
+    # Start with a single unreflected Hat at the origin
+    tiles = [(0.0, 0.0, 0.0, False)]
+    verts_cache = {0: list(HAT_VERTICES)}
+
+    # --- Spatial hash for overlap detection ---
+    cell_size = 4.0
+    spatial = {}          # (ix, iy) → [(cx, cy, tile_idx, verts)]
+
+    def _hash_key(x, y):
+        return (int(math.floor(x / cell_size)),
+                int(math.floor(y / cell_size)))
+
+    def _register(idx):
+        vs = verts_cache[idx]
+        cx, cy = _centroid(vs)
+        key = _hash_key(cx, cy)
+        spatial.setdefault(key, []).append((cx, cy, idx, vs))
+
+    def _overlaps(new_verts):
+        """Return True if *new_verts* overlaps any existing tile."""
+        ncx, ncy = _centroid(new_verts)
+        ix, iy = _hash_key(ncx, ncy)
+        for di in range(-1, 2):
+            for dj in range(-1, 2):
+                for ecx, ecy, _eidx, everts in spatial.get(
+                        (ix + di, iy + dj), []):
+                    # Quick distance pre-check
+                    if abs(ncx - ecx) > 7 or abs(ncy - ecy) > 7:
+                        continue
+                    # Centroid-in-polygon test (both directions)
+                    if _point_in_polygon(ncx, ncy, everts):
+                        return True
+                    if _point_in_polygon(ecx, ecy, new_verts):
+                        return True
+        return False
+
+    _register(0)
+
+    # --- BFS growth ---
+    boundary = deque((0, i) for i in range(13))
+    matched = set()
+
+    # Progress bookkeeping
+    report_step = max(1, max_tiles // max(iterations, 1))
+
+    while boundary and len(tiles) < max_tiles:
+        tile_idx, edge_idx = boundary.popleft()
+
+        if (tile_idx, edge_idx) in matched:
+            continue
+
+        ref_verts = verts_cache[tile_idx]
+
+        # Determine candidate edge indices by length
+        edge_len = math.hypot(
+            ref_verts[(edge_idx + 1) % 13][0] - ref_verts[edge_idx][0],
+            ref_verts[(edge_idx + 1) % 13][1] - ref_verts[edge_idx][1],
+        )
+        candidates = _SHORT_EDGES if edge_len < 1.5 else _LONG_EDGES
+
+        placed = False
+        # Prefer unreflected neighbours (matches ~1 : 6 reflected ratio)
+        for reflected_B in (False, True):
+            if placed:
+                break
+            for edge_j in candidates:
+                result = _find_neighbor(ref_verts, edge_idx,
+                                        reflected_B, edge_j)
+                if result is None:
+                    continue
+
+                theta, tx, ty = result
+                new_verts = _transform_hat(HAT_VERTICES, theta, tx, ty,
+                                           reflect=reflected_B)
+
+                if _overlaps(new_verts):
+                    continue
+
+                # Accept this placement
+                new_idx = len(tiles)
+                tiles.append((theta, tx, ty, reflected_B))
+                verts_cache[new_idx] = new_verts
+                _register(new_idx)
+
+                matched.add((tile_idx, edge_idx))
+                matched.add((new_idx, edge_j))
+
+                for i in range(13):
+                    if (new_idx, i) not in matched:
+                        boundary.append((new_idx, i))
+
+                placed = True
+                break
+
+        # Report progress periodically
+        if progress is not None and len(tiles) % report_step == 0:
+            step = min(iterations, int(iterations * len(tiles) / max_tiles))
+            progress.update(step)
+
+    if progress is not None:
+        progress.update(iterations)
+
     return tiles
 
 
@@ -464,8 +593,8 @@ def _annotation_einstein(parent, ns, target_x, target_y,
         "stone\u2019 \u2014 names the dream of a single",
         "shape that tiles the entire plane",
         "yet can never do so periodically.",
-        "The Hat is the first shape proven",
-        "to achieve this remarkable feat.",
+        "The Hat is the first monotile proven",
+        "to be aperiodic (with reflected copies).",
     ], scale, theme=theme)
     return g
 
@@ -522,10 +651,10 @@ def _panel_how_it_tiles(parent, ns, col_cx, anno_y, scale=1):
         "substitution system. Small clusters",
         "of Hats combine into four metatile",
         "types (H, T, P, F) that themselves",
-        "tile by substitution. Reflected and",
-        "unreflected Hats interleave at each",
-        "level, ensuring the pattern extends",
-        "to infinity without ever repeating.",
+        "tile by substitution. About one in",
+        "every seven Hats is a reflected copy;",
+        "the rest are unreflected, ensuring",
+        "the pattern never repeats.",
     ]
     _multiline_text(
         g, ns, col_cx, anno_y + 9 * scale,
