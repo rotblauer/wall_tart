@@ -502,7 +502,7 @@ def generate_poster(iterations=8, width_mm=BASE_WIDTH_MM,
     Parameters
     ----------
     iterations : int
-        Number of hex-ring growth iterations (default: 6).
+        Number of hex-ring growth iterations (default: 8).
     width_mm, height_mm : float
         Poster dimensions in millimetres (default: A2).
     designed_by, designed_for : str or None
