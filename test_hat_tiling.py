@@ -248,7 +248,7 @@ class TestGenerateHatTiling:
         tiles = generate_hat_tiling(2)
         n_reflected = sum(1 for _, _, _, r in tiles if r)
         ratio = n_reflected / len(tiles)
-        # Should be roughly 10-25% (canonical is ~14%)
+        # Should be in range [5%, 40%] (canonical is ~14%)
         assert 0.05 < ratio < 0.40, (
             f"Reflected ratio {ratio:.3f} is outside [0.05, 0.40]"
         )

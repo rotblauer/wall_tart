@@ -267,7 +267,8 @@ def generate_hat_tiling(iterations, progress=None):
     ----------
     iterations : int
         Controls the number of tiles generated (default: 3).
-        0 → ~7 tiles, 1 → ~30, 2 → ~150, 3 → ~500, 4 → ~2000.
+        Tile count scales as ``6 ** (iterations + 1)``:
+        0 → ~7, 1 → ~36, 2 → ~216, 3 → ~1296.
     progress : ProgressReporter or None
         Optional progress reporter (total should equal *iterations*).
 
@@ -593,7 +594,7 @@ def _annotation_einstein(parent, ns, target_x, target_y,
         "shape that tiles the entire plane",
         "yet can never do so periodically.",
         "The Hat is the first monotile proven",
-        "aperiodic (using reflected copies).",
+        "to be aperiodic (with reflected copies).",
     ], scale, theme=theme)
     return g
 
