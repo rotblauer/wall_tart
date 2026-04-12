@@ -5,11 +5,11 @@ Unified Poster Generator — generate all wall_tart posters in one command.
 Usage:
     python generate_all.py [OPTIONS]
 
-Generates all twelve posters (Sierpiński Triangle, Lorenz Attractor, Logistic
+Generates all thirteen posters (Sierpiński Triangle, Lorenz Attractor, Logistic
 Map, Mandelbrot Set, Double Pendulum, Cellular Automata, Fourier
 Epicycles, Turing Patterns, Penrose Tiling, Harmonograph, Hat Monotile,
-and Koch Snowflake) with shared common arguments and optional
-poster-specific parameters.
+Koch Snowflake, and Spectre Monotile) with shared common arguments and
+optional poster-specific parameters.
 
 Examples:
     # Generate all posters with defaults (SVG, A2 size)
@@ -56,12 +56,13 @@ from penrose_tiling_poster import generate_poster as generate_penrose_tiling
 from harmonograph_poster import generate_poster as generate_harmonograph
 from hat_tiling_poster import generate_poster as generate_hat_tiling
 from koch_snowflake_poster import generate_poster as generate_koch_snowflake
+from spectre_poster import generate_poster as generate_spectre
 
 
 POSTER_NAMES = ("sierpinski", "lorenz", "logistic", "mandelbrot",
                 "double_pendulum", "cellular_automata", "fourier_epicycles",
                 "turing_patterns", "penrose_tiling", "harmonograph",
-                "hat_tiling", "koch_snowflake")
+                "hat_tiling", "koch_snowflake", "spectre")
 
 
 def build_arg_parser():
@@ -87,7 +88,7 @@ def build_arg_parser():
             "Choices: sierpinski, lorenz, logistic, mandelbrot, "
             "double_pendulum, cellular_automata, fourier_epicycles, "
             "turing_patterns, penrose_tiling, harmonograph, "
-            "hat_tiling, koch_snowflake."
+            "hat_tiling, koch_snowflake, spectre."
         ),
     )
 
@@ -237,6 +238,13 @@ def build_arg_parser():
         help="Koch curve recursion depth (default: 5).",
     )
 
+    spectre = parser.add_argument_group("Spectre Monotile options")
+    spectre.add_argument(
+        "--spectre-iterations", type=int, default=8,
+        dest="spectre_iterations",
+        help="Number of hex-ring growth iterations (default: 8).",
+    )
+
     return parser
 
 
@@ -360,6 +368,15 @@ def main(argv=None):
             "label": (
                 f"Koch Snowflake "
                 f"(depth={args.koch_depth})"
+            ),
+        },
+        "spectre": {
+            "generate": generate_spectre,
+            "kwargs": {"iterations": args.spectre_iterations},
+            "filename": "spectre_poster",
+            "label": (
+                f"Spectre Monotile "
+                f"(iterations={args.spectre_iterations})"
             ),
         },
     }

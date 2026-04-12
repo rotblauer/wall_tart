@@ -113,6 +113,11 @@ class TestBuildArgParser:
         args = parser.parse_args([])
         assert args.koch_depth == 5
 
+    def test_spectre_iterations_default(self):
+        parser = build_arg_parser()
+        args = parser.parse_args([])
+        assert args.spectre_iterations == 8
+
     def test_no_skip_flags_default(self):
         parser = build_arg_parser()
         args = parser.parse_args([])
@@ -157,6 +162,7 @@ class TestMain:
                 "--harmonograph-steps", "500",
                 "--hat-iterations", "1",
                 "--koch-depth", "2",
+                "--spectre-iterations", "3",
             ])
             assert os.path.exists(os.path.join(tmpdir, "sierpinski_poster.svg"))
             assert os.path.exists(os.path.join(tmpdir, "lorenz_poster.svg"))
@@ -170,6 +176,7 @@ class TestMain:
             assert os.path.exists(os.path.join(tmpdir, "harmonograph_poster.svg"))
             assert os.path.exists(os.path.join(tmpdir, "hat_tiling_poster.svg"))
             assert os.path.exists(os.path.join(tmpdir, "koch_snowflake_poster.svg"))
+            assert os.path.exists(os.path.join(tmpdir, "spectre_poster.svg"))
 
     def test_generates_single_poster(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -289,6 +296,7 @@ class TestMain:
                 "--harmonograph-steps", "500",
                 "--hat-iterations", "1",
                 "--koch-depth", "2",
+                "--spectre-iterations", "3",
                 "--no-mandelbrot",
                 "--no-lorenz",
             ])

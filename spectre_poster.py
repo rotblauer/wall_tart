@@ -493,7 +493,7 @@ def _panel_attribution(parent, ns, col_cx, anno_y, scale=1):
 # Poster composition
 # ---------------------------------------------------------------------------
 
-def generate_poster(iterations=6, width_mm=BASE_WIDTH_MM,
+def generate_poster(iterations=8, width_mm=BASE_WIDTH_MM,
                     height_mm=BASE_HEIGHT_MM,
                     designed_by=None, designed_for=None, theme=None,
                     verbose=True):
@@ -636,8 +636,8 @@ def build_arg_parser():
         description="Generate an annotated Spectre monotile poster.",
     )
     parser.add_argument(
-        "--iterations", type=int, default=6,
-        help="Number of hex-ring growth iterations (default: 6).",
+        "--iterations", type=int, default=8,
+        help="Number of hex-ring growth iterations (default: 8).",
     )
     add_common_poster_args(parser)
     return parser
