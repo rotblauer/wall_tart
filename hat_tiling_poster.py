@@ -73,31 +73,56 @@ def _hex_to_cart(a, b):
 
 
 # The Hat polygon: canonical 13 vertices on the triangular grid.
-# Coordinates from Smith et al. (2023), arXiv:2303.10798, Figure 1 / Table S1.
+# Coordinates from Smith et al. (2023), arXiv:2303.10798, Figure 2 / Table 1.
 # Basis: a = (1, 0), b = (1/2, sqrt(3)/2).
 #
 # Index  (a,  b)   Cartesian (x, y)
 #   1    (0,  0)   (0,      0     )
-#   2    (-1,-1)   (-1.5,  -0.866 )
-#   3    (0, -2)   (-1,    -1.732 )
-#   4    (2, -2)   (1,     -1.732 )
-#   5    (2, -1)   (1.5,   -0.866 )
-#   6    (4, -2)   (3,     -1.732 )
-#   7    (5, -1)   (4.5,   -0.866 )
-#   8    (4,  0)   (4,      0     )
-#   9    (3,  0)   (3,      0     )
-#  10    (2,  2)   (3,      1.732 )
-#  11    (0,  3)   (1.5,    2.598 )
-#  12    (0,  2)   (1,      1.732 )
-#  13    (-1, 2)   (0,      1.732 )
+#   2    (1,  0)   (1,      0     )
+#   3    (2,  0)   (2,      0     )
+#   4    (3,  0)   (3,      0     )
+#   5    (3,  1)   (3.5,    0.866 )
+#   6    (2,  1)   (2.5,    0.866 )
+#   7    (2,  2)   (3,      1.732 )
+#   8    (1,  2)   (2,      1.732 )
+#   9    (1,  3)   (2.5,    2.598 )
+#  10    (0,  3)   (1.5,    2.598 )
+#  11    (0,  2)   (1,      1.732 )
+#  12    (-1, 2)   (0,      1.732 )
+#  13    (-1, 1)   (-0.5,   0.866 )
 _HAT_GRID_COORDS = [
+    (0, 0), (1, 0), (2, 0), (3, 0),
+    (3, 1), (2, 1), (2, 2), (1, 2),
+    (1, 3), (0, 3), (0, 2), (-1, 2),
+    (-1, 1),
+]
+
+HAT_VERTICES = [_hex_to_cart(a, b) for a, b in _HAT_GRID_COORDS]
+
+
+# Internal substitution hat — coordinates used by the Kaplan-style metatile
+# engine (H/T/P/F hierarchy).  These are NOT the canonical outline; they are
+# the basis-vector representation that the reference implementation uses to
+# define edge matchings and metatile outlines.  The public ``HAT_VERTICES``
+# above are used for rendering and display.
+_SUBST_HAT_GRID_COORDS = [
     (0, 0), (-1, -1), (0, -2), (2, -2),
     (2, -1), (4, -2), (5, -1), (4, 0),
     (3, 0), (2, 2), (0, 3), (0, 2),
     (-1, 2),
 ]
+_SUBST_HAT_VERTICES = [_hex_to_cart(a, b) for a, b in _SUBST_HAT_GRID_COORDS]
 
-HAT_VERTICES = [_hex_to_cart(a, b) for a, b in _HAT_GRID_COORDS]
+# Precompute centroids for both shapes — used when mapping substitution
+# positions onto the canonical polygon.
+_SUBST_CENTROID = (
+    sum(x for x, _ in _SUBST_HAT_VERTICES) / len(_SUBST_HAT_VERTICES),
+    sum(y for _, y in _SUBST_HAT_VERTICES) / len(_SUBST_HAT_VERTICES),
+)
+_CANON_CENTROID = (
+    sum(x for x, _ in HAT_VERTICES) / len(HAT_VERTICES),
+    sum(y for _, y in HAT_VERTICES) / len(HAT_VERTICES),
+)
 
 
 def _transform_hat(vertices, angle, tx, ty, scale=1.0, reflect=False):
@@ -214,7 +239,7 @@ def _intersect(p1, q1, p2, q2):
 class _BaseHat:
     def __init__(self, label):
         self.label = label
-        self.shape = HAT_VERTICES
+        self.shape = _SUBST_HAT_VERTICES
 
 
 class _MetaTile:
@@ -252,11 +277,11 @@ def _build_initial_metatiles():
         (2.5, 5 * hr3), (1.5, 5 * hr3), (-0.5, hr3),
     ]
     h_init = _MetaTile(h_outline, 2.0)
-    h_init.add_child(_match_two(HAT_VERTICES[5], HAT_VERTICES[7],
+    h_init.add_child(_match_two(_SUBST_HAT_VERTICES[5], _SUBST_HAT_VERTICES[7],
                                 h_outline[5], h_outline[0]), h_hat)
-    h_init.add_child(_match_two(HAT_VERTICES[9], HAT_VERTICES[11],
+    h_init.add_child(_match_two(_SUBST_HAT_VERTICES[9], _SUBST_HAT_VERTICES[11],
                                 h_outline[1], h_outline[2]), h_hat)
-    h_init.add_child(_match_two(HAT_VERTICES[5], HAT_VERTICES[7],
+    h_init.add_child(_match_two(_SUBST_HAT_VERTICES[5], _SUBST_HAT_VERTICES[7],
                                 h_outline[3], h_outline[4]), h_hat)
     h_init.add_child(_aff_mul(
         _aff_trans(2.5, hr3),
@@ -413,10 +438,9 @@ def _flatten_hats(geom, T_world, out):
         scale = math.hypot(a, d)
         if scale == 0:
             return
-        a_n, b_n, d_n = a / scale, b / scale, d / scale
         reflected = det < 0
-        angle = math.atan2(d_n, a_n)
-        out.append((angle, tx / scale, ty / scale, reflected))
+        # Store the full affine transform — do NOT normalise tx/ty by scale.
+        out.append((a, b, tx, d, e, ty, reflected))
         return
 
     for T_child, g_child in geom.children:
@@ -462,9 +486,10 @@ def generate_hat_tiling(iterations, progress=None):
 
     Returns
     -------
-    list[tuple[float, float, float, bool]]
-        Each element is ``(angle, tx, ty, reflected)`` describing one
-        Hat tile placement.
+    list[tuple[float, float, float, float, float, float, bool]]
+        Each element is ``(a, b, tx, d, e, ty, reflected)`` — the full
+        affine transform (computed for the internal substitution hat)
+        together with a reflection flag.
     """
     iterations = max(0, int(iterations))
     h_meta, t_meta, p_meta, f_meta = _build_initial_metatiles()
@@ -486,9 +511,19 @@ def generate_hat_tiling(iterations, progress=None):
 def render_hat_tiles(tiles, cx, cy, scale, clip_w, clip_h):
     """Convert tile descriptors to polygon vertex lists for rendering.
 
+    Each tile descriptor carries the full affine transform produced by the
+    substitution engine (computed for the internal substitution hat).  The
+    rendering maps the canonical ``HAT_VERTICES`` polygon onto each tile
+    position by:
+
+    1. Computing the world-space centroid of the *internal* hat via the
+       affine.
+    2. Drawing the *canonical* hat centred at that world centroid with
+       matching rotation, reflection, and scale.
+
     Parameters
     ----------
-    tiles : list[tuple[float, float, float, bool]]
+    tiles : list[tuple[float, float, float, float, float, float, bool]]
         Tile descriptors from :func:`generate_hat_tiling`.
     cx, cy : float
         Centre of the rendering area.
@@ -505,18 +540,42 @@ def render_hat_tiles(tiles, cx, cy, scale, clip_w, clip_h):
     """
     half_w = clip_w / 2
     half_h = clip_h / 2
+
+    scx, scy = _SUBST_CENTROID
+    ccx, ccy = _CANON_CENTROID
+
     result = []
-    for angle, tx, ty, reflected in tiles:
-        verts = _transform_hat(HAT_VERTICES, angle, tx, ty, scale=1.0,
-                               reflect=reflected)
-        # Scale and translate to rendering area
-        rendered = [(x * scale + cx, y * scale + cy) for x, y in verts]
+    for a_m, b_m, tx, d_m, e_m, ty, reflected in tiles:
+        # World-space centroid from the internal substitution hat
+        wc_x = a_m * scx + b_m * scy + tx
+        wc_y = d_m * scx + e_m * scy + ty
+
+        # Extract rotation angle and uniform scale from the affine
+        sub_scale = math.hypot(a_m, d_m)
+        if sub_scale == 0:
+            continue
+        angle = math.atan2(d_m / sub_scale, a_m / sub_scale)
+
+        cos_a = math.cos(angle)
+        sin_a = math.sin(angle)
+
+        # Render canonical hat centred at the world centroid
+        verts = []
+        for hx, hy in HAT_VERTICES:
+            dx = (hx - ccx) * sub_scale
+            dy = (hy - ccy) * sub_scale
+            if reflected:
+                dy = -dy
+            rx = dx * cos_a - dy * sin_a + wc_x
+            ry = dx * sin_a + dy * cos_a + wc_y
+            verts.append((rx * scale + cx, ry * scale + cy))
+
         # Clip: keep tile if its centroid falls within bounds
-        mx = sum(v[0] for v in rendered) / len(rendered)
-        my = sum(v[1] for v in rendered) / len(rendered)
+        mx = sum(v[0] for v in verts) / len(verts)
+        my = sum(v[1] for v in verts) / len(verts)
         if (cx - half_w <= mx <= cx + half_w and
                 cy - half_h <= my <= cy + half_h):
-            result.append((rendered, reflected))
+            result.append((verts, reflected))
     return result
 
 
@@ -869,15 +928,27 @@ def generate_poster(iterations=3, width_mm=BASE_WIDTH_MM,
     # --- Generate the tiling ---
     center_x = width_mm / 2
     center_y = min_top + avail_h / 2
-    tile_scale = min(avail_w, avail_h) / 2 * 0.95 / max(
-        max(abs(x) for x, _ in HAT_VERTICES),
-        max(abs(y) for _, y in HAT_VERTICES),
-    ) * 0.33
 
     _pp = ProgressReporter(iterations, "Hat: iterations") if verbose else None
     raw_tiles = generate_hat_tiling(iterations, progress=_pp)
     if _pp:
         _pp.done()
+
+    # Compute tile_scale from the actual tiling extent so that the full
+    # patch fits comfortably inside the content area.
+    scx, scy = _SUBST_CENTROID
+    max_ext = 1.0
+    for a_m, b_m, tx_m, d_m, e_m, ty_m, _r in raw_tiles:
+        wc_x = a_m * scx + b_m * scy + tx_m
+        wc_y = d_m * scx + e_m * scy + ty_m
+        ext = max(abs(wc_x), abs(wc_y))
+        if ext > max_ext:
+            max_ext = ext
+    # Add a hat-radius margin so edge tiles are fully visible
+    hat_r = max(max(abs(x) for x, _ in HAT_VERTICES),
+                max(abs(y) for _, y in HAT_VERTICES))
+    max_ext += hat_r
+    tile_scale = min(avail_w, avail_h) / 2 * 0.95 / max_ext
 
     rendered = render_hat_tiles(raw_tiles, center_x, center_y,
                                 tile_scale, avail_w, avail_h)
