@@ -23,7 +23,7 @@ jobs:
         run: pip install pytest cairosvg
 
       - name: Run tests
-        run: pytest test_poster_utils.py test_sierpinski.py test_lorenz.py test_logistic_map.py test_mandelbrot.py test_double_pendulum.py test_cellular_automata.py test_hat_tiling.py test_koch_snowflake.py test_generate_all.py -v
+        run: pytest test_poster_utils.py test_sierpinski.py test_lorenz.py test_logistic_map.py test_mandelbrot.py test_double_pendulum.py test_cellular_automata.py test_hat_tiling.py test_koch_snowflake.py test_spectre.py test_generate_all.py -v
 
   docker:
     runs-on: ubuntu-latest
