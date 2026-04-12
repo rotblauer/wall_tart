@@ -24,7 +24,6 @@ Options:
 
 import argparse
 import math
-from collections import deque
 
 from poster_utils import (
     ACCENT_COLOR,
@@ -79,23 +78,23 @@ def _hex_to_cart(a, b):
 #
 # Index  (a,  b)   Cartesian (x, y)
 #   1    (0,  0)   (0,      0     )
-#   2    (1,  0)   (1,      0     )
-#   3    (2,  0)   (2,      0     )
-#   4    (3,  1)   (3.5,    0.866 )
-#   5    (3,  2)   (4,      1.732 )
-#   6    (2,  3)   (3.5,    2.598 )
-#   7    (1,  3)   (2.5,    2.598 )
-#   8    (0,  2)   (1,      1.732 )
-#   9    (-1, 2)   (0,      1.732 )
-#  10    (-2, 1)   (-1.5,   0.866 )
-#  11    (-2, 0)   (-2,     0     )
-#  12    (-1,-1)   (-1.5,  -0.866 )
-#  13    (0, -1)   (-0.5,  -0.866 )
+#   2    (-1,-1)   (-1.5,  -0.866 )
+#   3    (0, -2)   (-1,    -1.732 )
+#   4    (2, -2)   (1,     -1.732 )
+#   5    (2, -1)   (1.5,   -0.866 )
+#   6    (4, -2)   (3,     -1.732 )
+#   7    (5, -1)   (4.5,   -0.866 )
+#   8    (4,  0)   (4,      0     )
+#   9    (3,  0)   (3,      0     )
+#  10    (2,  2)   (3,      1.732 )
+#  11    (0,  3)   (1.5,    2.598 )
+#  12    (0,  2)   (1,      1.732 )
+#  13    (-1, 2)   (0,      1.732 )
 _HAT_GRID_COORDS = [
-    (0, 0), (1, 0), (2, 0), (3, 1),
-    (3, 2), (2, 3), (1, 3), (0, 2),
-    (-1, 2), (-2, 1), (-2, 0), (-1, -1),
-    (0, -1),
+    (0, 0), (-1, -1), (0, -2), (2, -2),
+    (2, -1), (4, -2), (5, -1), (4, 0),
+    (3, 0), (2, 2), (0, 3), (0, 2),
+    (-1, 2),
 ]
 
 HAT_VERTICES = [_hex_to_cart(a, b) for a, b in _HAT_GRID_COORDS]
@@ -135,103 +134,293 @@ def _transform_hat(vertices, angle, tx, ty, scale=1.0, reflect=False):
 
 
 # ---------------------------------------------------------------------------
-# Hat tiling via edge-matching BFS growth
+# Hat tiling via deterministic substitution (H/T/P/F metatiles)
 # ---------------------------------------------------------------------------
 
-# Each tile is stored as (angle, tx, ty, reflected).
-# We grow the tiling outward from a single seed tile by matching edges
-# with neighbours.  Every Hat placement is edge-to-edge on the
-# triangular grid, guaranteeing a gap-free, overlap-free tiling.
-# The Hat's key property (Smith et al., 2023) ensures that any valid
-# edge-to-edge tiling is necessarily aperiodic.
-
-# Pre-classify Hat edges by length for efficient matching.
-# Short edges (length 1):  indices 0,1,3,4,5,7,9,10,11,12
-# Long  edges (length √3): indices 2,6,8
-_SHORT_EDGES = []
-_LONG_EDGES = []
-
-for _i in range(13):
-    _v1 = HAT_VERTICES[_i]
-    _v2 = HAT_VERTICES[(_i + 1) % 13]
-    _elen = math.hypot(_v2[0] - _v1[0], _v2[1] - _v1[1])
-    if _elen < 1.5:
-        _SHORT_EDGES.append(_i)
-    else:
-        _LONG_EDGES.append(_i)
+# Affine matrix format:
+# [a, b, c, d, e, f] where x' = a*x + b*y + c and y' = d*x + e*y + f
+_IDENT = (1.0, 0.0, 0.0, 0.0, 1.0, 0.0)
 
 
-def _find_neighbor(ref_verts, edge_i, reflected_B, edge_j):
-    """Compute a candidate neighbour placement that shares one edge.
+def _pt_add(p, q):
+    return (p[0] + q[0], p[1] + q[1])
 
-    Given a placed tile (via its world-coordinate vertices *ref_verts*),
-    compute the angle and position of a new tile whose edge *edge_j*
-    (reversed) aligns exactly with edge *edge_i* of the placed tile.
 
-    Parameters
-    ----------
-    ref_verts : list[tuple[float, float]]
-        The 13 world-coordinate vertices of the placed (reference) tile.
-    edge_i : int
-        Edge index on the reference tile (0–12).
-    reflected_B : bool
-        Whether the candidate neighbour is reflected.
-    edge_j : int
-        Edge index on the candidate tile (0–12).
+def _pt_sub(p, q):
+    return (p[0] - q[0], p[1] - q[1])
 
-    Returns
-    -------
-    tuple[float, float, float] or None
-        ``(angle, tx, ty)`` for the candidate tile, or *None* if the
-        edges are incompatible (different length).
-    """
-    vi = ref_verts[edge_i]
-    vi_next = ref_verts[(edge_i + 1) % 13]
 
-    # Reversed edge direction (target direction for neighbour's edge)
-    dx_rev = vi[0] - vi_next[0]
-    dy_rev = vi[1] - vi_next[1]
-    len_rev = math.hypot(dx_rev, dy_rev)
+def _aff_mul(A, B):
+    return (
+        A[0] * B[0] + A[1] * B[3],
+        A[0] * B[1] + A[1] * B[4],
+        A[0] * B[2] + A[1] * B[5] + A[2],
+        A[3] * B[0] + A[4] * B[3],
+        A[3] * B[1] + A[4] * B[4],
+        A[3] * B[2] + A[4] * B[5] + A[5],
+    )
 
-    # Edge j of the base Hat in local coordinates (possibly reflected)
-    vj = HAT_VERTICES[edge_j]
-    vj_next = HAT_VERTICES[(edge_j + 1) % 13]
 
-    if reflected_B:
-        vj = (vj[0], -vj[1])
-        vj_next = (vj_next[0], -vj_next[1])
+def _aff_inv(T):
+    det = T[0] * T[4] - T[1] * T[3]
+    return (
+        T[4] / det,
+        -T[1] / det,
+        (T[1] * T[5] - T[2] * T[4]) / det,
+        -T[3] / det,
+        T[0] / det,
+        (T[2] * T[3] - T[0] * T[5]) / det,
+    )
 
-    dx_B = vj_next[0] - vj[0]
-    dy_B = vj_next[1] - vj[1]
-    len_B = math.hypot(dx_B, dy_B)
 
-    # Only same-length edges can match
-    if abs(len_B - len_rev) > 1e-6:
-        return None
+def _aff_trans(tx, ty):
+    return (1.0, 0.0, tx, 0.0, 1.0, ty)
 
-    # Rotation: Rot(θ) · d_B = d_rev
-    # θ = atan2(d_rev_y · d_B_x − d_rev_x · d_B_y,
-    #           d_rev_x · d_B_x + d_rev_y · d_B_y)
-    dot_val = dx_rev * dx_B + dy_rev * dy_B
-    cross_val = dy_rev * dx_B - dx_rev * dy_B
-    theta = math.atan2(cross_val, dot_val)
 
-    cos_t = math.cos(theta)
-    sin_t = math.sin(theta)
+def _aff_rot(ang):
+    c = math.cos(ang)
+    s = math.sin(ang)
+    return (c, -s, 0.0, s, c, 0.0)
 
-    # Translation: world position of vertex j equals vi_next
-    rx = vj[0] * cos_t - vj[1] * sin_t
-    ry = vj[0] * sin_t + vj[1] * cos_t
-    tx = vi_next[0] - rx
-    ty = vi_next[1] - ry
 
-    # Sanity check: vertex (j+1)%13 should equal vi
-    rx2 = vj_next[0] * cos_t - vj_next[1] * sin_t
-    ry2 = vj_next[0] * sin_t + vj_next[1] * cos_t
-    if abs(rx2 + tx - vi[0]) > 1e-4 or abs(ry2 + ty - vi[1]) > 1e-4:
-        return None
+def _aff_rot_about(p, ang):
+    return _aff_mul(_aff_trans(p[0], p[1]),
+                    _aff_mul(_aff_rot(ang), _aff_trans(-p[0], -p[1])))
 
-    return (theta, tx, ty)
+
+def _trans_pt(M, P):
+    return (M[0] * P[0] + M[1] * P[1] + M[2],
+            M[3] * P[0] + M[4] * P[1] + M[5])
+
+
+def _match_seg(p, q):
+    return (q[0] - p[0], p[1] - q[1], p[0],
+            q[1] - p[1], q[0] - p[0], p[1])
+
+
+def _match_two(p1, q1, p2, q2):
+    return _aff_mul(_match_seg(p2, q2), _aff_inv(_match_seg(p1, q1)))
+
+
+def _intersect(p1, q1, p2, q2):
+    d = ((q2[1] - p2[1]) * (q1[0] - p1[0]) -
+         (q2[0] - p2[0]) * (q1[1] - p1[1]))
+    ua = (((q2[0] - p2[0]) * (p1[1] - p2[1]) -
+           (q2[1] - p2[1]) * (p1[0] - p2[0])) / d)
+    return (p1[0] + ua * (q1[0] - p1[0]),
+            p1[1] + ua * (q1[1] - p1[1]))
+
+
+class _BaseHat:
+    def __init__(self, label):
+        self.label = label
+        self.shape = HAT_VERTICES
+
+
+class _MetaTile:
+    def __init__(self, shape, width):
+        self.shape = shape
+        self.width = width
+        self.children = []
+
+    def add_child(self, T, geom):
+        self.children.append((T, geom))
+
+    def eval_child(self, n, i):
+        T, geom = self.children[n]
+        return _trans_pt(T, geom.shape[i])
+
+    def recenter(self):
+        cx = sum(p[0] for p in self.shape) / len(self.shape)
+        cy = sum(p[1] for p in self.shape) / len(self.shape)
+        self.shape = [(p[0] - cx, p[1] - cy) for p in self.shape]
+        M = _aff_trans(-cx, -cy)
+        self.children = [(_aff_mul(M, T), geom) for T, geom in self.children]
+
+
+def _build_initial_metatiles():
+    h1_hat = _BaseHat("H1")
+    h_hat = _BaseHat("H")
+    t_hat = _BaseHat("T")
+    p_hat = _BaseHat("P")
+    f_hat = _BaseHat("F")
+
+    hr3 = _SQRT3 / 2.0
+
+    h_outline = [
+        (0.0, 0.0), (4.0, 0.0), (4.5, hr3),
+        (2.5, 5 * hr3), (1.5, 5 * hr3), (-0.5, hr3),
+    ]
+    h_init = _MetaTile(h_outline, 2.0)
+    h_init.add_child(_match_two(HAT_VERTICES[5], HAT_VERTICES[7],
+                                h_outline[5], h_outline[0]), h_hat)
+    h_init.add_child(_match_two(HAT_VERTICES[9], HAT_VERTICES[11],
+                                h_outline[1], h_outline[2]), h_hat)
+    h_init.add_child(_match_two(HAT_VERTICES[5], HAT_VERTICES[7],
+                                h_outline[3], h_outline[4]), h_hat)
+    h_init.add_child(_aff_mul(
+        _aff_trans(2.5, hr3),
+        _aff_mul((-0.5, -hr3, 0.0, hr3, -0.5, 0.0),
+                 (0.5, 0.0, 0.0, 0.0, -0.5, 0.0))), h1_hat)
+
+    t_outline = [(0.0, 0.0), (3.0, 0.0), (1.5, 3 * hr3)]
+    t_init = _MetaTile(t_outline, 2.0)
+    t_init.add_child((0.5, 0.0, 0.5, 0.0, 0.5, hr3), t_hat)
+
+    p_outline = [(0.0, 0.0), (4.0, 0.0), (3.0, 2 * hr3), (-1.0, 2 * hr3)]
+    p_init = _MetaTile(p_outline, 2.0)
+    p_init.add_child((0.5, 0.0, 1.5, 0.0, 0.5, hr3), p_hat)
+    p_init.add_child(_aff_mul(
+        _aff_trans(0.0, 2 * hr3),
+        _aff_mul((0.5, hr3, 0.0, -hr3, 0.5, 0.0),
+                 (0.5, 0.0, 0.0, 0.0, 0.5, 0.0))), p_hat)
+
+    f_outline = [
+        (0.0, 0.0), (3.0, 0.0), (3.5, hr3),
+        (3.0, 2 * hr3), (-1.0, 2 * hr3),
+    ]
+    f_init = _MetaTile(f_outline, 2.0)
+    f_init.add_child((0.5, 0.0, 1.5, 0.0, 0.5, hr3), f_hat)
+    f_init.add_child(_aff_mul(
+        _aff_trans(0.0, 2 * hr3),
+        _aff_mul((0.5, hr3, 0.0, -hr3, 0.5, 0.0),
+                 (0.5, 0.0, 0.0, 0.0, 0.5, 0.0))), f_hat)
+
+    return h_init, t_init, p_init, f_init
+
+
+def _construct_patch(H, T, P, F):
+    rules = [
+        ["H"],
+        [0, 0, "P", 2],
+        [1, 0, "H", 2],
+        [2, 0, "P", 2],
+        [3, 0, "H", 2],
+        [4, 4, "P", 2],
+        [0, 4, "F", 3],
+        [2, 4, "F", 3],
+        [4, 1, 3, 2, "F", 0],
+        [8, 3, "H", 0],
+        [9, 2, "P", 0],
+        [10, 2, "H", 0],
+        [11, 4, "P", 2],
+        [12, 0, "H", 2],
+        [13, 0, "F", 3],
+        [14, 2, "F", 1],
+        [15, 3, "H", 4],
+        [8, 2, "F", 1],
+        [17, 3, "H", 0],
+        [18, 2, "P", 0],
+        [19, 2, "H", 2],
+        [20, 4, "F", 3],
+        [20, 0, "P", 2],
+        [22, 0, "H", 2],
+        [23, 4, "F", 3],
+        [23, 0, "F", 3],
+        [16, 0, "P", 2],
+        [9, 4, 0, 2, "T", 2],
+        [4, 0, "F", 3],
+    ]
+
+    ret = _MetaTile([], H.width)
+    shapes = {"H": H, "T": T, "P": P, "F": F}
+
+    for r in rules:
+        if len(r) == 1:
+            ret.add_child(_IDENT, shapes[r[0]])
+            continue
+        if len(r) == 4:
+            poly = ret.children[r[0]][1].shape
+            Tm = ret.children[r[0]][0]
+            p = _trans_pt(Tm, poly[(r[1] + 1) % len(poly)])
+            q = _trans_pt(Tm, poly[r[1]])
+            nshp = shapes[r[2]]
+            npoly = nshp.shape
+            ret.add_child(
+                _match_two(npoly[r[3]], npoly[(r[3] + 1) % len(npoly)], p, q),
+                nshp,
+            )
+            continue
+
+        ch_p = ret.children[r[0]]
+        ch_q = ret.children[r[2]]
+        p = _trans_pt(ch_q[0], ch_q[1].shape[r[3]])
+        q = _trans_pt(ch_p[0], ch_p[1].shape[r[1]])
+        nshp = shapes[r[4]]
+        npoly = nshp.shape
+        ret.add_child(
+            _match_two(npoly[r[5]], npoly[(r[5] + 1) % len(npoly)], p, q),
+            nshp,
+        )
+
+    return ret
+
+
+def _construct_metatiles(patch):
+    bps1 = patch.eval_child(8, 2)
+    bps2 = patch.eval_child(21, 2)
+    rbps = _trans_pt(_aff_rot_about(bps1, -2.0 * math.pi / 3.0), bps2)
+
+    p72 = patch.eval_child(7, 2)
+    p252 = patch.eval_child(25, 2)
+
+    llc = _intersect(bps1, rbps, patch.eval_child(6, 2), p72)
+    w = _pt_sub(patch.eval_child(6, 2), llc)
+
+    new_h_outline = [llc, bps1]
+    w = _trans_pt(_aff_rot(-math.pi / 3), w)
+    new_h_outline.append(_pt_add(new_h_outline[1], w))
+    new_h_outline.append(patch.eval_child(14, 2))
+    w = _trans_pt(_aff_rot(-math.pi / 3), w)
+    new_h_outline.append(_pt_sub(new_h_outline[3], w))
+    new_h_outline.append(patch.eval_child(6, 2))
+
+    new_h = _MetaTile(new_h_outline, patch.width * 2.0)
+    for idx in [0, 9, 16, 27, 26, 6, 1, 8, 10, 15]:
+        new_h.add_child(*patch.children[idx])
+
+    new_p_outline = [p72, _pt_add(p72, _pt_sub(bps1, llc)), bps1, llc]
+    new_p = _MetaTile(new_p_outline, patch.width * 2.0)
+    for idx in [7, 2, 3, 4, 28]:
+        new_p.add_child(*patch.children[idx])
+
+    new_f_outline = [
+        bps2, patch.eval_child(24, 2), patch.eval_child(25, 0),
+        p252, _pt_add(p252, _pt_sub(llc, bps1)),
+    ]
+    new_f = _MetaTile(new_f_outline, patch.width * 2.0)
+    for idx in [21, 20, 22, 23, 24, 25]:
+        new_f.add_child(*patch.children[idx])
+
+    aaa = new_h_outline[2]
+    bbb = _pt_add(new_h_outline[1], _pt_sub(new_h_outline[4], new_h_outline[5]))
+    ccc = _trans_pt(_aff_rot_about(bbb, -math.pi / 3), aaa)
+    new_t = _MetaTile([bbb, ccc, aaa], patch.width * 2.0)
+    new_t.add_child(*patch.children[11])
+
+    new_h.recenter()
+    new_t.recenter()
+    new_p.recenter()
+    new_f.recenter()
+
+    return new_h, new_t, new_p, new_f
+
+
+def _flatten_hats(geom, T_world, out):
+    if isinstance(geom, _BaseHat):
+        a, b, tx, d, e, ty = T_world
+        det = a * e - b * d
+        scale = math.hypot(a, d)
+        if scale == 0:
+            return
+        a_n, b_n, d_n = a / scale, b / scale, d / scale
+        reflected = det < 0
+        angle = math.atan2(d_n, a_n)
+        out.append((angle, tx / scale, ty / scale, reflected))
+        return
+
+    for T_child, g_child in geom.children:
+        _flatten_hats(g_child, _aff_mul(T_world, T_child), out)
 
 
 def _centroid(verts):
@@ -259,16 +448,15 @@ def _point_in_polygon(px, py, polygon):
 def generate_hat_tiling(iterations, progress=None):
     """Generate a Hat tiling as a list of tile descriptors.
 
-    Grows an edge-to-edge Hat tiling outward from a single seed tile
-    using breadth-first edge matching.  The number of tiles scales
-    roughly as ``7 ** iterations``.
+    Builds an exact substitution tiling using the H/T/P/F metatile
+    hierarchy from the Hat construction.
 
     Parameters
     ----------
     iterations : int
-        Controls the number of tiles generated (default: 3).
-        Tile count scales as ``6 ** (iterations + 1)``:
-        0 → ~7, 1 → ~36, 2 → ~216, 3 → ~1296.
+        Number of substitution iterations (default: 3).
+        Tile count in the rendered H-metatile patch grows rapidly with
+        each iteration (e.g. 4, 25, 169, 1156, ...).
     progress : ProgressReporter or None
         Optional progress reporter (total should equal *iterations*).
 
@@ -278,111 +466,20 @@ def generate_hat_tiling(iterations, progress=None):
         Each element is ``(angle, tx, ty, reflected)`` describing one
         Hat tile placement.
     """
-    # Target tile count scales with iterations
-    max_tiles = max(7, int(6 ** (min(iterations, 5) + 1.0)))
+    iterations = max(0, int(iterations))
+    h_meta, t_meta, p_meta, f_meta = _build_initial_metatiles()
 
-    # Start with a single unreflected Hat at the origin
-    tiles = [(0.0, 0.0, 0.0, False)]
-    verts_cache = {0: list(HAT_VERTICES)}
-
-    # --- Spatial hash for overlap detection ---
-    cell_size = 4.0
-    spatial = {}          # (ix, iy) → [(cx, cy, tile_idx, verts)]
-
-    def _hash_key(x, y):
-        return (int(math.floor(x / cell_size)),
-                int(math.floor(y / cell_size)))
-
-    def _register(idx):
-        vs = verts_cache[idx]
-        cx, cy = _centroid(vs)
-        key = _hash_key(cx, cy)
-        spatial.setdefault(key, []).append((cx, cy, idx, vs))
-
-    def _overlaps(new_verts):
-        """Return True if *new_verts* overlaps any existing tile."""
-        ncx, ncy = _centroid(new_verts)
-        ix, iy = _hash_key(ncx, ncy)
-        for di in range(-1, 2):
-            for dj in range(-1, 2):
-                for ecx, ecy, _eidx, everts in spatial.get(
-                        (ix + di, iy + dj), []):
-                    # Quick distance pre-check
-                    if abs(ncx - ecx) > 7 or abs(ncy - ecy) > 7:
-                        continue
-                    # Centroid-in-polygon test (both directions)
-                    if _point_in_polygon(ncx, ncy, everts):
-                        return True
-                    if _point_in_polygon(ecx, ecy, new_verts):
-                        return True
-        return False
-
-    _register(0)
-
-    # --- BFS growth ---
-    boundary = deque((0, i) for i in range(13))
-    matched = set()
-
-    # Progress bookkeeping
-    report_step = max(1, max_tiles // max(iterations, 1))
-
-    while boundary and len(tiles) < max_tiles:
-        tile_idx, edge_idx = boundary.popleft()
-
-        if (tile_idx, edge_idx) in matched:
-            continue
-
-        ref_verts = verts_cache[tile_idx]
-
-        # Determine candidate edge indices by length
-        edge_len = math.hypot(
-            ref_verts[(edge_idx + 1) % 13][0] - ref_verts[edge_idx][0],
-            ref_verts[(edge_idx + 1) % 13][1] - ref_verts[edge_idx][1],
-        )
-        candidates = _SHORT_EDGES if edge_len < 1.5 else _LONG_EDGES
-
-        placed = False
-        # Prefer unreflected neighbours (matches ~1 : 6 reflected ratio)
-        for reflected_B in (False, True):
-            if placed:
-                break
-            for edge_j in candidates:
-                result = _find_neighbor(ref_verts, edge_idx,
-                                        reflected_B, edge_j)
-                if result is None:
-                    continue
-
-                theta, tx, ty = result
-                new_verts = _transform_hat(HAT_VERTICES, theta, tx, ty,
-                                           reflect=reflected_B)
-
-                if _overlaps(new_verts):
-                    continue
-
-                # Accept this placement
-                new_idx = len(tiles)
-                tiles.append((theta, tx, ty, reflected_B))
-                verts_cache[new_idx] = new_verts
-                _register(new_idx)
-
-                matched.add((tile_idx, edge_idx))
-                matched.add((new_idx, edge_j))
-
-                for i in range(13):
-                    if (new_idx, i) not in matched:
-                        boundary.append((new_idx, i))
-
-                placed = True
-                break
-
-        # Report progress periodically
-        if progress is not None and len(tiles) % report_step == 0:
-            step = min(iterations, int(iterations * len(tiles) / max_tiles))
-            progress.update(step)
+    for i in range(iterations):
+        patch = _construct_patch(h_meta, t_meta, p_meta, f_meta)
+        h_meta, t_meta, p_meta, f_meta = _construct_metatiles(patch)
+        if progress is not None:
+            progress.update(i + 1)
 
     if progress is not None:
         progress.update(iterations)
 
+    tiles = []
+    _flatten_hats(h_meta, _IDENT, tiles)
     return tiles
 
 
@@ -734,7 +831,7 @@ def generate_poster(iterations=3, width_mm=BASE_WIDTH_MM,
     Parameters
     ----------
     iterations : int
-        Number of cluster expansion iterations (default: 3).
+        Number of substitution iterations (default: 3).
     width_mm, height_mm : float
         Poster dimensions in millimetres (default: A2).
     designed_by, designed_for : str or None
@@ -876,7 +973,7 @@ def build_arg_parser():
     )
     parser.add_argument(
         "--iterations", type=int, default=3,
-        help="Number of cluster expansion iterations (default: 3).",
+        help="Number of substitution iterations (default: 3).",
     )
     add_common_poster_args(parser)
     return parser

@@ -32,25 +32,25 @@ from poster_utils import write_png, write_svg, _group
 _SQRT3 = math.sqrt(3)
 _CANONICAL_CARTESIAN = [
     (0.0,          0.0          ),   # 1  (0, 0)
-    (1.0,          0.0          ),   # 2  (1, 0)
-    (2.0,          0.0          ),   # 3  (2, 0)
-    (3.5,          _SQRT3 / 2   ),   # 4  (3, 1)
-    (4.0,          _SQRT3       ),   # 5  (3, 2)
-    (3.5,          3*_SQRT3 / 2 ),   # 6  (2, 3)
-    (2.5,          3*_SQRT3 / 2 ),   # 7  (1, 3)
-    (1.0,          _SQRT3       ),   # 8  (0, 2)
-    (0.0,          _SQRT3       ),   # 9  (-1, 2)
-    (-1.5,         _SQRT3 / 2   ),   # 10 (-2, 1)
-    (-2.0,         0.0          ),   # 11 (-2, 0)
-    (-1.5,        -_SQRT3 / 2   ),   # 12 (-1, -1)
-    (-0.5,        -_SQRT3 / 2   ),   # 13 (0, -1)
+    (-1.5,        -_SQRT3 / 2   ),   # 2  (-1, -1)
+    (-1.0,        -_SQRT3       ),   # 3  (0, -2)
+    (1.0,         -_SQRT3       ),   # 4  (2, -2)
+    (1.5,         -_SQRT3 / 2   ),   # 5  (2, -1)
+    (3.0,         -_SQRT3       ),   # 6  (4, -2)
+    (4.5,         -_SQRT3 / 2   ),   # 7  (5, -1)
+    (4.0,          0.0          ),   # 8  (4, 0)
+    (3.0,          0.0          ),   # 9  (3, 0)
+    (3.0,          _SQRT3       ),   # 10 (2, 2)
+    (1.5,          3*_SQRT3 / 2 ),   # 11 (0, 3)
+    (1.0,          _SQRT3       ),   # 12 (0, 2)
+    (0.0,          _SQRT3       ),   # 13 (-1, 2)
 ]
 
 _CANONICAL_GRID = [
-    (0, 0), (1, 0), (2, 0), (3, 1),
-    (3, 2), (2, 3), (1, 3), (0, 2),
-    (-1, 2), (-2, 1), (-2, 0), (-1, -1),
-    (0, -1),
+    (0, 0), (-1, -1), (0, -2), (2, -2),
+    (2, -1), (4, -2), (5, -1), (4, 0),
+    (3, 0), (2, 2), (0, 3), (0, 2),
+    (-1, 2),
 ]
 
 
@@ -85,28 +85,28 @@ class TestCanonicalHatVertices:
         assert math.isclose(y, _SQRT3 / 2, abs_tol=1e-9)
 
     def test_vertex_5_cartesian(self):
-        """Spot-check: vertex 5 at grid (3,2) → Cartesian (4, sqrt(3))."""
+        """Spot-check: vertex 5 at grid (2,-1) → Cartesian (1.5, -sqrt(3)/2)."""
         x, y = HAT_VERTICES[4]
-        assert math.isclose(x, 4.0, abs_tol=1e-9)
-        assert math.isclose(y, _SQRT3, abs_tol=1e-9)
+        assert math.isclose(x, 1.5, abs_tol=1e-9)
+        assert math.isclose(y, -_SQRT3 / 2, abs_tol=1e-9)
 
     def test_vertex_11_cartesian(self):
-        """Spot-check: vertex 11 at grid (-2,0) → Cartesian (-2, 0)."""
+        """Spot-check: vertex 11 at grid (0,3) → Cartesian (1.5, 3*sqrt(3)/2)."""
         x, y = HAT_VERTICES[10]
-        assert math.isclose(x, -2.0, abs_tol=1e-9)
-        assert math.isclose(y, 0.0, abs_tol=1e-9)
+        assert math.isclose(x, 1.5, abs_tol=1e-9)
+        assert math.isclose(y, 3 * _SQRT3 / 2, abs_tol=1e-9)
 
     def test_vertex_12_cartesian(self):
-        """Spot-check: vertex 12 at grid (-1,-1) → Cartesian (-1.5, -sqrt(3)/2)."""
+        """Spot-check: vertex 12 at grid (0,2) → Cartesian (1, sqrt(3))."""
         x, y = HAT_VERTICES[11]
-        assert math.isclose(x, -1.5, abs_tol=1e-9)
-        assert math.isclose(y, -_SQRT3 / 2, abs_tol=1e-9)
+        assert math.isclose(x, 1.0, abs_tol=1e-9)
+        assert math.isclose(y, _SQRT3, abs_tol=1e-9)
 
     def test_vertex_13_cartesian(self):
-        """Spot-check: vertex 13 at grid (0,-1) → Cartesian (-0.5, -sqrt(3)/2)."""
+        """Spot-check: vertex 13 at grid (-1,2) → Cartesian (0, sqrt(3))."""
         x, y = HAT_VERTICES[12]
-        assert math.isclose(x, -0.5, abs_tol=1e-9)
-        assert math.isclose(y, -_SQRT3 / 2, abs_tol=1e-9)
+        assert math.isclose(x, 0.0, abs_tol=1e-9)
+        assert math.isclose(y, _SQRT3, abs_tol=1e-9)
 
 
 # ---------------------------------------------------------------------------
@@ -154,7 +154,7 @@ class TestCanonicalHatLegend:
         texts = root.findall(f".//{{{svg_ns}}}text")
         text_content = " ".join(t.text or "" for t in texts)
         assert "(0,0)" in text_content
-        assert "(-2,0)" in text_content
+        assert "(5,-1)" in text_content
 
     def test_legend_rendered_in_poster(self):
         svg = generate_poster(iterations=1, width_mm=200, height_mm=300,
